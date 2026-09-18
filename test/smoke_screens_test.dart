@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mi_pendiente/core/providers/notification_providers.dart';
+import 'package:mi_pendiente/core/providers/preferences_providers.dart';
 import 'package:mi_pendiente/core/theme/app_theme.dart';
 import 'package:mi_pendiente/domain/entities/pendiente.dart';
 import 'package:mi_pendiente/domain/entities/prioridad.dart';
 import 'package:mi_pendiente/domain/entities/hora_del_dia.dart';
-import 'package:mi_pendiente/domain/repositories/pendiente_repository.dart';
 import 'package:mi_pendiente/presentation/screens/splash_screen.dart';
 import 'package:mi_pendiente/presentation/screens/home_shell_screen.dart';
 import 'package:mi_pendiente/presentation/screens/hoy_screen.dart';
@@ -17,37 +19,16 @@ import 'package:mi_pendiente/presentation/screens/detalle_pendiente_screen.dart'
 import 'package:mi_pendiente/presentation/screens/completados_screen.dart';
 import 'package:mi_pendiente/presentation/screens/ajustes_screen.dart';
 import 'package:mi_pendiente/presentation/providers/pendientes_provider.dart';
+import 'helpers/test_fakes.dart';
 
-class _FakeRepository implements PendienteRepository {
-  final List<Pendiente> _pendientes;
-  _FakeRepository(this._pendientes);
-
-  @override
-  Future<List<Pendiente>> getPendientes() async => _pendientes;
-  @override
-  Future<List<Pendiente>> getPendientesPorFecha(DateTime fecha) async => _pendientes;
-  @override
-  Future<List<Pendiente>> getPendientesPorRango(DateTime inicio, DateTime fin) async => _pendientes;
-  @override
-  Future<List<Pendiente>> getPendientesCompletados() async => _pendientes.where((p) => p.estaCompletado).toList();
-  @override
-  Future<Pendiente?> getPendientePorId(String id) async => _pendientes.where((p) => p.id == id).firstOrNull;
-  @override
-  Future<void> insertarPendiente(Pendiente pendiente) async => _pendientes.add(pendiente);
-  @override
-  Future<void> actualizarPendiente(Pendiente pendiente) async {}
-  @override
-  Future<void> eliminarPendiente(String id) async => _pendientes.removeWhere((p) => p.id == id);
-  @override
-  Future<void> alternarCompletado(String id, bool completado) async {}
-  @override
-  Future<void> eliminarCompletados() async => _pendientes.removeWhere((p) => p.estaCompletado);
-}
+late SharedPreferences testPrefs;
 
 Widget _crearAppDePrueba(Widget child, {List<Pendiente> pendientes = const []}) {
   return ProviderScope(
     overrides: [
-      pendienteRepositoryProvider.overrideWithValue(_FakeRepository(List.from(pendientes))),
+      sharedPreferencesProvider.overrideWithValue(testPrefs),
+      notificationSchedulerProvider.overrideWithValue(FakeNotificationScheduler()),
+      pendienteRepositoryProvider.overrideWithValue(FakeRepository(List.from(pendientes))),
     ],
     child: MaterialApp(
       theme: AppTheme.lightTheme,
@@ -66,6 +47,11 @@ Widget _crearAppDePrueba(Widget child, {List<Pendiente> pendientes = const []}) 
 }
 
 void main() {
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues({});
+    testPrefs = await SharedPreferences.getInstance();
+  });
+
   final pendienteEjemplo = Pendiente(
     id: 'test-123',
     titulo: 'Pendiente de prueba',

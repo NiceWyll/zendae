@@ -7,10 +7,16 @@ import '../../domain/entities/prioridad.dart';
 import '../models/pendiente_model.dart';
 
 class AppDatabase {
-  static final AppDatabase instance = AppDatabase._init();
-  static Database? _database;
+  static final AppDatabase instance = AppDatabase();
+  Database? _database;
 
-  AppDatabase._init();
+  AppDatabase({Database? db}) : _database = db;
+
+  static Future<AppDatabase> abrir({String filePath = 'mi_pendiente.db'}) async {
+    final appDb = AppDatabase();
+    await appDb.database;
+    return appDb;
+  }
 
   Future<Database> get database async {
     if (_database != null) return _database!;

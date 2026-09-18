@@ -11,7 +11,7 @@ import 'mes_screen.dart';
 import 'completados_screen.dart';
 import 'ajustes_screen.dart';
 import 'nuevo_pendiente_screen.dart';
-import '../../core/services/notification_service.dart';
+import '../../core/providers/notification_providers.dart';
 import '../mappers/prioridad_ui.dart';
 
 class HomeShellScreen extends ConsumerStatefulWidget {
@@ -567,8 +567,9 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                     style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
                   ),
                   onPressed: () async {
-                    await NotificationService.instance.pedirPermisos();
-                    await NotificationService.instance.mostrarNotificacionInmediata(
+                    final notificaciones = ref.read(notificationSchedulerProvider);
+                    await notificaciones.pedirPermisos();
+                    await notificaciones.mostrarNotificacionInmediata(
                       titulo: '¡Tienes un pendiente programado!',
                       cuerpo: 'Reunión con el equipo - Tienes este pendiente ahora',
                     );

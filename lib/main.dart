@@ -4,9 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'core/providers/database_providers.dart';
+import 'core/providers/notification_providers.dart';
+import 'core/providers/preferences_providers.dart';
 import 'core/services/notification_service.dart';
 import 'core/theme/app_theme.dart';
+import 'data/datasources/app_database.dart';
 import 'presentation/providers/ajustes_provider.dart';
 import 'presentation/screens/splash_screen.dart';
 
@@ -26,15 +31,27 @@ void main() async {
     databaseFactory = databaseFactoryFfi;
   }
 
-  // Inicializar servicio de notificaciones
+  // 1. Inicializar SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+
+  // 2. Abrir base de datos
+  final db = await AppDatabase.abrir();
+
+  // 3. Inicializar servicio de notificaciones
+  final notificaciones = NotificationServiceImpl();
   if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
-    await NotificationService.instance.init();
-    await NotificationService.instance.pedirPermisos();
+    await notificaciones.init();
+    await notificaciones.pedirPermisos();
   }
 
   runApp(
-    const ProviderScope(
-      child: MiPendienteApp(),
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        databaseProvider.overrideWithValue(db),
+        notificationSchedulerProvider.overrideWithValue(notificaciones),
+      ],
+      child: const MiPendienteApp(),
     ),
   );
 }

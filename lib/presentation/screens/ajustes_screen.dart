@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/services/notification_service.dart';
+import '../../core/providers/notification_providers.dart';
 import '../providers/ajustes_provider.dart';
 
 class AjustesScreen extends ConsumerWidget {
@@ -34,10 +34,11 @@ class AjustesScreen extends ConsumerWidget {
             activeColor: AppColors.primary,
             onChanged: (val) async {
               ref.read(ajustesProvider.notifier).alternarNotificaciones(val);
+              final scheduler = ref.read(notificationSchedulerProvider);
               if (val) {
-                await NotificationService.instance.pedirPermisos();
+                await scheduler.pedirPermisos();
               } else {
-                await NotificationService.instance.cancelarTodas();
+                await scheduler.cancelarTodas();
               }
             },
           ),

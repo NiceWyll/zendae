@@ -4,10 +4,13 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../../domain/entities/pendiente.dart';
+import '../../domain/services/notification_scheduler.dart';
 
-class NotificationService {
-  NotificationService._internal();
-  static final NotificationService instance = NotificationService._internal();
+class NotificationServiceImpl implements NotificationScheduler {
+  NotificationServiceImpl();
+
+  // Instancia singleton transitoria para retrocompatibilidad
+  static final NotificationServiceImpl instance = NotificationServiceImpl();
 
   final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
 
@@ -71,13 +74,13 @@ class NotificationService {
   }
 
   /// Solicitar permisos al usuario (indispensable en Android 13+)
+  @override
   Future<bool> pedirPermisos() async {
     try {
       if (Platform.isAndroid) {
         final androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
         if (androidPlugin != null) {
           final granted = await androidPlugin.requestNotificationsPermission() ?? false;
-          // Opcionalmente pedir permiso de alarmas exactas en Android 14+
           try {
             await androidPlugin.requestExactAlarmsPermission();
           } catch (_) {}
@@ -101,6 +104,7 @@ class NotificationService {
   }
 
   /// Dispara una notificación inmediata de alta prioridad con banner emergente ("la nubecita")
+  @override
   Future<void> mostrarNotificacionInmediata({
     int id = 9999,
     required String titulo,
@@ -148,44 +152,57 @@ class NotificationService {
     }
   }
 
-  /// Agenda un recordatorio programado según la fecha y hora del pendiente
-  Future<void> programarRecordatorio(Pendiente pendiente) async {
+  /// Implementación del contrato NotificationScheduler
+  @override
+  Future<void> programarRecordatorio({
+    required int notificacionId,
+    required String titulo,
+    required String cuerpo,
+    required DateTime cuando,
+    String? payload,
+  }) async {
+    final tzDate = tz.TZDateTime.from(cuando, tz.local);
+    await _agendarZoned(
+      id: notificacionId,
+      titulo: titulo,
+      cuerpo: cuerpo,
+      date: tzDate,
+      payload: payload,
+    );
+  }
+
+  /// Método de conveniencia para la entidad Pendiente
+  @override
+  Future<void> programarRecordatorioPendiente(Pendiente pendiente) async {
     if (!pendiente.tieneRecordatorio) return;
 
     try {
-      final int notifId = pendiente.id.hashCode & 0x7fffffff;
-
-      // Calcular fecha y hora de la alerta (restando minutosAntes)
-      final scheduledDate = pendiente.fechaHoraCompleta.subtract(
-        Duration(minutes: pendiente.minutosAntes),
-      );
-
+      final int notifId = pendiente.notificacionId ?? (pendiente.id.hashCode & 0x7fffffff);
+      final scheduledDate = pendiente.momentoDeAviso;
       final now = DateTime.now();
+
       if (scheduledDate.isBefore(now)) {
-        // Si el tiempo del recordatorio ya pasó, pero la hora de la tarea aún está en el futuro
         if (pendiente.fechaHoraCompleta.isAfter(now)) {
-          // Programar para la hora exacta
-          await _agendarZoned(
-            id: notifId,
+          await programarRecordatorio(
+            notificacionId: notifId,
             titulo: '⏰ ¡Tienes un pendiente ahora!',
             cuerpo: '${pendiente.titulo}${pendiente.descripcion != null ? ' - ${pendiente.descripcion}' : ''}',
-            date: tz.TZDateTime.from(pendiente.fechaHoraCompleta, tz.local),
+            cuando: pendiente.fechaHoraCompleta,
             payload: pendiente.id,
           );
         }
         return;
       }
 
-      final tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
       final String aviso = pendiente.minutosAntes > 0
           ? 'En ${pendiente.minutosAntes} minutos: ${pendiente.titulo}'
           : '¡Es hora de: ${pendiente.titulo}!';
 
-      await _agendarZoned(
-        id: notifId,
+      await programarRecordatorio(
+        notificacionId: notifId,
         titulo: '🔔 Recordatorio de Pendiente',
         cuerpo: aviso,
-        date: tzDate,
+        cuando: scheduledDate,
         payload: pendiente.id,
       );
     } catch (e) {
@@ -212,9 +229,9 @@ class NotificationService {
       icon: '@mipmap/ic_launcher',
     );
 
-    final details = NotificationDetails(
+    const details = NotificationDetails(
       android: androidDetails,
-      iOS: const DarwinNotificationDetails(
+      iOS: DarwinNotificationDetails(
         presentAlert: true,
         presentBadge: true,
         presentSound: true,
@@ -233,7 +250,6 @@ class NotificationService {
       );
       debugPrint('📅 Recordatorio programado para: $date (ID: $id)');
     } catch (exactError) {
-      // Si el sistema no permite alarmas exactas, programar con inexactAllowWhileIdle
       debugPrint('⚠️ Intento con inexactAllowWhileIdle por: $exactError');
       await _plugin.zonedSchedule(
         id: id,
@@ -247,18 +263,23 @@ class NotificationService {
     }
   }
 
-  /// Cancela la notificación de un pendiente específico
-  Future<void> cancelarRecordatorio(String pendienteId) async {
+  @override
+  Future<void> cancelarRecordatorio(int notificacionId) async {
     try {
-      final int notifId = pendienteId.hashCode & 0x7fffffff;
-      await _plugin.cancel(id: notifId);
-      debugPrint('🗑️ Recordatorio cancelado para ID: $pendienteId');
+      await _plugin.cancel(id: notificacionId);
+      debugPrint('🗑️ Recordatorio cancelado para notificacionId: $notificacionId');
     } catch (e) {
       debugPrint('⚠️ Error al cancelar recordatorio: $e');
     }
   }
 
-  /// Cancela todas las notificaciones pendientes
+  @override
+  Future<void> cancelarRecordatorioPorIdString(String pendienteId) async {
+    final int notifId = pendienteId.hashCode & 0x7fffffff;
+    await cancelarRecordatorio(notifId);
+  }
+
+  @override
   Future<void> cancelarTodas() async {
     try {
       await _plugin.cancelAll();
@@ -268,3 +289,6 @@ class NotificationService {
     }
   }
 }
+
+// Alias para retrocompatibilidad
+typedef NotificationService = NotificationServiceImpl;

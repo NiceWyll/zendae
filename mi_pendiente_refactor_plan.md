@@ -451,10 +451,10 @@ class Fallo<T> extends Result<T> {
 > Los mensajes van en español y **orientados al usuario**, no al programador. Nada de "SqfliteDatabaseException: no such column". Ese texto termina en un `SnackBar`.
 
 ### Criterio de completado ✅
-- [ ] Ningún archivo bajo `domain/` importa `package:flutter/*`
-- [ ] `HoraDelDia` serializa a `"HH:mm"` idéntico al formato actual
-- [ ] Los 3 colores de prioridad se ven idénticos a las capturas base
-- [ ] `flutter analyze` en 0, tests existentes adaptados y pasando
+- [x] Ningún archivo bajo `domain/` importa `package:flutter/*`
+- [x] `HoraDelDia` serializa a `"HH:mm"` idéntico al formato actual
+- [x] Los 3 colores de prioridad se ven idénticos a las capturas base
+- [x] `flutter analyze` en 0, tests existentes adaptados y pasando
 
 ### Prompt sugerido para la IA
 ```
@@ -551,10 +551,10 @@ final uuidProvider = Provider<String Function()>((ref) => () => const Uuid().v4(
 Ahora `posponerParaManana` y "Hoy" se pueden testear congelando la fecha, sin depender del día real.
 
 ### Criterio de completado ✅
-- [ ] Cero apariciones de `NotificationService.instance` en el proyecto
-- [ ] `AppDatabase` ya no expone constructor estático singleton
-- [ ] La app arranca, muestra el splash y carga los pendientes igual que antes
-- [ ] El botón "🔔 Probar notificación" sigue mostrando la nubecita
+- [x] Cero apariciones de `NotificationService.instance` en el proyecto
+- [x] `AppDatabase` ya no expone constructor estático singleton
+- [x] La app arranca, muestra el splash y carga los pendientes igual que antes
+- [x] El botón "🔔 Probar notificación" sigue mostrando la nubecita
 
 ### Prompt sugerido para la IA
 ```

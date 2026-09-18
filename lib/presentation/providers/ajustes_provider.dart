@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/providers/preferences_providers.dart';
 
 class AjustesState {
   final ThemeMode themeMode;
@@ -43,12 +44,13 @@ class AjustesState {
 }
 
 class AjustesNotifier extends StateNotifier<AjustesState> {
-  AjustesNotifier() : super(const AjustesState()) {
+  final SharedPreferences prefs;
+
+  AjustesNotifier(this.prefs) : super(const AjustesState()) {
     _cargarAjustes();
   }
 
-  Future<void> _cargarAjustes() async {
-    final prefs = await SharedPreferences.getInstance();
+  void _cargarAjustes() {
     final isDark = prefs.getBool('es_oscuro') ?? false;
     final notif = prefs.getBool('notificaciones') ?? true;
     final sonido = prefs.getBool('sonido') ?? true;
@@ -69,48 +71,42 @@ class AjustesNotifier extends StateNotifier<AjustesState> {
   }
 
   Future<void> alternarTema(bool esOscuro) async {
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('es_oscuro', esOscuro);
     state = state.copyWith(themeMode: esOscuro ? ThemeMode.dark : ThemeMode.light);
   }
 
   Future<void> alternarNotificaciones(bool valor) async {
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('notificaciones', valor);
     state = state.copyWith(notificaciones: valor);
   }
 
   Future<void> alternarSonido(bool valor) async {
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('sonido', valor);
     state = state.copyWith(sonido: valor);
   }
 
   Future<void> alternarVibracion(bool valor) async {
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('vibracion', valor);
     state = state.copyWith(vibracion: valor);
   }
 
   Future<void> cambiarHoraPredeterminada(String hora) async {
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setString('hora_pred', hora);
     state = state.copyWith(horaPredeterminada: hora);
   }
 
   Future<void> cambiarPrimerDiaSemana(String dia) async {
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setString('primer_dia', dia);
     state = state.copyWith(primerDiaSemana: dia);
   }
 
   Future<void> alternarEliminarCompletados(bool valor) async {
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('eliminar_comp', valor);
     state = state.copyWith(eliminarCompletados: valor);
   }
 }
 
 final ajustesProvider = StateNotifierProvider<AjustesNotifier, AjustesState>((ref) {
-  return AjustesNotifier();
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return AjustesNotifier(prefs);
 });

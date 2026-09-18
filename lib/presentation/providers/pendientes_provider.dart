@@ -1,12 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/services/notification_service.dart';
+import '../../core/providers/database_providers.dart';
+import '../../core/providers/notification_providers.dart';
 import '../../data/datasources/app_database.dart';
 import '../../data/repositories/pendiente_repository_impl.dart';
 import '../../domain/entities/pendiente.dart';
 import '../../domain/repositories/pendiente_repository.dart';
+import '../../domain/services/notification_scheduler.dart';
 
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
-  return AppDatabase.instance;
+  return ref.watch(databaseProvider);
 });
 
 final pendienteRepositoryProvider = Provider<PendienteRepository>((ref) {
@@ -44,8 +46,9 @@ class PendientesState {
 
 class PendientesNotifier extends StateNotifier<PendientesState> {
   final PendienteRepository repository;
+  final NotificationScheduler notifications;
 
-  PendientesNotifier(this.repository) : super(PendientesState()) {
+  PendientesNotifier(this.repository, this.notifications) : super(PendientesState()) {
     cargarPendientes();
   }
 
@@ -66,11 +69,11 @@ class PendientesNotifier extends StateNotifier<PendientesState> {
   Future<void> alternarCompletado(String id, bool valor) async {
     await repository.alternarCompletado(id, valor);
     if (valor) {
-      await NotificationService.instance.cancelarRecordatorio(id);
+      await notifications.cancelarRecordatorioPorIdString(id);
     } else {
       final task = state.pendientes.where((p) => p.id == id).firstOrNull;
       if (task != null && task.tieneRecordatorio) {
-        await NotificationService.instance.programarRecordatorio(task);
+        await notifications.programarRecordatorioPendiente(task);
       }
     }
     await cargarPendientes();
@@ -79,7 +82,7 @@ class PendientesNotifier extends StateNotifier<PendientesState> {
   Future<void> crearPendiente(Pendiente pendiente) async {
     await repository.insertarPendiente(pendiente);
     if (pendiente.tieneRecordatorio) {
-      await NotificationService.instance.programarRecordatorio(pendiente);
+      await notifications.programarRecordatorioPendiente(pendiente);
     }
     await cargarPendientes();
   }
@@ -87,16 +90,16 @@ class PendientesNotifier extends StateNotifier<PendientesState> {
   Future<void> actualizarPendiente(Pendiente pendiente) async {
     await repository.actualizarPendiente(pendiente);
     if (pendiente.tieneRecordatorio && !pendiente.estaCompletado) {
-      await NotificationService.instance.programarRecordatorio(pendiente);
+      await notifications.programarRecordatorioPendiente(pendiente);
     } else {
-      await NotificationService.instance.cancelarRecordatorio(pendiente.id);
+      await notifications.cancelarRecordatorioPorIdString(pendiente.id);
     }
     await cargarPendientes();
   }
 
   Future<void> eliminarPendiente(String id) async {
     await repository.eliminarPendiente(id);
-    await NotificationService.instance.cancelarRecordatorio(id);
+    await notifications.cancelarRecordatorioPorIdString(id);
     await cargarPendientes();
   }
 
@@ -106,7 +109,7 @@ class PendientesNotifier extends StateNotifier<PendientesState> {
     final updated = task.copyWith(fecha: manana);
     await repository.actualizarPendiente(updated);
     if (updated.tieneRecordatorio && !updated.estaCompletado) {
-      await NotificationService.instance.programarRecordatorio(updated);
+      await notifications.programarRecordatorioPendiente(updated);
     }
     await cargarPendientes();
   }
@@ -115,7 +118,7 @@ class PendientesNotifier extends StateNotifier<PendientesState> {
     await repository.alternarCompletado(id, false);
     final task = state.pendientes.where((p) => p.id == id).firstOrNull;
     if (task != null && task.tieneRecordatorio) {
-      await NotificationService.instance.programarRecordatorio(task);
+      await notifications.programarRecordatorioPendiente(task);
     }
     await cargarPendientes();
   }
@@ -128,5 +131,6 @@ class PendientesNotifier extends StateNotifier<PendientesState> {
 
 final pendientesProvider = StateNotifierProvider<PendientesNotifier, PendientesState>((ref) {
   final repository = ref.watch(pendienteRepositoryProvider);
-  return PendientesNotifier(repository);
+  final notifications = ref.watch(notificationSchedulerProvider);
+  return PendientesNotifier(repository, notifications);
 });

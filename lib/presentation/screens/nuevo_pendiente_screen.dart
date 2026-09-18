@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/date_time_utils.dart';
 import '../../domain/entities/pendiente.dart';
 import '../../domain/entities/prioridad.dart';
 import '../../domain/entities/repeticion.dart';
-import '../../core/services/notification_service.dart';
+import '../../core/providers/notification_providers.dart';
+import '../../core/providers/clock_providers.dart';
 import '../providers/pendientes_provider.dart';
 import '../mappers/hora_ui.dart';
 import '../mappers/prioridad_ui.dart';
@@ -70,7 +70,7 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
     setState(() => _isSaving = true);
 
     try {
-      final id = widget.pendienteAEditar?.id ?? const Uuid().v4();
+      final id = widget.pendienteAEditar?.id ?? ref.read(uuidProvider)();
       final nuevo = Pendiente(
         id: id,
         titulo: titulo,
@@ -86,7 +86,7 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
       );
 
       if (nuevo.tieneRecordatorio) {
-        await NotificationService.instance.pedirPermisos();
+        await ref.read(notificationSchedulerProvider).pedirPermisos();
       }
 
       final notifier = ref.read(pendientesProvider.notifier);
@@ -894,8 +894,8 @@ class _AlarmaTimePickerSheetState extends State<_AlarmaTimePickerSheet> {
                         ),
 
                         // Separador ":"
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8),
                           child: Text(
                             ':',
                             style: TextStyle(

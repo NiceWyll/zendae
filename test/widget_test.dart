@@ -2,14 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mi_pendiente/main.dart';
 import 'package:mi_pendiente/presentation/screens/nuevo_pendiente_screen.dart';
+import 'package:mi_pendiente/core/providers/preferences_providers.dart';
+import 'package:mi_pendiente/core/providers/notification_providers.dart';
+import 'package:mi_pendiente/presentation/providers/pendientes_provider.dart';
+import 'helpers/test_fakes.dart';
 
 void main() {
+  late SharedPreferences testPrefs;
+
+  setUpAll(() async {
+    SharedPreferences.setMockInitialValues({});
+    testPrefs = await SharedPreferences.getInstance();
+  });
+
   testWidgets('MiPendienteApp inicia correctamente', (WidgetTester tester) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MiPendienteApp(),
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(testPrefs),
+          notificationSchedulerProvider.overrideWithValue(FakeNotificationScheduler()),
+          pendienteRepositoryProvider.overrideWithValue(FakeRepository()),
+        ],
+        child: const MiPendienteApp(),
       ),
     );
 
@@ -26,9 +43,19 @@ void main() {
   });
 
   testWidgets('Selector de hora estilo alarma abre correctamente y elimina chips fijos', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(testPrefs),
+          notificationSchedulerProvider.overrideWithValue(FakeNotificationScheduler()),
+          pendienteRepositoryProvider.overrideWithValue(FakeRepository()),
+        ],
+        child: const MaterialApp(
           home: NuevoPendienteScreen(),
         ),
       ),
@@ -66,4 +93,3 @@ void main() {
     expect(find.text('Ajustar Hora'), findsNothing);
   });
 }
-
