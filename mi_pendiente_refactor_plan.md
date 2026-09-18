@@ -1205,8 +1205,8 @@ Renovar la identidad visual ahora que el rediseño es intencional.
 
 | Fase | Estado | Fecha | Notas |
 |---|---|---|---|
-| 0 — Red de seguridad | ⚪ Pendiente | — | |
-| 1 — Dominio puro | ⚪ Pendiente | — | |
+| 0 — Red de seguridad | ✅ Completado | 2026-09-18 | Rama refactor/arquitectura, tag pre-refactor, 9 smoke tests |
+| 1 — Dominio puro | ✅ Completado | 2026-09-18 | HoraDelDia, Repeticion, PrioridadUI, Failure/Result, 16/16 tests verdes |
 | 2 — Inyección de dependencias | ⚪ Pendiente | — | |
 | 3 — Repositorio + migraciones | ⚪ Pendiente | — | |
 | 4 — Casos de uso | ⚪ Pendiente | — | |
