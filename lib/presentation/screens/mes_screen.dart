@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/date_time_utils.dart';
 import '../../core/widgets/priority_badge.dart';
+import '../../domain/entities/pendiente.dart';
 import '../providers/pendientes_provider.dart';
 import 'detalle_pendiente_screen.dart';
+import '../mappers/prioridad_ui.dart';
 
 class MesScreen extends ConsumerStatefulWidget {
   const MesScreen({super.key});
@@ -199,7 +201,7 @@ class _MesScreenState extends ConsumerState<MesScreen> {
     );
   }
 
-  Widget _buildMonthGrid(bool isDark, DateTime selectedDate, List<dynamic> allTasks) {
+  Widget _buildMonthGrid(bool isDark, DateTime selectedDate, List<Pendiente> allTasks) {
     final firstDayOfMonth = DateTime(_currentMonth.year, _currentMonth.month, 1);
     final daysInMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
     

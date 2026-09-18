@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/theme/app_theme.dart';
 import 'package:mi_pendiente/domain/entities/pendiente.dart';
 import 'package:mi_pendiente/domain/entities/prioridad.dart';
+import 'package:mi_pendiente/domain/entities/hora_del_dia.dart';
 import 'package:mi_pendiente/domain/repositories/pendiente_repository.dart';
 import 'package:mi_pendiente/presentation/screens/splash_screen.dart';
 import 'package:mi_pendiente/presentation/screens/home_shell_screen.dart';
@@ -70,7 +71,7 @@ void main() {
     titulo: 'Pendiente de prueba',
     descripcion: 'Descripción detallada de prueba',
     fecha: DateTime.now(),
-    hora: const TimeOfDay(hour: 14, minute: 30),
+    hora: const HoraDelDia(hora: 14, minuto: 30),
     prioridad: Prioridad.alta,
     tieneRecordatorio: true,
   );

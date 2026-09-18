@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
+import '../../domain/entities/hora_del_dia.dart';
 import '../../domain/entities/pendiente.dart';
 import '../../domain/entities/prioridad.dart';
 import '../models/pendiente_model.dart';
-import 'package:flutter/material.dart';
 
 class AppDatabase {
   static final AppDatabase instance = AppDatabase._init();
@@ -83,7 +83,7 @@ class AppDatabase {
         titulo: 'Revisar correos',
         descripcion: 'Responder mensajes prioritarios y archivar newsletters.',
         fecha: todayStr,
-        hora: const TimeOfDay(hour: 8, minute: 0),
+        hora: const HoraDelDia(hora: 8, minuto: 0),
         prioridad: Prioridad.alta,
         tieneRecordatorio: true,
         minutosAntes: 10,
@@ -94,7 +94,7 @@ class AppDatabase {
         titulo: 'Reunión con equipo',
         descripcion: 'Revisar avances del proyecto y definir próximos pasos.',
         fecha: todayStr,
-        hora: const TimeOfDay(hour: 10, minute: 30),
+        hora: const HoraDelDia(hora: 10, minuto: 30),
         prioridad: Prioridad.media,
         tieneRecordatorio: true,
         minutosAntes: 15,
@@ -106,7 +106,7 @@ class AppDatabase {
         titulo: 'Comprar materiales',
         descripcion: 'Adquirir libretas y suministros de oficina.',
         fecha: todayStr,
-        hora: const TimeOfDay(hour: 15, minute: 0),
+        hora: const HoraDelDia(hora: 15, minuto: 0),
         prioridad: Prioridad.baja,
         tieneRecordatorio: false,
         minutosAntes: 10,
@@ -117,7 +117,7 @@ class AppDatabase {
         titulo: 'Hacer ejercicio',
         descripcion: 'Rutina de cardio y estiramiento por 45 minutos.',
         fecha: todayStr,
-        hora: const TimeOfDay(hour: 18, minute: 30),
+        hora: const HoraDelDia(hora: 18, minuto: 30),
         prioridad: Prioridad.baja,
         tieneRecordatorio: true,
         minutosAntes: 30,
@@ -129,7 +129,7 @@ class AppDatabase {
         titulo: 'Enviar reporte semanal',
         descripcion: 'Reporte consolidado de métricas al supervisor.',
         fecha: todayStr,
-        hora: const TimeOfDay(hour: 9, minute: 15),
+        hora: const HoraDelDia(hora: 9, minuto: 15),
         prioridad: Prioridad.media,
         estaCompletado: true,
         fechaCompletado: todayStr,
@@ -139,7 +139,7 @@ class AppDatabase {
         titulo: 'Comprar pasajes',
         descripcion: 'Boletos de avión para el viaje de trabajo.',
         fecha: todayStr,
-        hora: const TimeOfDay(hour: 11, minute: 30),
+        hora: const HoraDelDia(hora: 11, minuto: 30),
         prioridad: Prioridad.alta,
         estaCompletado: true,
         fechaCompletado: todayStr,
@@ -149,7 +149,7 @@ class AppDatabase {
         titulo: 'Llamar al banco',
         descripcion: 'Confirmar recepción de transferencia internacional.',
         fecha: todayStr,
-        hora: const TimeOfDay(hour: 16, minute: 45),
+        hora: const HoraDelDia(hora: 16, minuto: 45),
         prioridad: Prioridad.baja,
         estaCompletado: true,
         fechaCompletado: todayStr,
@@ -159,7 +159,7 @@ class AppDatabase {
         titulo: 'Revisar presentación',
         descripcion: 'Diapositivas finales con diseño corporativo.',
         fecha: yesterdayStr,
-        hora: const TimeOfDay(hour: 10, minute: 20),
+        hora: const HoraDelDia(hora: 10, minuto: 20),
         prioridad: Prioridad.media,
         estaCompletado: true,
         fechaCompletado: yesterdayStr,
@@ -169,7 +169,7 @@ class AppDatabase {
         titulo: 'Pagar servicios',
         descripcion: 'Luz, internet y agua potable del mes.',
         fecha: yesterdayStr,
-        hora: const TimeOfDay(hour: 18, minute: 30),
+        hora: const HoraDelDia(hora: 18, minuto: 30),
         prioridad: Prioridad.alta,
         estaCompletado: true,
         fechaCompletado: yesterdayStr,

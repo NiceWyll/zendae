@@ -6,8 +6,11 @@ import '../../core/constants/app_colors.dart';
 import '../../core/utils/date_time_utils.dart';
 import '../../domain/entities/pendiente.dart';
 import '../../domain/entities/prioridad.dart';
+import '../../domain/entities/repeticion.dart';
 import '../../core/services/notification_service.dart';
 import '../providers/pendientes_provider.dart';
+import '../mappers/hora_ui.dart';
+import '../mappers/prioridad_ui.dart';
 
 class NuevoPendienteScreen extends ConsumerStatefulWidget {
   final Pendiente? pendienteAEditar;
@@ -37,11 +40,11 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
     _tituloController = TextEditingController(text: p?.titulo ?? '');
     _descController = TextEditingController(text: p?.descripcion ?? '');
     _fechaSeleccionada = p?.fecha ?? DateTime.now();
-    _horaSeleccionada = p?.hora ?? const TimeOfDay(hour: 10, minute: 30);
+    _horaSeleccionada = p?.hora.comoTimeOfDay ?? const TimeOfDay(hour: 10, minute: 30);
     _prioridad = p?.prioridad ?? Prioridad.media;
     _tieneRecordatorio = p?.tieneRecordatorio ?? true;
     _minutosAntes = p?.minutosAntes ?? 10;
-    _repetir = p?.repetir ?? 'No repetir';
+    _repetir = p?.repetir.comoTexto ?? 'No repetir';
   }
 
   @override
@@ -73,11 +76,11 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
         titulo: titulo,
         descripcion: _descController.text.trim().isEmpty ? null : _descController.text.trim(),
         fecha: DateTime(_fechaSeleccionada.year, _fechaSeleccionada.month, _fechaSeleccionada.day),
-        hora: _horaSeleccionada,
+        hora: _horaSeleccionada.comoHoraDelDia,
         prioridad: _prioridad,
         tieneRecordatorio: _tieneRecordatorio,
         minutosAntes: _minutosAntes,
-        repetir: _repetir,
+        repetir: Repeticion.desdeTexto(_repetir),
         estaCompletado: widget.pendienteAEditar?.estaCompletado ?? false,
         fechaCompletado: widget.pendienteAEditar?.fechaCompletado,
       );

@@ -12,6 +12,7 @@ import 'completados_screen.dart';
 import 'ajustes_screen.dart';
 import 'nuevo_pendiente_screen.dart';
 import '../../core/services/notification_service.dart';
+import '../mappers/prioridad_ui.dart';
 
 class HomeShellScreen extends ConsumerStatefulWidget {
   const HomeShellScreen({super.key});

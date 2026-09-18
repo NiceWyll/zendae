@@ -24,10 +24,13 @@ class DateTimeUtils {
     return formatted[0].toUpperCase() + formatted.substring(1);
   }
 
-  static String formatTime(TimeOfDay time) {
-    final hour = time.hour.toString().padLeft(2, '0');
-    final minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
+  static String formatTime(dynamic time) {
+    if (time is TimeOfDay) {
+      final hour = time.hour.toString().padLeft(2, '0');
+      final minute = time.minute.toString().padLeft(2, '0');
+      return '$hour:$minute';
+    }
+    return time.toString();
   }
 
   static String formatTimeOfDayString(DateTime dateTime) {

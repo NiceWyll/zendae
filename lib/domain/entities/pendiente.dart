@@ -1,18 +1,20 @@
-import 'package:flutter/material.dart';
+import 'hora_del_dia.dart';
 import 'prioridad.dart';
+import 'repeticion.dart';
 
 class Pendiente {
   final String id;
   final String titulo;
   final String? descripcion;
   final DateTime fecha;
-  final TimeOfDay hora;
+  final HoraDelDia hora;
   final Prioridad prioridad;
   final bool tieneRecordatorio;
   final int minutosAntes; // Ej. 10, 15, 30, 60
-  final String repetir; // "No repetir", "Diario", "Semanal", "Mensual"
+  final Repeticion repetir;
   final bool estaCompletado;
   final DateTime? fechaCompletado;
+  final int? notificacionId;
 
   const Pendiente({
     required this.id,
@@ -23,9 +25,10 @@ class Pendiente {
     this.prioridad = Prioridad.media,
     this.tieneRecordatorio = false,
     this.minutosAntes = 10,
-    this.repetir = 'No repetir',
+    this.repetir = Repeticion.noRepetir,
     this.estaCompletado = false,
     this.fechaCompletado,
+    this.notificacionId,
   });
 
   Pendiente copyWith({
@@ -33,13 +36,15 @@ class Pendiente {
     String? titulo,
     String? descripcion,
     DateTime? fecha,
-    TimeOfDay? hora,
+    HoraDelDia? hora,
     Prioridad? prioridad,
     bool? tieneRecordatorio,
     int? minutosAntes,
-    String? repetir,
+    Repeticion? repetir,
     bool? estaCompletado,
     DateTime? fechaCompletado,
+    int? notificacionId,
+    bool limpiarFechaCompletado = false,
   }) {
     return Pendiente(
       id: id ?? this.id,
@@ -52,7 +57,8 @@ class Pendiente {
       minutosAntes: minutosAntes ?? this.minutosAntes,
       repetir: repetir ?? this.repetir,
       estaCompletado: estaCompletado ?? this.estaCompletado,
-      fechaCompletado: fechaCompletado ?? this.fechaCompletado,
+      fechaCompletado: limpiarFechaCompletado ? null : (fechaCompletado ?? this.fechaCompletado),
+      notificacionId: notificacionId ?? this.notificacionId,
     );
   }
 
@@ -61,8 +67,12 @@ class Pendiente {
       fecha.year,
       fecha.month,
       fecha.day,
-      hora.hour,
-      hora.minute,
+      hora.hora,
+      hora.minuto,
     );
+  }
+
+  DateTime get momentoDeAviso {
+    return fechaHoraCompleta.subtract(Duration(minutes: minutosAntes));
   }
 }
