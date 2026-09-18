@@ -221,9 +221,15 @@ class SelectorTemasGrid extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF7ED),
+                  color: isDark
+                      ? const Color(0xFFF97316).withValues(alpha: 0.15)
+                      : const Color(0xFFFFF7ED),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFFEDD5)),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFFF97316).withValues(alpha: 0.3)
+                        : const Color(0xFFFFEDD5),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -232,10 +238,12 @@ class SelectorTemasGrid extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         'Desbloquea este tema al alcanzar ${tema.diasRequeridos} días de racha 🔥.',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFFC2410C),
+                          color: isDark
+                              ? const Color(0xFFFB923C)
+                              : const Color(0xFFC2410C),
                         ),
                       ),
                     ),
