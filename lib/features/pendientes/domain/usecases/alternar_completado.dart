@@ -1,15 +1,22 @@
 import 'package:mi_pendiente/core/error/result.dart';
 import 'package:mi_pendiente/core/services/reloj.dart';
+import 'package:mi_pendiente/features/racha/domain/usecases/actualizar_racha.dart';
 import '../entities/pendiente.dart';
 import '../repositories/pendiente_repository.dart';
 import '../services/notification_scheduler.dart';
 
 class AlternarCompletado {
-  const AlternarCompletado(this._repo, this._alarmas, this._reloj);
+  const AlternarCompletado(
+    this._repo,
+    this._alarmas,
+    this._reloj, [
+    this._actualizarRacha,
+  ]);
 
   final PendienteRepository _repo;
   final NotificationScheduler _alarmas;
   final Reloj _reloj;
+  final ActualizarRacha? _actualizarRacha;
 
   Future<Result<Pendiente>> call(Pendiente pendiente, [bool? forzarValor]) async {
     final completandoAhora = forzarValor ?? !pendiente.estaCompletado;
@@ -32,6 +39,11 @@ class AlternarCompletado {
         await _alarmas.cancelarRecordatorio(actualizado.notificacionId!);
       }
       await _alarmas.cancelarRecordatorioPorIdString(actualizado.id);
+
+      // Actualizar racha al completar pendiente
+      if (_actualizarRacha != null) {
+        await _actualizarRacha();
+      }
     } else if (actualizado.tieneRecordatorio &&
         actualizado.momentoDeAviso.isAfter(_reloj.ahora())) {
       if (actualizado.notificacionId != null) {

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/providers/clock_providers.dart';
 import 'package:mi_pendiente/core/providers/notification_providers.dart';
+import 'package:mi_pendiente/features/racha/presentation/providers/racha_provider.dart';
 import '../../domain/usecases/actualizar_pendiente.dart';
 import '../../domain/usecases/alternar_completado.dart';
 import '../../domain/usecases/crear_pendiente.dart';
@@ -13,6 +14,7 @@ final alternarCompletadoProvider = Provider<AlternarCompletado>((ref) {
     ref.watch(pendienteRepositoryProvider),
     ref.watch(notificationSchedulerProvider),
     ref.watch(relojProvider),
+    ref.watch(actualizarRachaProvider),
   );
 });
 

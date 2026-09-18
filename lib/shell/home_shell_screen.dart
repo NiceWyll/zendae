@@ -14,6 +14,10 @@ import 'package:mi_pendiente/features/pendientes/presentation/screens/nuevo_pend
 import 'package:mi_pendiente/features/completados/presentation/screens/completados_screen.dart';
 import 'package:mi_pendiente/features/ajustes/presentation/screens/ajustes_screen.dart';
 import 'package:mi_pendiente/features/pendientes/domain/entities/pendiente.dart';
+import 'package:mi_pendiente/features/racha/domain/entities/racha.dart';
+import 'package:mi_pendiente/features/racha/presentation/widgets/banner_racha.dart';
+import 'package:mi_pendiente/features/racha/presentation/screens/mis_logros_screen.dart';
+import 'package:mi_pendiente/features/racha/presentation/providers/racha_provider.dart';
 
 class HomeShellScreen extends ConsumerStatefulWidget {
   const HomeShellScreen({super.key});
@@ -26,6 +30,42 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _bottomNavIndex = 0; // 0: Pendientes, 1: Calendario, 2: Completados, 3: Ajustes
   int _topTabIndex = 0;    // 0: Hoy, 1: Semana, 2: Mes
+  bool _mostroBannerInicial = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_mostroBannerInicial) {
+      _mostroBannerInicial = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final racha = ref.read(rachaNotifierProvider).valueOrNull;
+        if (racha != null) {
+          _mostrarBannerBienvenidaRacha(racha);
+        }
+      });
+    }
+  }
+
+  void _mostrarBannerBienvenidaRacha(Racha racha) {
+    final dias = racha.diasActuales;
+    final mensaje = dias > 0
+        ? '🔥 ¡Llevas $dias ${dias == 1 ? 'día' : 'días'} de racha activa!'
+        : '💪 ¡Empecemos de nuevo! Completa un pendiente hoy';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(milliseconds: 2000),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: dias > 0 ? const Color(0xFFFF5722) : const Color(0xFF1E293B),
+        content: Text(
+          mensaje,
+          style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +98,8 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                 _buildAppBar(isDark, pendientes),
 
                 // Selector de pestañas (Hoy | Semana | Mes) solo cuando estamos en la pestaña 'Pendientes'
-                if (_bottomNavIndex == 0)
+                if (_bottomNavIndex == 0) ...[
+                  const BannerRachaMotivacional(),
                   SegmentedViewTabs(
                     selectedIndex: _topTabIndex,
                     onTabSelected: (index) {
@@ -67,6 +108,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                       });
                     },
                   ),
+                ],
 
                 // Contenido principal según la pestaña activa
                 Expanded(
@@ -177,36 +219,43 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
             ),
           ),
 
-          // Campanita con badge de notificaciones
-          Stack(
+          Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                icon: const Icon(Icons.notifications_none_rounded, color: AppColors.primary, size: 28),
-                onPressed: () => _mostrarModalNotificaciones(context, pendientes),
-                tooltip: 'Recordatorios',
-              ),
-              if (reminderCount > 0)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: AppColors.priorityAlta,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                    child: Text(
-                      '$reminderCount',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+              const BannerRachaChip(compacto: true),
+              const SizedBox(width: 4),
+              // Campanita con badge de notificaciones
+              Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_none_rounded, color: AppColors.primary, size: 28),
+                    onPressed: () => _mostrarModalNotificaciones(context, pendientes),
+                    tooltip: 'Recordatorios',
                   ),
-                ),
+                  if (reminderCount > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: AppColors.priorityAlta,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                        child: Text(
+                          '$reminderCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ],
           ),
         ],
@@ -286,7 +335,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
               children: [
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                     decoration: BoxDecoration(
                       color: AppColors.primaryBgLight,
                       borderRadius: BorderRadius.circular(12),
@@ -296,7 +345,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                         Text(
                           '$pendientesActivos',
                           style: const TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.w800,
                             color: AppColors.primary,
                           ),
@@ -304,16 +353,16 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                         const SizedBox(height: 2),
                         const Text(
                           'Activos',
-                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                          style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
                         ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                     decoration: BoxDecoration(
                       color: const Color(0xFFECFDF5),
                       borderRadius: BorderRadius.circular(12),
@@ -323,17 +372,64 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                         Text(
                           '$completados',
                           style: const TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.w800,
                             color: AppColors.priorityBaja,
                           ),
                         ),
                         const SizedBox(height: 2),
                         const Text(
-                          'Completados',
-                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                          'Completos',
+                          style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
                         ),
                       ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const MisLogrosScreen(),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Ink(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF7ED),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            Consumer(
+                              builder: (context, ref, _) {
+                                final rachaAsync = ref.watch(rachaNotifierProvider);
+                                final dias = rachaAsync.valueOrNull?.diasActuales ?? 0;
+                                return Text(
+                                  '$dias 🔥',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFFEA580C),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 2),
+                            const Text(
+                              'Racha',
+                              style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -373,6 +469,19 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                   onTap: () {
                     Navigator.pop(context);
                     setState(() => _bottomNavIndex = 2);
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.local_fire_department_rounded,
+                  label: 'Mis Logros 🔥',
+                  isSelected: false,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const MisLogrosScreen(),
+                      ),
+                    );
                   },
                 ),
                 _buildDrawerItem(

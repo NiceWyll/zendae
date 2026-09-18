@@ -3,6 +3,7 @@ import 'package:mi_pendiente/core/error/result.dart';
 import 'package:mi_pendiente/core/providers/clock_providers.dart';
 import 'package:mi_pendiente/core/providers/database_providers.dart';
 import 'package:mi_pendiente/core/utils/date_time_utils.dart';
+import 'package:mi_pendiente/features/racha/presentation/providers/racha_provider.dart';
 import '../../data/datasources/app_database.dart';
 import '../../data/repositories/pendiente_repository_impl.dart';
 import '../../domain/entities/pendiente.dart';
@@ -51,6 +52,9 @@ class PendientesNotifier extends AsyncNotifier<List<Pendiente>> {
           for (final p in state.valueOrNull ?? <Pendiente>[])
             if (p.id == valor.id) valor else p,
         ]);
+        if (valor.estaCompletado) {
+          ref.read(rachaNotifierProvider.notifier).refrescar();
+        }
       case Fallo(:final failure):
         ref.read(mensajeErrorProvider.notifier).state = failure.mensaje;
     }

@@ -6,7 +6,7 @@ import 'seed_data.dart';
 
 class AppDatabase {
   static final AppDatabase instance = AppDatabase();
-  static const int _version = 2;
+  static const int _version = 3;
   Database? _database;
 
   AppDatabase({Database? db}) : _database = db;
@@ -77,6 +77,16 @@ class AppDatabase {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_pendientes_fecha ON pendientes(fecha);');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_pendientes_completado ON pendientes(esta_completado);');
 
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS racha (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        dias_actuales INTEGER NOT NULL,
+        mejor_racha INTEGER NOT NULL,
+        ultima_fecha TEXT,
+        logros TEXT NOT NULL
+      );
+    ''');
+
     await sembrarDatos(db);
   }
 
@@ -85,6 +95,17 @@ class AppDatabase {
       await db.execute('ALTER TABLE pendientes ADD COLUMN notificacion_id INTEGER;');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_pendientes_fecha ON pendientes(fecha);');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_pendientes_completado ON pendientes(esta_completado);');
+    }
+    if (oldVersion < 3) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS racha (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          dias_actuales INTEGER NOT NULL,
+          mejor_racha INTEGER NOT NULL,
+          ultima_fecha TEXT,
+          logros TEXT NOT NULL
+        );
+      ''');
     }
   }
 

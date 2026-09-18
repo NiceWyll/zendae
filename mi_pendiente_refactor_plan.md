@@ -1017,10 +1017,10 @@ class ActualizarRacha {
 Al entrar a `home_shell_screen.dart` se muestra un banner breve (1.5–2s): `🔥 12 días de racha`, con una micro-animación simple. Si la racha se rompió desde la última sesión, el mensaje es motivador ("Empecemos de nuevo 💪"), no punitivo. Se agrega también una pantalla **"Mis Logros"** (Drawer o Ajustes) con los hitos, cuáles están desbloqueados y una barra de progreso hacia el siguiente.
 
 ### Criterio de completado ✅
-- [ ] Completar un pendiente incrementa la racha una sola vez por día
-- [ ] La racha se reinicia correctamente tras un día natural sin completar nada
-- [ ] Al iniciar sesión se muestra la racha actual
-- [ ] Los hitos de día 30 y día 50 quedan disponibles para que los usen las Fases 9 y 10
+- [x] Completar un pendiente incrementa la racha una sola vez por día
+- [x] La racha se reinicia correctamente tras un día natural sin completar nada
+- [x] Al iniciar sesión se muestra la racha actual
+- [x] Los hitos de día 30 y día 50 quedan disponibles para que los usen las Fases 9 y 10
 
 ---
 
