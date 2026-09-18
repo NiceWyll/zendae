@@ -1,0 +1,69 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mi_pendiente/main.dart';
+import 'package:mi_pendiente/presentation/screens/nuevo_pendiente_screen.dart';
+
+void main() {
+  testWidgets('MiPendienteApp inicia correctamente', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MiPendienteApp(),
+      ),
+    );
+
+    // Verifica que el título inicial aparezca en el Splash
+    expect(find.text('Mi Pendiente'), findsOneWidget);
+    expect(find.text('Organiza tu día, semana y mes'), findsOneWidget);
+
+    // Avanza el tiempo pasando el Timer del splash
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(milliseconds: 600));
+
+    // Verifica que se muestre la cabecera en el Shell
+    expect(find.text('Mis pendientes'), findsOneWidget);
+  });
+
+  testWidgets('Selector de hora estilo alarma abre correctamente y elimina chips fijos', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(
+          home: NuevoPendienteScreen(),
+        ),
+      ),
+    );
+
+    // Verifica que exista la fila de Hora
+    expect(find.text('Hora'), findsOneWidget);
+    expect(find.text('10:30'), findsOneWidget);
+
+    // Toca el selector de Hora
+    await tester.tap(find.text('Hora'));
+    await tester.pumpAndSettle();
+
+    // Verifica que se abra el BottomSheet estilo alarma
+    expect(find.text('Ajustar Hora'), findsOneWidget);
+    expect(find.text('Desliza las ruedas para configurar tu hora preferida'), findsOneWidget);
+    expect(find.text('HORA (0-23)'), findsOneWidget);
+    expect(find.text('MINUTOS (0-59)'), findsOneWidget);
+    expect(find.text('Confirmar hora'), findsOneWidget);
+
+    // Verifica que los cuadros fijos anteriores (chips) NO existan
+    expect(find.text('08:00'), findsNothing);
+    expect(find.text('09:00'), findsNothing);
+    expect(find.text(':15'), findsNothing);
+    expect(find.text(':45'), findsNothing);
+
+    // Verifica que existan las ruedas CupertinoPicker para horas y minutos
+    expect(find.byType(CupertinoPicker), findsNWidgets(2));
+
+    // Pulsa el botón "Confirmar hora"
+    await tester.tap(find.text('Confirmar hora'));
+    await tester.pumpAndSettle();
+
+    // El modal se cierra correctamente
+    expect(find.text('Ajustar Hora'), findsNothing);
+  });
+}
+
