@@ -18,6 +18,7 @@ class DetallePendienteScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncPendientes = ref.watch(pendientesProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
 
     final pendiente = asyncPendientes.valueOrNull?.where((p) => p.id == pendienteId).firstOrNull;
     if (pendiente == null) {
@@ -42,15 +43,15 @@ class DetallePendienteScreen extends ConsumerWidget {
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+          icon: Icon(Icons.arrow_back, color: primaryColor),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Detalle',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
-            color: AppColors.primary,
+            color: isDark ? Colors.white : primaryColor,
           ),
         ),
         centerTitle: true,
@@ -104,12 +105,12 @@ class DetallePendienteScreen extends ConsumerWidget {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppColors.primaryBgLight,
+                              color: isDark ? primaryColor.withValues(alpha: 0.2) : AppColors.primaryBgLight,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.calendar_month_rounded,
-                              color: AppColors.primary,
+                              color: primaryColor,
                               size: 26,
                             ),
                           ),
@@ -117,10 +118,10 @@ class DetallePendienteScreen extends ConsumerWidget {
                           Expanded(
                             child: Text(
                               pendiente.titulo,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.primary,
+                                color: isDark ? Colors.white : primaryColor,
                               ),
                             ),
                           ),
@@ -221,18 +222,19 @@ class DetallePendienteScreen extends ConsumerWidget {
             const SizedBox(height: 24),
 
                 // Sección Acciones
-                const Text(
+                Text(
                   'Acciones',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: isDark ? Colors.white : primaryColor,
                   ),
                 ),
                 const SizedBox(height: 12),
 
                 // Lista de acciones
                 _buildActionItem(
+                  context: context,
                   icon: Icons.check_circle_outline_rounded,
                   label: pendiente.estaCompletado ? 'Marcar como pendiente' : 'Completar',
                   isDark: isDark,
@@ -246,6 +248,7 @@ class DetallePendienteScreen extends ConsumerWidget {
                 const SizedBox(height: 10),
 
                 _buildActionItem(
+                  context: context,
                   icon: Icons.edit_outlined,
                   label: 'Editar',
                   isDark: isDark,
@@ -260,6 +263,7 @@ class DetallePendienteScreen extends ConsumerWidget {
                 const SizedBox(height: 10),
 
                 _buildActionItem(
+                  context: context,
                   icon: Icons.calendar_month_outlined,
                   label: 'Cambiar fecha',
                   isDark: isDark,
@@ -279,6 +283,7 @@ class DetallePendienteScreen extends ConsumerWidget {
                 const SizedBox(height: 10),
 
                 _buildActionItem(
+                  context: context,
                   icon: Icons.wb_sunny_outlined,
                   label: 'Pasar para mañana',
                   isDark: isDark,
@@ -286,9 +291,9 @@ class DetallePendienteScreen extends ConsumerWidget {
                     await ref.read(pendientesProvider.notifier).posponerParaManana(pendiente.id);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Pendiente postergado para mañana con éxito'),
-                          backgroundColor: AppColors.primary,
+                        SnackBar(
+                          content: const Text('Pendiente postergado para mañana con éxito'),
+                          backgroundColor: primaryColor,
                         ),
                       );
                       Navigator.of(context).pop();
@@ -298,6 +303,7 @@ class DetallePendienteScreen extends ConsumerWidget {
                 const SizedBox(height: 10),
 
                 _buildActionItem(
+                  context: context,
                   icon: Icons.delete_outline_rounded,
                   label: 'Eliminar',
                   isDestructive: true,
@@ -345,13 +351,15 @@ class DetallePendienteScreen extends ConsumerWidget {
   }
 
   Widget _buildActionItem({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required VoidCallback onTap,
     required bool isDark,
     bool isDestructive = false,
   }) {
-    final color = isDestructive ? AppColors.priorityAlta : AppColors.primary;
+    final primaryColor = Theme.of(context).primaryColor;
+    final color = isDestructive ? AppColors.priorityAlta : primaryColor;
 
     return Container(
       decoration: BoxDecoration(

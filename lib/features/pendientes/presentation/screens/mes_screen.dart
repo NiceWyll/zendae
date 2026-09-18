@@ -24,6 +24,7 @@ class _MesScreenState extends ConsumerState<MesScreen> {
   Widget build(BuildContext context) {
     final asyncPendientes = ref.watch(pendientesProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
     final selectedDate = ref.watch(fechaSeleccionadaProvider);
     final tasksForSelectedDay = ref.watch(pendientesPorFechaProvider(selectedDate)).valueOrNull ?? [];
 
@@ -42,7 +43,7 @@ class _MesScreenState extends ConsumerState<MesScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: const Icon(Icons.chevron_left, color: AppColors.primary, size: 28),
+                icon: Icon(Icons.chevron_left, color: primaryColor, size: 28),
                 onPressed: () {
                   setState(() {
                     _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
@@ -51,14 +52,14 @@ class _MesScreenState extends ConsumerState<MesScreen> {
               ),
               Text(
                 DateTimeUtils.formatMonthYear(_currentMonth),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
+                  color: isDark ? Colors.white : primaryColor,
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.chevron_right, color: AppColors.primary, size: 28),
+                icon: Icon(Icons.chevron_right, color: primaryColor, size: 28),
                 onPressed: () {
                   setState(() {
                     _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
@@ -93,7 +94,7 @@ class _MesScreenState extends ConsumerState<MesScreen> {
           child: _buildMonthGrid(isDark, selectedDate, allTasks),
         ),
 
-        const Divider(height: 24, thickness: 1, color: Color(0xFFF1F5F9)),
+        Divider(height: 24, thickness: 1, color: isDark ? AppColors.borderDark : const Color(0xFFF1F5F9)),
 
         // Título de la sección de tareas del día
         Padding(
@@ -102,10 +103,10 @@ class _MesScreenState extends ConsumerState<MesScreen> {
             alignment: Alignment.centerLeft,
             child: Text(
               'Pendientes del ${selectedDate.day} de ${_getMonthName(selectedDate.month)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
-                color: AppColors.primary,
+                color: isDark ? Colors.white : primaryColor,
               ),
             ),
           ),
@@ -161,10 +162,10 @@ class _MesScreenState extends ConsumerState<MesScreen> {
                             const SizedBox(width: 8),
                             Text(
                               DateTimeUtils.formatTime(task.hora),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                                color: primaryColor,
                               ),
                             ),
                             const SizedBox(width: 14),
@@ -176,7 +177,7 @@ class _MesScreenState extends ConsumerState<MesScreen> {
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                                  color: isDark ? Colors.white : AppColors.textPrimary,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -207,6 +208,7 @@ class _MesScreenState extends ConsumerState<MesScreen> {
   }
 
   Widget _buildMonthGrid(bool isDark, DateTime selectedDate, List<Pendiente> allTasks) {
+    final primaryColor = Theme.of(context).primaryColor;
     final firstDayOfMonth = DateTime(_currentMonth.year, _currentMonth.month, 1);
     final daysInMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
     
@@ -247,8 +249,10 @@ class _MesScreenState extends ConsumerState<MesScreen> {
                 height: 32,
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.primary
-                      : (isToday ? AppColors.primaryBgLight : Colors.transparent),
+                      ? primaryColor
+                      : (isToday
+                          ? (isDark ? primaryColor.withValues(alpha: 0.22) : AppColors.primaryBgLight)
+                          : Colors.transparent),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -260,8 +264,8 @@ class _MesScreenState extends ConsumerState<MesScreen> {
                       color: isSelected
                           ? Colors.white
                           : (isToday
-                              ? AppColors.primary
-                              : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimary)),
+                              ? primaryColor
+                              : (isDark ? Colors.white : AppColors.textPrimary)),
                     ),
                   ),
                 ),

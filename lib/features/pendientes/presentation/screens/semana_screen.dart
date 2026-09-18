@@ -99,6 +99,9 @@ class _SemanaScreenState extends ConsumerState<SemanaScreen> {
     List<DateTime> daysOfWeek,
     List<Pendiente> allTasks,
   ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -124,12 +127,12 @@ class _SemanaScreenState extends ConsumerState<SemanaScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Esta semana',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: isDark ? Colors.white : primaryColor,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -138,8 +141,8 @@ class _SemanaScreenState extends ConsumerState<SemanaScreen> {
                   borderRadius: BorderRadius.circular(6),
                   child: LinearProgressIndicator(
                     value: progress,
-                    backgroundColor: const Color(0xFFE2E8F0),
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    backgroundColor: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFE2E8F0),
+                    valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
                     minHeight: 6,
                   ),
                 ),
@@ -264,7 +267,7 @@ class _SemanaScreenState extends ConsumerState<SemanaScreen> {
 
           // Tareas desplegadas
           if (isExpanded && tasks.isNotEmpty) ...[
-            const Divider(height: 1, color: Color(0xFFF1F5F9)),
+            Divider(height: 1, color: isDark ? AppColors.borderDark : const Color(0xFFF1F5F9)),
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -296,10 +299,10 @@ class _SemanaScreenState extends ConsumerState<SemanaScreen> {
                             width: 20,
                             height: 20,
                             decoration: BoxDecoration(
-                              color: task.estaCompletado ? AppColors.primary : Colors.transparent,
+                              color: task.estaCompletado ? Theme.of(context).primaryColor : Colors.transparent,
                               borderRadius: BorderRadius.circular(5),
                               border: Border.all(
-                                color: task.estaCompletado ? AppColors.primary : const Color(0xFF93C5FD),
+                                color: task.estaCompletado ? Theme.of(context).primaryColor : (isDark ? const Color(0xFF64748B) : const Color(0xFF93C5FD)),
                                 width: 1.8,
                               ),
                             ),
@@ -322,7 +325,7 @@ class _SemanaScreenState extends ConsumerState<SemanaScreen> {
                                   fontWeight: FontWeight.w600,
                                   color: task.estaCompletado
                                       ? AppColors.textMuted
-                                      : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimary),
+                                      : (isDark ? Colors.white : AppColors.textPrimary),
                                   decoration: task.estaCompletado
                                       ? TextDecoration.lineThrough
                                       : TextDecoration.none,

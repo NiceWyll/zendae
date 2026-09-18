@@ -351,7 +351,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                     decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: 0.1),
+                      color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -365,9 +365,13 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                           ),
                         ),
                         const SizedBox(height: 2),
-                        const Text(
+                        Text(
                           'Activos',
-                          style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ],
                     ),
@@ -378,23 +382,29 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFECFDF5),
+                      color: isDark
+                          ? const Color(0xFF10B981).withValues(alpha: 0.2)
+                          : const Color(0xFFECFDF5),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
                       children: [
                         Text(
                           '$completados',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.priorityBaja,
+                            color: isDark ? const Color(0xFF34D399) : AppColors.priorityBaja,
                           ),
                         ),
                         const SizedBox(height: 2),
-                        const Text(
+                        Text(
                           'Completos',
-                          style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ],
                     ),
@@ -417,7 +427,9 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                       child: Ink(
                         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFF7ED),
+                          color: isDark
+                              ? const Color(0xFFF97316).withValues(alpha: 0.2)
+                              : const Color(0xFFFFF7ED),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Column(
@@ -428,18 +440,22 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                                 final dias = rachaAsync.valueOrNull?.diasActuales ?? 0;
                                 return Text(
                                   '$dias 🔥',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFFEA580C),
+                                    color: isDark ? const Color(0xFFFB923C) : const Color(0xFFEA580C),
                                   ),
                                 );
                               },
                             ),
                             const SizedBox(height: 2),
-                            const Text(
+                            Text(
                               'Racha',
-                              style: TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ],
                         ),
@@ -451,7 +467,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
             ),
           ),
 
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          Divider(height: 1, color: isDark ? AppColors.borderDark : const Color(0xFFF1F5F9)),
 
           // Opciones de navegación del Drawer
           Expanded(
@@ -595,8 +611,12 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
         .where((p) => p.tieneRecordatorio && !p.estaCompletado)
         .toList();
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
+
     showModalBottomSheet(
       context: context,
+      backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -613,7 +633,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFCBD5E1),
+                    color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -624,10 +644,10 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                      color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(Icons.notifications_active_rounded, color: Theme.of(context).primaryColor, size: 22),
+                    child: Icon(Icons.notifications_active_rounded, color: primaryColor, size: 22),
                   ),
                   const SizedBox(width: 12),
                   Text(
@@ -635,19 +655,22 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: Theme.of(context).primaryColor,
+                      color: isDark ? Colors.white : primaryColor,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
               if (conRecordatorio.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 30),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 30),
                   child: Center(
                     child: Text(
                       'No tienes recordatorios pendientes.',
-                      style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
+                      style: TextStyle(
+                        color: isDark ? Colors.white60 : const Color(0xFF64748B),
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 )
@@ -662,9 +685,11 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                       return Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: isDark ? AppColors.cardDark : const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(
+                            color: isDark ? AppColors.borderDark : const Color(0xFFE2E8F0),
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -676,11 +701,19 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                                 children: [
                                   Text(
                                     item.titulo,
-                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      color: isDark ? Colors.white : AppColors.textPrimary,
+                                    ),
                                   ),
+                                  const SizedBox(height: 2),
                                   Text(
                                     '${DateTimeUtils.formatFullDate(item.fecha)} a las ${DateTimeUtils.formatTime(item.hora)} (${item.minutosAntes} min antes)',
-                                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                                    ),
                                   ),
                                 ],
                               ),

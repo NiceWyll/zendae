@@ -130,21 +130,22 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
     final isEditing = widget.pendienteAEditar != null;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+          icon: Icon(Icons.arrow_back, color: primaryColor),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           isEditing ? 'Editar pendiente' : 'Nuevo pendiente',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
-            color: AppColors.primary,
+            color: isDark ? Colors.white : primaryColor,
           ),
         ),
         centerTitle: true,
@@ -231,21 +232,21 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
               trailing: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryBgLight,
+                  color: isDark ? primaryColor.withValues(alpha: 0.2) : AppColors.primaryBgLight,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
                     Text(
                       '${_fechaSeleccionada.day.toString().padLeft(2, '0')}/${_fechaSeleccionada.month.toString().padLeft(2, '0')}/${_fechaSeleccionada.year}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
+                        color: primaryColor,
                       ),
                     ),
                     const SizedBox(width: 6),
-                    const Icon(Icons.edit_calendar_rounded, color: AppColors.primary, size: 18),
+                    Icon(Icons.edit_calendar_rounded, color: primaryColor, size: 18),
                   ],
                 ),
               ),
@@ -261,21 +262,21 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
               trailing: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryBgLight,
+                  color: isDark ? primaryColor.withValues(alpha: 0.2) : AppColors.primaryBgLight,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
                     Text(
                       DateTimeUtils.formatTime(_horaSeleccionada),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
+                        color: primaryColor,
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(Icons.keyboard_arrow_down, color: AppColors.primary, size: 20),
+                    Icon(Icons.keyboard_arrow_down, color: primaryColor, size: 20),
                   ],
                 ),
               ),
@@ -406,9 +407,9 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
               child: ElevatedButton(
                 onPressed: _isSaving ? null : _guardar,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: primaryColor,
                   elevation: 4,
-                  shadowColor: AppColors.primary.withValues(alpha: 0.4),
+                  shadowColor: primaryColor.withValues(alpha: 0.4),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -441,6 +442,7 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
     required IconData icon,
     required Widget child,
   }) {
+    final primaryColor = Theme.of(context).primaryColor;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -454,7 +456,7 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.primary, size: 24),
+          Icon(icon, color: primaryColor, size: 24),
           const SizedBox(width: 14),
           Expanded(child: child),
         ],
@@ -469,6 +471,7 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
     required Widget trailing,
     VoidCallback? onTap,
   }) {
+    final primaryColor = Theme.of(context).primaryColor;
     final rowWidget = Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -481,7 +484,7 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
       ),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.primary, size: 24),
+          Icon(icon, color: primaryColor, size: 24),
           const SizedBox(width: 14),
           Text(
             label,

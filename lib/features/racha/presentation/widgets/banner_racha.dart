@@ -32,7 +32,7 @@ class BannerRachaChip extends ConsumerWidget {
     final gradientColors = tieneRacha
         ? [const Color(0xFFFF5722), const Color(0xFFFFA000)]
         : isDark
-            ? [const Color(0xFF334155), const Color(0xFF1E293B)]
+            ? [const Color(0xFF2C2C2C), const Color(0xFF1E1E1E)]
             : [const Color(0xFFE2E8F0), const Color(0xFFCBD5E1)];
 
     final textColor = tieneRacha
@@ -156,7 +156,7 @@ class BannerRachaMotivacional extends ConsumerWidget {
                   ? [const Color(0xFF2D150B), const Color(0xFF1F1612)]
                   : [const Color(0xFFFFF7ED), const Color(0xFFFFEDD5)])
               : (isDark
-                  ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
+                  ? [const Color(0xFF1E1E1E), const Color(0xFF141414)]
                   : [const Color(0xFFF1F5F9), const Color(0xFFE2E8F0)]),
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

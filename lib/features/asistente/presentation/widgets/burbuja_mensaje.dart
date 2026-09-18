@@ -110,22 +110,28 @@ class BurbujaMensaje extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFECFDF5),
+                        color: isDark ? const Color(0xFF059669).withValues(alpha: 0.2) : const Color(0xFFECFDF5),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFA7F3D0)),
+                        border: Border.all(
+                          color: isDark ? const Color(0xFF059669).withValues(alpha: 0.45) : const Color(0xFFA7F3D0),
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.check_circle_rounded, color: Color(0xFF059669), size: 16),
+                          Icon(
+                            Icons.check_circle_rounded,
+                            color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
+                            size: 16,
+                          ),
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
                               'Tarea agregada: ${mensaje.tituloPendienteCreado ?? 'Pendiente'}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF065F46),
+                                color: isDark ? const Color(0xFF6EE7B7) : const Color(0xFF065F46),
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),

@@ -43,9 +43,8 @@ class CompletadosScreen extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           children: [
             // Tarjeta de felicitación y métrica semanal
-            _buildWeeklyBadgeCard(isDark, completados.length),
+            _buildWeeklyBadgeCard(context, isDark, completados.length),
             const SizedBox(height: 20),
-
             if (completados.isEmpty) ...[
               const SizedBox(height: 10),
               const EmptyStateWidget(
@@ -54,23 +53,27 @@ class CompletadosScreen extends ConsumerWidget {
                 mensaje: 'Completa tus pendientes diarios para verlos registrados aquí y sumar progreso en tu racha.',
               ),
             ] else ...[
+              // Tarjeta de felicitación y métrica semanal
+              _buildWeeklyBadgeCard(context, isDark, completados.length),
+              const SizedBox(height: 20),
+
               // Grupo: Hoy
               if (hoyTasks.isNotEmpty) ...[
-                _buildSectionHeader('Hoy'),
+                _buildSectionHeader(context, 'Hoy', isDark),
                 _buildGroupCard(isDark, hoyTasks, ref),
                 const SizedBox(height: 16),
               ],
 
               // Grupo: Ayer
               if (ayerTasks.isNotEmpty) ...[
-                _buildSectionHeader('Ayer'),
+                _buildSectionHeader(context, 'Ayer', isDark),
                 _buildGroupCard(isDark, ayerTasks, ref),
                 const SizedBox(height: 16),
               ],
 
               // Grupo: Esta semana / Anteriores
               if (anterioresTasks.isNotEmpty) ...[
-                _buildSectionHeader('Esta semana'),
+                _buildSectionHeader(context, 'Esta semana', isDark),
                 _buildGroupCard(isDark, anterioresTasks, ref),
                 const SizedBox(height: 16),
               ],
@@ -83,7 +86,8 @@ class CompletadosScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildWeeklyBadgeCard(bool isDark, int count) {
+  Widget _buildWeeklyBadgeCard(BuildContext context, bool isDark, int count) {
+    final primaryColor = Theme.of(context).primaryColor;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
@@ -107,13 +111,13 @@ class CompletadosScreen extends ConsumerWidget {
           Container(
             width: 54,
             height: 54,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE2EDFE),
+            decoration: BoxDecoration(
+              color: isDark ? primaryColor.withValues(alpha: 0.2) : const Color(0xFFE2EDFE),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.trending_up_rounded,
-              color: AppColors.primary,
+              color: primaryColor,
               size: 32,
             ),
           ),
@@ -123,21 +127,21 @@ class CompletadosScreen extends ConsumerWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Esta semana completaste',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF64748B),
+                  color: isDark ? Colors.white70 : const Color(0xFF64748B),
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 '$count ${count == 1 ? "pendiente" : "pendientes"}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
+                  color: primaryColor,
                 ),
               ),
             ],
@@ -147,15 +151,16 @@ class CompletadosScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title, bool isDark) {
+    final primaryColor = Theme.of(context).primaryColor;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8, left: 4),
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w700,
-          color: AppColors.primary,
+          color: isDark ? Colors.white : primaryColor,
         ),
       ),
     );
@@ -175,9 +180,10 @@ class CompletadosScreen extends ConsumerWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: tasks.length,
-        separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+        separatorBuilder: (_, __) => Divider(height: 1, color: isDark ? AppColors.borderDark : const Color(0xFFF1F5F9)),
         itemBuilder: (context, index) {
           final task = tasks[index];
+          final primaryColor = Theme.of(context).primaryColor;
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
@@ -195,10 +201,10 @@ class CompletadosScreen extends ConsumerWidget {
                   width: 50,
                   child: Text(
                     DateTimeUtils.formatTime(task.hora),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: Color(0xFF64748B),
+                      color: isDark ? Colors.white70 : const Color(0xFF64748B),
                     ),
                   ),
                 ),
@@ -211,7 +217,7 @@ class CompletadosScreen extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -226,20 +232,20 @@ class CompletadosScreen extends ConsumerWidget {
                       SnackBar(
                         content: Text('"${task.titulo}" restaurado a pendientes'),
                         duration: const Duration(seconds: 2),
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: primaryColor,
                       ),
                     );
                   },
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.refresh, size: 16, color: AppColors.primary),
-                      SizedBox(width: 4),
+                      Icon(Icons.refresh, size: 16, color: primaryColor),
+                      const SizedBox(width: 4),
                       Text(
                         'Restaurar',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
+                          color: primaryColor,
                         ),
                       ),
                     ],

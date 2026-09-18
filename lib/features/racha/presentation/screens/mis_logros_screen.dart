@@ -417,11 +417,15 @@ class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFEF3C7), Color(0xFFFDE68A)],
+          gradient: LinearGradient(
+            colors: isDark
+                ? [const Color(0xFF3B1E08), const Color(0xFF271705)]
+                : [const Color(0xFFFEF3C7), const Color(0xFFFDE68A)],
           ),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFF59E0B)),
+          border: Border.all(
+            color: isDark ? const Color(0xFFD97706).withValues(alpha: 0.5) : const Color(0xFFF59E0B),
+          ),
         ),
         child: Column(
           children: [
@@ -435,18 +439,18 @@ class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
                     children: [
                       Text(
                         '¡Nivel ${_rangoSeleccionado.nombre} Disponible!',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF92400E),
+                          color: isDark ? const Color(0xFFFCD34D) : const Color(0xFF92400E),
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Has alcanzado los ${_rangoSeleccionado.diasMinimos} días necesarios de racha.',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12.5,
-                          color: Color(0xFFB45309),
+                          color: isDark ? const Color(0xFFFDE68A) : const Color(0xFFB45309),
                         ),
                       ),
                     ],

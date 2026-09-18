@@ -14,19 +14,29 @@ class PriorityBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     if (asPill) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: prioridad.bgColor,
+          color: isDark
+              ? prioridad.color.withValues(alpha: 0.2)
+              : prioridad.bgColor,
           borderRadius: BorderRadius.circular(20),
+          border: isDark
+              ? Border.all(
+                  color: prioridad.color.withValues(alpha: 0.45),
+                  width: 1,
+                )
+              : null,
         ),
         child: Text(
           prioridad.label,
           style: TextStyle(
-            color: prioridad.color,
+            color: isDark ? prioridad.color : prioridad.color,
             fontSize: 12,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
           ),
         ),
       );
