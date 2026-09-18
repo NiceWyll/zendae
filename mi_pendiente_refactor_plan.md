@@ -743,10 +743,10 @@ final alternarCompletadoProvider = Provider(
 ```
 
 ### Criterio de completado ✅
-- [ ] `pendientes_notifier.dart` no contiene ningún `copyWith` de negocio ni cálculo de fechas
-- [ ] Los 5 casos de uso existen, cada uno con un único `call()`
-- [ ] Ningún caso de uso importa Flutter
-- [ ] Comportamiento idéntico verificado a mano en las 8 pantallas
+- [x] `pendientes_notifier.dart` no contiene ningún `copyWith` de negocio ni cálculo de fechas
+- [x] Los 5 casos de uso existen, cada uno con un único `call()`
+- [x] Ningún caso de uso importa Flutter
+- [x] Comportamiento idéntico verificado a mano en las 8 pantallas
 
 ---
 

@@ -1,12 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/error/result.dart';
 import '../../core/providers/database_providers.dart';
-import '../../core/providers/notification_providers.dart';
+import '../../core/providers/usecase_providers.dart';
 import '../../data/datasources/app_database.dart';
 import '../../data/repositories/pendiente_repository_impl.dart';
 import '../../domain/entities/pendiente.dart';
 import '../../domain/repositories/pendiente_repository.dart';
-import '../../domain/services/notification_scheduler.dart';
+import '../../domain/usecases/actualizar_pendiente.dart';
+import '../../domain/usecases/alternar_completado.dart';
+import '../../domain/usecases/crear_pendiente.dart';
+import '../../domain/usecases/eliminar_pendiente.dart';
+import '../../domain/usecases/posponer_para_manana.dart';
 
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
   return ref.watch(databaseProvider);
@@ -47,9 +51,20 @@ class PendientesState {
 
 class PendientesNotifier extends StateNotifier<PendientesState> {
   final PendienteRepository repository;
-  final NotificationScheduler notifications;
+  final AlternarCompletado alternarCompletadoCasoDeUso;
+  final PosponerParaManana posponerParaMananaCasoDeUso;
+  final CrearPendiente crearPendienteCasoDeUso;
+  final ActualizarPendiente actualizarPendienteCasoDeUso;
+  final EliminarPendiente eliminarPendienteCasoDeUso;
 
-  PendientesNotifier(this.repository, this.notifications) : super(PendientesState()) {
+  PendientesNotifier({
+    required this.repository,
+    required this.alternarCompletadoCasoDeUso,
+    required this.posponerParaMananaCasoDeUso,
+    required this.crearPendienteCasoDeUso,
+    required this.actualizarPendienteCasoDeUso,
+    required this.eliminarPendienteCasoDeUso,
+  }) : super(PendientesState()) {
     cargarPendientes();
   }
 
@@ -69,84 +84,57 @@ class PendientesNotifier extends StateNotifier<PendientesState> {
   }
 
   Future<void> alternarCompletado(String id, bool valor) async {
-    final res = await repository.alternarCompletado(id, valor);
+    final task = state.pendientes.where((p) => p.id == id).firstOrNull;
+    if (task == null) return;
+    final res = await alternarCompletadoCasoDeUso(task, valor);
     if (res case Fallo(:final failure)) {
       state = state.copyWith(errorMessage: failure.mensaje);
       return;
-    }
-    if (valor) {
-      await notifications.cancelarRecordatorioPorIdString(id);
-    } else {
-      final task = state.pendientes.where((p) => p.id == id).firstOrNull;
-      if (task != null && task.tieneRecordatorio) {
-        await notifications.programarRecordatorioPendiente(task);
-      }
     }
     await cargarPendientes();
   }
 
   Future<void> crearPendiente(Pendiente pendiente) async {
-    final res = await repository.insertarPendiente(pendiente);
+    final res = await crearPendienteCasoDeUso(pendiente);
     if (res case Fallo(:final failure)) {
       state = state.copyWith(errorMessage: failure.mensaje);
       return;
-    }
-    if (pendiente.tieneRecordatorio) {
-      await notifications.programarRecordatorioPendiente(pendiente);
     }
     await cargarPendientes();
   }
 
   Future<void> actualizarPendiente(Pendiente pendiente) async {
-    final res = await repository.actualizarPendiente(pendiente);
+    final res = await actualizarPendienteCasoDeUso(pendiente);
     if (res case Fallo(:final failure)) {
       state = state.copyWith(errorMessage: failure.mensaje);
       return;
-    }
-    if (pendiente.tieneRecordatorio && !pendiente.estaCompletado) {
-      await notifications.programarRecordatorioPendiente(pendiente);
-    } else {
-      await notifications.cancelarRecordatorioPorIdString(pendiente.id);
     }
     await cargarPendientes();
   }
 
   Future<void> eliminarPendiente(String id) async {
-    final res = await repository.eliminarPendiente(id);
+    final task = state.pendientes.where((p) => p.id == id).firstOrNull;
+    final res = await eliminarPendienteCasoDeUso(id, task?.notificacionId);
     if (res case Fallo(:final failure)) {
       state = state.copyWith(errorMessage: failure.mensaje);
       return;
     }
-    await notifications.cancelarRecordatorioPorIdString(id);
     await cargarPendientes();
   }
 
   Future<void> posponerParaManana(String id) async {
-    final task = state.pendientes.firstWhere((p) => p.id == id);
-    final manana = task.fecha.add(const Duration(days: 1));
-    final updated = task.copyWith(fecha: manana);
-    final res = await repository.actualizarPendiente(updated);
+    final task = state.pendientes.where((p) => p.id == id).firstOrNull;
+    if (task == null) return;
+    final res = await posponerParaMananaCasoDeUso(task);
     if (res case Fallo(:final failure)) {
       state = state.copyWith(errorMessage: failure.mensaje);
       return;
-    }
-    if (updated.tieneRecordatorio && !updated.estaCompletado) {
-      await notifications.programarRecordatorioPendiente(updated);
     }
     await cargarPendientes();
   }
 
   Future<void> restaurarCompletado(String id) async {
-    final res = await repository.alternarCompletado(id, false);
-    if (res case Fallo(:final failure)) {
-      state = state.copyWith(errorMessage: failure.mensaje);
-      return;
-    }
-    final task = state.pendientes.where((p) => p.id == id).firstOrNull;
-    if (task != null && task.tieneRecordatorio) {
-      await notifications.programarRecordatorioPendiente(task);
-    }
-    await cargarPendientes();
+    await alternarCompletado(id, false);
   }
 
   Future<void> eliminarTodosCompletados() async {
@@ -161,6 +149,12 @@ class PendientesNotifier extends StateNotifier<PendientesState> {
 
 final pendientesProvider = StateNotifierProvider<PendientesNotifier, PendientesState>((ref) {
   final repository = ref.watch(pendienteRepositoryProvider);
-  final notifications = ref.watch(notificationSchedulerProvider);
-  return PendientesNotifier(repository, notifications);
+  return PendientesNotifier(
+    repository: repository,
+    alternarCompletadoCasoDeUso: ref.watch(alternarCompletadoProvider),
+    posponerParaMananaCasoDeUso: ref.watch(posponerParaMananaProvider),
+    crearPendienteCasoDeUso: ref.watch(crearPendienteProvider),
+    actualizarPendienteCasoDeUso: ref.watch(actualizarPendienteProvider),
+    eliminarPendienteCasoDeUso: ref.watch(eliminarPendienteProvider),
+  );
 });

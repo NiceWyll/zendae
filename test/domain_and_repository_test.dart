@@ -1,12 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mi_pendiente/core/error/failure.dart';
 import 'package:mi_pendiente/core/error/result.dart';
+import 'package:mi_pendiente/core/services/reloj.dart';
 import 'package:mi_pendiente/data/datasources/seed_data.dart';
 import 'package:mi_pendiente/domain/entities/hora_del_dia.dart';
 import 'package:mi_pendiente/domain/entities/pendiente.dart';
 import 'package:mi_pendiente/domain/entities/prioridad.dart';
 import 'package:mi_pendiente/domain/entities/repeticion.dart';
 import 'package:mi_pendiente/data/models/pendiente_model.dart';
+import 'package:mi_pendiente/domain/usecases/actualizar_pendiente.dart';
+import 'package:mi_pendiente/domain/usecases/alternar_completado.dart';
+import 'package:mi_pendiente/domain/usecases/crear_pendiente.dart';
+import 'package:mi_pendiente/domain/usecases/eliminar_pendiente.dart';
+import 'package:mi_pendiente/domain/usecases/posponer_para_manana.dart';
 import 'package:mi_pendiente/presentation/mappers/prioridad_ui.dart';
 import 'helpers/test_fakes.dart';
 
@@ -137,6 +143,139 @@ void main() {
 
       final emptyList = await repo.getPendientes();
       expect(emptyList.datosO([]).isEmpty, isTrue);
+    });
+  });
+
+  group('Casos de Uso de Negocio (Fase 4)', () {
+    final momentoFijo = DateTime(2026, 9, 20, 10, 0);
+    final reloj = RelojFijo(momentoFijo);
+
+    test('CrearPendiente valida que el título no esté vacío', () async {
+      final repo = FakeRepository();
+      final alarmas = FakeNotificationScheduler();
+      final casoDeUso = CrearPendiente(repo, alarmas, reloj, () => 'uuid-123');
+
+      final vacio = Pendiente(
+        id: '',
+        titulo: '   ',
+        fecha: momentoFijo,
+        hora: const HoraDelDia(hora: 11, minuto: 0),
+      );
+
+      final res = await casoDeUso(vacio);
+      expect(res.esFallo, isTrue);
+      expect(res.failureO, isA<FallaValidacion>());
+    });
+
+    test('CrearPendiente asigna UUID y notificacionId si tiene recordatorio', () async {
+      final repo = FakeRepository();
+      final alarmas = FakeNotificationScheduler();
+      final casoDeUso = CrearPendiente(repo, alarmas, reloj, () => 'uuid-123');
+
+      final tarea = Pendiente(
+        id: '',
+        titulo: 'Comprar pan',
+        fecha: momentoFijo,
+        hora: const HoraDelDia(hora: 11, minuto: 0),
+        tieneRecordatorio: true,
+      );
+
+      final res = await casoDeUso(tarea);
+      expect(res.esExito, isTrue);
+      final creado = res.valorO!;
+      expect(creado.id, 'uuid-123');
+      expect(creado.notificacionId != null, isTrue);
+    });
+
+    test('AlternarCompletado sella fecha al completar y limpia al desmarcar', () async {
+      final repo = FakeRepository();
+      final alarmas = FakeNotificationScheduler();
+      final casoDeUso = AlternarCompletado(repo, alarmas, reloj);
+
+      final tarea = Pendiente(
+        id: '1',
+        titulo: 'Hacer deporte',
+        fecha: momentoFijo,
+        hora: const HoraDelDia(hora: 12, minuto: 0),
+        estaCompletado: false,
+      );
+      await repo.insertarPendiente(tarea);
+
+      final completadaRes = await casoDeUso(tarea);
+      expect(completadaRes.esExito, isTrue);
+      expect(completadaRes.valorO!.estaCompletado, isTrue);
+      expect(completadaRes.valorO!.fechaCompletado, momentoFijo);
+
+      final desmarcadaRes = await casoDeUso(completadaRes.valorO!);
+      expect(desmarcadaRes.esExito, isTrue);
+      expect(desmarcadaRes.valorO!.estaCompletado, isFalse);
+      expect(desmarcadaRes.valorO!.fechaCompletado, isNull);
+    });
+
+    test('PosponerParaManana suma 1 día y rechaza completadas', () async {
+      final repo = FakeRepository();
+      final alarmas = FakeNotificationScheduler();
+      final casoDeUso = PosponerParaManana(repo, alarmas, reloj);
+
+      final tarea = Pendiente(
+        id: '2',
+        titulo: 'Estudiar Flutter',
+        fecha: DateTime(2026, 9, 20),
+        hora: const HoraDelDia(hora: 14, minuto: 0),
+      );
+      await repo.insertarPendiente(tarea);
+
+      final res = await casoDeUso(tarea);
+      expect(res.esExito, isTrue);
+      expect(res.valorO!.fecha, DateTime(2026, 9, 21));
+
+      // Intento de posponer una completada
+      final completada = tarea.copyWith(estaCompletado: true);
+      final resComp = await casoDeUso(completada);
+      expect(resComp.esFallo, isTrue);
+      expect(resComp.failureO, isA<FallaValidacion>());
+    });
+
+    test('ActualizarPendiente modifica los datos y valida título no vacío', () async {
+      final repo = FakeRepository();
+      final alarmas = FakeNotificationScheduler();
+      final casoDeUso = ActualizarPendiente(repo, alarmas, reloj);
+
+      final tarea = Pendiente(
+        id: '2b',
+        titulo: 'Título anterior',
+        fecha: DateTime(2026, 9, 20),
+        hora: const HoraDelDia(hora: 14, minuto: 0),
+      );
+      await repo.insertarPendiente(tarea);
+
+      final res = await casoDeUso(tarea.copyWith(titulo: 'Título nuevo'));
+      expect(res.esExito, isTrue);
+      expect(res.valorO!.titulo, 'Título nuevo');
+
+      final vacio = await casoDeUso(tarea.copyWith(titulo: '   '));
+      expect(vacio.esFallo, isTrue);
+      expect(vacio.failureO, isA<FallaValidacion>());
+    });
+
+    test('EliminarPendiente borra de repositorio', () async {
+      final repo = FakeRepository();
+      final alarmas = FakeNotificationScheduler();
+      final casoDeUso = EliminarPendiente(repo, alarmas);
+
+      final tarea = Pendiente(
+        id: '3',
+        titulo: 'Eliminarme',
+        fecha: momentoFijo,
+        hora: const HoraDelDia(hora: 9, minuto: 0),
+      );
+      await repo.insertarPendiente(tarea);
+
+      final res = await casoDeUso(tarea.id, tarea.notificacionId);
+      expect(res.esExito, isTrue);
+
+      final list = await repo.getPendientes();
+      expect(list.valorO!.isEmpty, isTrue);
     });
   });
 }
