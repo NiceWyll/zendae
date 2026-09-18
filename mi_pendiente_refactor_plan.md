@@ -764,10 +764,10 @@ Ejecutar el mapa de migración de §3.1.
 5. Al final, ningún archivo debe tener un import con `../../../`. Usa imports de paquete (`package:mi_pendiente/features/...`).
 
 ### Criterio de completado ✅
-- [ ] El árbol coincide con §3 exactamente
-- [ ] Cero imports relativos que salgan de su carpeta
-- [ ] `flutter analyze` en 0
-- [ ] Capturas comparadas contra la baseline: idénticas
+- [x] El árbol coincide con §3 exactamente
+- [x] Cero imports relativos que salgan de su carpeta
+- [x] `flutter analyze` en 0
+- [x] Capturas comparadas contra la baseline: idénticas
 
 ---
 

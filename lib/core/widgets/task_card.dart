@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../domain/entities/pendiente.dart';
+import 'package:mi_pendiente/features/pendientes/domain/entities/pendiente.dart';
 import '../constants/app_colors.dart';
 import '../utils/date_time_utils.dart';
 import 'priority_badge.dart';

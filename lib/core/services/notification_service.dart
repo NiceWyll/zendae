@@ -3,8 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import '../../domain/entities/pendiente.dart';
-import '../../domain/services/notification_scheduler.dart';
+import 'package:mi_pendiente/features/pendientes/domain/entities/pendiente.dart';
+import 'package:mi_pendiente/features/pendientes/domain/services/notification_scheduler.dart';
 
 class NotificationServiceImpl implements NotificationScheduler {
   NotificationServiceImpl();

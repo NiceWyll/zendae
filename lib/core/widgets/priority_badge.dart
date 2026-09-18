@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../domain/entities/prioridad.dart';
-import '../../presentation/mappers/prioridad_ui.dart';
+import 'package:mi_pendiente/features/pendientes/domain/entities/prioridad.dart';
+import 'package:mi_pendiente/features/pendientes/presentation/mappers/prioridad_ui.dart';
 
 class PriorityBadge extends StatelessWidget {
   final Prioridad prioridad;

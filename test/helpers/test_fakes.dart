@@ -1,7 +1,7 @@
 import 'package:mi_pendiente/core/error/result.dart';
-import 'package:mi_pendiente/domain/entities/pendiente.dart';
-import 'package:mi_pendiente/domain/repositories/pendiente_repository.dart';
-import 'package:mi_pendiente/domain/services/notification_scheduler.dart';
+import 'package:mi_pendiente/features/pendientes/domain/entities/pendiente.dart';
+import 'package:mi_pendiente/features/pendientes/domain/repositories/pendiente_repository.dart';
+import 'package:mi_pendiente/features/pendientes/domain/services/notification_scheduler.dart';
 
 class FakeRepository implements PendienteRepository {
   final List<Pendiente> _pendientes;

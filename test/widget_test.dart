@@ -3,11 +3,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:mi_pendiente/main.dart';
-import 'package:mi_pendiente/presentation/screens/nuevo_pendiente_screen.dart';
+import 'package:mi_pendiente/app.dart';
+import 'package:mi_pendiente/features/pendientes/presentation/screens/nuevo_pendiente_screen.dart';
 import 'package:mi_pendiente/core/providers/preferences_providers.dart';
 import 'package:mi_pendiente/core/providers/notification_providers.dart';
-import 'package:mi_pendiente/presentation/providers/pendientes_provider.dart';
+import 'package:mi_pendiente/features/pendientes/presentation/providers/pendientes_provider.dart';
 import 'helpers/test_fakes.dart';
 
 void main() {
