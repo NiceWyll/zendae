@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
 import 'package:mi_pendiente/core/error/failure.dart';
 import 'package:mi_pendiente/core/utils/date_time_utils.dart';
+import 'package:mi_pendiente/core/widgets/empty_state_widget.dart';
 import 'package:mi_pendiente/core/widgets/estado_error.dart';
 import 'package:mi_pendiente/core/widgets/task_card.dart';
 import '../providers/pendientes_provider.dart';
 import 'detalle_pendiente_screen.dart';
+import 'nuevo_pendiente_screen.dart';
 
 class HoyScreen extends ConsumerWidget {
   const HoyScreen({super.key});
@@ -52,26 +54,16 @@ class HoyScreen extends ConsumerWidget {
               onReintentar: () => ref.invalidate(pendientesProvider),
             ),
             data: (hoyList) => hoyList.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.done_all_rounded,
-                          size: 64,
-                          color: isDark ? AppColors.textMuted : const Color(0xFFCBD5E1),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          '¡No tienes pendientes para hoy!',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: isDark ? AppColors.textMuted : AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
+                ? EmptyStateWidget(
+                    icono: Icons.task_alt_rounded,
+                    titulo: '¡Todo al día por hoy!',
+                    mensaje: 'No tienes tareas pendientes para hoy. Disfruta tu día o agrega una nueva tarea.',
+                    textoBoton: 'Nuevo pendiente',
+                    alPresionarBoton: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const NuevoPendienteScreen()),
+                      );
+                    },
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),

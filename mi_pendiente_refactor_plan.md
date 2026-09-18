@@ -1140,9 +1140,9 @@ Renovar la identidad visual ahora que el rediseño es intencional.
 > Aquí sí conviene tomar capturas "antes/después" — no para evitar cambios, sino para documentar la evolución visual.
 
 ### Criterio de completado ✅
-- [ ] Las 8 pantallas originales conservan su función con la nueva identidad visual
-- [ ] Racha, chat y selector de temas se sienten parte de la misma app
-- [ ] Se probó en tema claro, oscuro y al menos un tema de color nuevo
+- [x] Las 8 pantallas originales conservan su función con la nueva identidad visual
+- [x] Racha, chat y selector de temas se sienten parte de la misma app
+- [x] Se probó en tema claro, oscuro y al menos un tema de color nuevo
 
 ---
 
@@ -1216,7 +1216,7 @@ Renovar la identidad visual ahora que el rediseño es intencional.
 | 8 — Racha y recompensas | ✅ Completado | 2026-09-18 | Racha, hitos (3, 7, 14, 30, 100), Mis Logros, SQLite racha |
 | 9 — Chatbox / Asistente IA | ✅ Completado | 2026-09-18 | Asistente IA conversacional, NLP, límite diario, voz condicional |
 | 10 — Temas de color | ✅ Completado | 2026-09-18 | 6 paletas dinámicas, desbloqueo por racha, grid swatches |
-| 11 — Rediseño visual | ⚪ Pendiente | — | |
+| 11 — Rediseño visual | ✅ Completado | 2026-09-18 | Jerarquía Inter, TaskCard Hero, EmptyStateWidget, racha en Splash |
 
 **Leyenda:** ⚪ Pendiente | 🟡 En proceso | ✅ Completado | 🔴 Bloqueado
 

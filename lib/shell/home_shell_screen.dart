@@ -728,26 +728,40 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
   }
 
   Widget _buildCurrentView() {
+    Widget view;
     switch (_bottomNavIndex) {
       case 0: // Pendientes (Hoy / Semana / Mes)
         switch (_topTabIndex) {
           case 0:
-            return const HoyScreen();
+            view = const HoyScreen(key: ValueKey('hoy'));
           case 1:
-            return const SemanaScreen();
+            view = const SemanaScreen(key: ValueKey('semana'));
           case 2:
-            return const MesScreen();
+            view = const MesScreen(key: ValueKey('mes'));
           default:
-            return const HoyScreen();
+            view = const HoyScreen(key: ValueKey('hoy_default'));
         }
       case 1: // Calendario directo
-        return const MesScreen();
+        view = const MesScreen(key: ValueKey('mes_directo'));
       case 2: // Completados
-        return const CompletadosScreen();
+        view = const CompletadosScreen(key: ValueKey('completados'));
       case 3: // Ajustes
-        return const AjustesScreen();
+        view = const AjustesScreen(key: ValueKey('ajustes'));
       default:
-        return const HoyScreen();
+        view = const HoyScreen(key: ValueKey('hoy_fallback'));
     }
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 220),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: child,
+        );
+      },
+      child: view,
+    );
   }
 }

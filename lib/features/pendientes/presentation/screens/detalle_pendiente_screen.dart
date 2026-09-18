@@ -74,15 +74,19 @@ class DetallePendienteScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Tarjeta principal con la información del pendiente
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.cardDark : AppColors.cardLight,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isDark ? AppColors.borderDark : const Color(0xFFEDF2F7),
-                      width: 1.2,
-                    ),
+                Hero(
+                  tag: 'task_card_${pendiente.id}',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: isDark ? AppColors.cardDark : AppColors.cardLight,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isDark ? AppColors.borderDark : const Color(0xFFEDF2F7),
+                          width: 1.2,
+                        ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
@@ -212,7 +216,9 @@ class DetallePendienteScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+              ),
+            ),
+            const SizedBox(height: 24),
 
                 // Sección Acciones
                 const Text(

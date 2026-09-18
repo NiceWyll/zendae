@@ -62,6 +62,10 @@ class AppTheme {
           selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
         ),
+        dialogTheme: DialogThemeData(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: AppColors.cardDark,
+        ),
       );
     }
 
@@ -112,6 +116,10 @@ class AppTheme {
         elevation: 8,
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 11),
         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
+      ),
+      dialogTheme: DialogThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
       ),
     );
   }

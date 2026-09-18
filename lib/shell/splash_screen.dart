@@ -1,17 +1,20 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
+import 'package:mi_pendiente/core/constants/app_typography.dart';
 import 'package:mi_pendiente/core/widgets/wave_background.dart';
+import 'package:mi_pendiente/features/racha/presentation/providers/racha_provider.dart';
 import 'home_shell_screen.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends ConsumerState<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
@@ -59,6 +62,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
+    final rachaAsync = ref.watch(rachaNotifierProvider);
+    final diasRacha = rachaAsync.valueOrNull?.diasActuales ?? 0;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : Colors.white,
@@ -85,20 +91,18 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Icono 3D de Calendario con Check
-                    _buildCalendarLogo(),
-                    const SizedBox(height: 32),
+                    _buildCalendarLogo(primaryColor),
+                    const SizedBox(height: 28),
 
-                    // Título de la app
-                    const Text(
+                    // Título de la app con AppTypography
+                    Text(
                       'Mi Pendiente',
-                      style: TextStyle(
+                      style: AppTypography.displayLarge.copyWith(
+                        color: primaryColor,
                         fontSize: 32,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
-                        letterSpacing: -0.5,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
 
                     // Subtítulo
                     Text(
@@ -109,16 +113,20 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         color: isDark ? AppColors.textSecondaryDark : const Color(0xFF64748B),
                       ),
                     ),
-                    const SizedBox(height: 50),
+                    const SizedBox(height: 18),
 
-                    // Loader circular azul suave
+                    // Badge interactivo de racha
+                    _buildRachaBadge(isDark, diasRacha, primaryColor),
+                    const SizedBox(height: 40),
+
+                    // Loader circular dinámico acorde al tema
                     SizedBox(
-                      width: 36,
-                      height: 36,
+                      width: 34,
+                      height: 34,
                       child: CircularProgressIndicator(
                         strokeWidth: 3,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          AppColors.primary.withOpacity(0.7),
+                          primaryColor.withValues(alpha: 0.8),
                         ),
                       ),
                     ),
@@ -132,7 +140,46 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildCalendarLogo() {
+  Widget _buildRachaBadge(bool isDark, int dias, Color primary) {
+    final tieneRacha = dias > 0;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: tieneRacha
+            ? const Color(0xFFFF5722).withValues(alpha: isDark ? 0.2 : 0.1)
+            : primary.withValues(alpha: isDark ? 0.15 : 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: tieneRacha
+              ? const Color(0xFFFF5722).withValues(alpha: 0.35)
+              : primary.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(tieneRacha ? '🔥' : '✨', style: const TextStyle(fontSize: 14)),
+          const SizedBox(width: 6),
+          Text(
+            tieneRacha
+                ? 'Racha activa: $dias ${dias == 1 ? 'día' : 'días'}'
+                : '¡Mantén tu racha al día!',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: tieneRacha
+                  ? const Color(0xFFEA580C)
+                  : (isDark ? Colors.white70 : const Color(0xFF475569)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendarLogo(Color primaryColor) {
     return SizedBox(
       width: 130,
       height: 130,
@@ -148,7 +195,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               borderRadius: BorderRadius.circular(26),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.18),
+                  color: primaryColor.withValues(alpha: 0.2),
                   blurRadius: 28,
                   offset: const Offset(0, 10),
                 ),
@@ -160,16 +207,19 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             ),
             child: Column(
               children: [
-                // Cabecera azul del calendario
+                // Cabecera del calendario con degradado del color primario
                 Container(
                   height: 34,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Color(0xFF3B82F6), AppColors.primary],
+                      colors: [
+                        primaryColor.withValues(alpha: 0.8),
+                        primaryColor,
+                      ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                   ),
                 ),
                 // Cuadrícula de días
@@ -184,7 +234,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       children: List.generate(6, (index) {
                         return Container(
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE0EDFF),
+                            color: primaryColor.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(5),
                           ),
                         );
@@ -200,15 +250,15 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           Positioned(
             top: 2,
             left: 28,
-            child: _buildRing(),
+            child: _buildRing(primaryColor),
           ),
           Positioned(
             top: 2,
             right: 28,
-            child: _buildRing(),
+            child: _buildRing(primaryColor),
           ),
 
-          // Badge Check Azul en la esquina inferior derecha
+          // Badge Check en la esquina inferior derecha
           Positioned(
             bottom: 4,
             right: 4,
@@ -216,8 +266,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
+                gradient: LinearGradient(
+                  colors: [
+                    primaryColor,
+                    Color.lerp(primaryColor, Colors.black, 0.2) ?? primaryColor,
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -225,7 +278,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 border: Border.all(color: Colors.white, width: 3),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.35),
+                    color: primaryColor.withValues(alpha: 0.35),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -243,16 +296,16 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildRing() {
+  Widget _buildRing(Color color) {
     return Container(
       width: 8,
       height: 18,
       decoration: BoxDecoration(
-        color: const Color(0xFF2563EB),
+        color: color,
         borderRadius: BorderRadius.circular(4),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 2,
             offset: const Offset(0, 1),
           ),

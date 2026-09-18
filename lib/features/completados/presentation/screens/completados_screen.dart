@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
 import 'package:mi_pendiente/core/error/failure.dart';
 import 'package:mi_pendiente/core/utils/date_time_utils.dart';
+import 'package:mi_pendiente/core/widgets/empty_state_widget.dart';
 import 'package:mi_pendiente/core/widgets/estado_error.dart';
 import 'package:mi_pendiente/features/pendientes/domain/entities/pendiente.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/providers/pendientes_provider.dart';
@@ -46,26 +47,11 @@ class CompletadosScreen extends ConsumerWidget {
             const SizedBox(height: 20),
 
             if (completados.isEmpty) ...[
-              const SizedBox(height: 40),
-              Center(
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.check_circle_outline,
-                      size: 60,
-                      color: isDark ? AppColors.textMuted : const Color(0xFFCBD5E1),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Aún no tienes pendientes completados',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: isDark ? AppColors.textMuted : AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 10),
+              const EmptyStateWidget(
+                icono: Icons.checklist_rounded,
+                titulo: 'Sin tareas completadas aún',
+                mensaje: 'Completa tus pendientes diarios para verlos registrados aquí y sumar progreso en tu racha.',
               ),
             ] else ...[
               // Grupo: Hoy
