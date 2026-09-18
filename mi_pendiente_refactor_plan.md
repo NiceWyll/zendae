@@ -914,9 +914,9 @@ test('completar una tarea cancela su recordatorio', () async {
 Para el repositorio, usa SQLite **en memoria** con `sqflite_common_ffi` (`inMemoryDatabasePath`): tests reales contra SQL de verdad, sin emulador y sin archivos.
 
 ### Criterio de completado ✅
-- [ ] ≥ 20 tests, todos verdes
-- [ ] Ningún test requiere emulador Android
-- [ ] Los tests corren en menos de 10 segundos
+- [x] ≥ 20 tests, todos verdes (39/39 pasando)
+- [x] Ningún test requiere emulador Android
+- [x] Los tests corren en menos de 10 segundos (5s de ejecución)
 
 ---
 
