@@ -18,6 +18,7 @@ import 'package:mi_pendiente/features/racha/domain/entities/racha.dart';
 import 'package:mi_pendiente/features/racha/presentation/widgets/banner_racha.dart';
 import 'package:mi_pendiente/features/racha/presentation/screens/mis_logros_screen.dart';
 import 'package:mi_pendiente/features/racha/presentation/providers/racha_provider.dart';
+import 'package:mi_pendiente/features/asistente/presentation/screens/chat_screen.dart';
 
 class HomeShellScreen extends ConsumerStatefulWidget {
   const HomeShellScreen({super.key});
@@ -223,7 +224,17 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const BannerRachaChip(compacto: true),
-              const SizedBox(width: 4),
+              IconButton(
+                icon: const Icon(Icons.auto_awesome_rounded, color: Color(0xFF8B5CF6), size: 24),
+                tooltip: 'Asistente IA',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ChatScreen(),
+                    ),
+                  );
+                },
+              ),
               // Campanita con badge de notificaciones
               Stack(
                 children: [
@@ -480,6 +491,19 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => const MisLogrosScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.auto_awesome_rounded,
+                  label: 'Asistente IA ✨',
+                  isSelected: false,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ChatScreen(),
                       ),
                     );
                   },

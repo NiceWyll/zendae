@@ -22,3 +22,7 @@ class FallaNoEncontrado extends Failure {
 class FallaValidacion extends Failure {
   const FallaValidacion([super.mensaje = 'Datos del pendiente inválidos']);
 }
+
+class FallaPreferencias extends Failure {
+  const FallaPreferencias([super.mensaje = 'Error al acceder a las preferencias']);
+}

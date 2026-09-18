@@ -1080,10 +1080,10 @@ IconButton(
 Si no está desbloqueado, se muestra: *"Desbloquea el micrófono al llegar a 50 días de racha 🔥 (llevas X)"*. La restricción se comunica como incentivo, no como error. Para la transcripción usa `speech_to_text` (funciona offline, sin costo extra de API); el texto resultante entra por el mismo flujo del §9.2, así que texto y voz comparten toda la lógica.
 
 ### Criterio de completado ✅
-- [ ] El chat crea pendientes reales vía `CrearPendiente`, sin lógica propia de persistencia
-- [ ] El contador de mensajes/día se respeta y se reinicia a medianoche
-- [ ] El micrófono queda bloqueado con candado hasta los 50 días de racha, con explicación clara
-- [ ] Un mensaje ambiguo no crashea el flujo: se le pide al usuario que aclare
+- [x] El chat crea pendientes reales vía `CrearPendiente`, sin lógica propia de persistencia
+- [x] El contador de mensajes/día se respeta y se reinicia a medianoche
+- [x] El micrófono queda bloqueado con candado hasta los 50 días de racha, con explicación clara
+- [x] Un mensaje ambiguo no crashea el flujo: se le pide al usuario que aclare
 
 ---
 
