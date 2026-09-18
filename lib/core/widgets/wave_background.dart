@@ -3,21 +3,25 @@ import '../constants/app_colors.dart';
 
 class WaveBackgroundPainter extends CustomPainter {
   final bool isDark;
+  final Color primaryColor;
 
-  WaveBackgroundPainter({this.isDark = false});
+  WaveBackgroundPainter({
+    this.isDark = false,
+    this.primaryColor = AppColors.primary,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint1 = Paint()
       ..color = isDark
-          ? const Color(0xFF1E293B).withOpacity(0.5)
-          : const Color(0xFFE0ECFD).withOpacity(0.6)
+          ? primaryColor.withValues(alpha: 0.12)
+          : primaryColor.withValues(alpha: 0.14)
       ..style = PaintingStyle.fill;
 
     final paint2 = Paint()
       ..color = isDark
-          ? AppColors.primaryDark.withOpacity(0.3)
-          : AppColors.primary.withOpacity(0.35)
+          ? primaryColor.withValues(alpha: 0.22)
+          : primaryColor.withValues(alpha: 0.28)
       ..style = PaintingStyle.fill;
 
     // Wave 1 (Fondo)
@@ -62,26 +66,34 @@ class WaveBackgroundPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant WaveBackgroundPainter oldDelegate) =>
+      oldDelegate.isDark != isDark || oldDelegate.primaryColor != primaryColor;
 }
 
 class WaveBackground extends StatelessWidget {
   final double height;
   final bool isDark;
+  final Color? color;
 
   const WaveBackground({
     super.key,
     this.height = 160,
     this.isDark = false,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = color ?? Theme.of(context).primaryColor;
+
     return SizedBox(
       height: height,
       width: double.infinity,
       child: CustomPaint(
-        painter: WaveBackgroundPainter(isDark: isDark),
+        painter: WaveBackgroundPainter(
+          isDark: isDark,
+          primaryColor: effectiveColor,
+        ),
       ),
     );
   }

@@ -133,7 +133,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                     ),
                   );
                 },
-                backgroundColor: AppColors.primary,
+                backgroundColor: Theme.of(context).primaryColor,
                 elevation: 4,
                 child: const Icon(Icons.add, size: 28, color: Colors.white),
               ),
@@ -190,6 +190,8 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
     if (_bottomNavIndex == 2) title = 'Completados';
     if (_bottomNavIndex == 3) title = 'Ajustes';
 
+    final primaryColor = Theme.of(context).primaryColor;
+
     // Contar tareas que tienen recordatorio activo
     final reminderCount = pendientes.where((p) => p.tieneRecordatorio && !p.estaCompletado).length;
 
@@ -201,7 +203,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
           // Botón de las 3 rayitas (Abre el Drawer lateral)
           Builder(
             builder: (ctx) => IconButton(
-              icon: const Icon(Icons.menu_rounded, color: AppColors.primary, size: 28),
+              icon: Icon(Icons.menu_rounded, color: primaryColor, size: 28),
               onPressed: () {
                 Scaffold.of(ctx).openDrawer();
               },
@@ -212,10 +214,10 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
           // Título central
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: AppColors.primary,
+              color: primaryColor,
               letterSpacing: -0.3,
             ),
           ),
@@ -239,7 +241,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
               Stack(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.notifications_none_rounded, color: AppColors.primary, size: 28),
+                    icon: Icon(Icons.notifications_none_rounded, color: primaryColor, size: 28),
                     onPressed: () => _mostrarModalNotificaciones(context, pendientes),
                     tooltip: 'Recordatorios',
                   ),
@@ -278,6 +280,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
   Widget _buildAppDrawer(bool isDark, List<Pendiente> pendientes) {
     final pendientesActivos = pendientes.where((p) => !p.estaCompletado).length;
     final completados = pendientes.where((p) => p.estaCompletado).length;
+    final primaryColor = Theme.of(context).primaryColor;
 
     return Drawer(
       backgroundColor: isDark ? AppColors.backgroundDark : Colors.white,
@@ -287,9 +290,9 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 50, 20, 24),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF3B82F6), AppColors.primary],
+                colors: [primaryColor.withValues(alpha: 0.82), primaryColor],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -311,9 +314,9 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.calendar_month_rounded,
-                    color: AppColors.primary,
+                    color: primaryColor,
                     size: 30,
                   ),
                 ),
@@ -348,17 +351,17 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryBgLight,
+                      color: primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
                       children: [
                         Text(
                           '$pendientesActivos',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.primary,
+                            color: primaryColor,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -534,7 +537,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                     icon: const Icon(Icons.add, color: Colors.white),
                     label: const Text('Crear pendiente', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: primaryColor,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
@@ -566,20 +569,21 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final primaryColor = Theme.of(context).primaryColor;
     return ListTile(
       leading: Icon(
         icon,
-        color: isSelected ? AppColors.primary : const Color(0xFF64748B),
+        color: isSelected ? primaryColor : const Color(0xFF64748B),
       ),
       title: Text(
         label,
         style: TextStyle(
           fontSize: 15,
           fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-          color: isSelected ? AppColors.primary : const Color(0xFF1E293B),
+          color: isSelected ? primaryColor : (Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF1E293B)),
         ),
       ),
-      tileColor: isSelected ? AppColors.primaryBgLight : Colors.transparent,
+      tileColor: isSelected ? primaryColor.withValues(alpha: 0.12) : Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       onTap: onTap,
     );
@@ -620,18 +624,18 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryBgLight,
+                      color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.notifications_active_rounded, color: AppColors.primary, size: 22),
+                    child: Icon(Icons.notifications_active_rounded, color: Theme.of(context).primaryColor, size: 22),
                   ),
                   const SizedBox(width: 12),
-                  const Text(
+                  Text(
                     'Recordatorios Activos',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: Theme.of(context).primaryColor,
                     ),
                   ),
                 ],
@@ -692,7 +696,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: Theme.of(context).primaryColor,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
@@ -710,10 +714,10 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                     );
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('🚀 ¡Notificación enviada! Revisa la parte superior de tu pantalla.'),
-                          backgroundColor: AppColors.primary,
-                          duration: Duration(seconds: 3),
+                        SnackBar(
+                          content: const Text('🚀 ¡Notificación enviada! Revisa la parte superior de tu pantalla.'),
+                          backgroundColor: Theme.of(context).primaryColor,
+                          duration: const Duration(seconds: 3),
                         ),
                       );
                     }

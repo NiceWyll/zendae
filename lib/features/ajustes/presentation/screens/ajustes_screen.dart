@@ -13,6 +13,7 @@ class AjustesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ajustes = ref.watch(ajustesProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
     final temaActual = TemasDisponibles.obtenerPorId(ajustes.temaId);
 
     return ListView(
@@ -21,15 +22,18 @@ class AjustesScreen extends ConsumerWidget {
         // Fila 1: Tema claro/oscuro
         _buildSettingCard(
           isDark: isDark,
+          primaryColor: primaryColor,
           icon: Icons.palette_outlined,
           title: 'Tema claro/oscuro',
-          trailing: _buildThemeToggle(isDark, ref),
+          trailing: _buildThemeToggle(isDark, ref, primaryColor),
+          onTap: () => ref.read(ajustesProvider.notifier).alternarTema(!isDark),
         ),
         const SizedBox(height: 12),
 
         // Fila: Paleta de colores y temas
         _buildSettingCard(
           isDark: isDark,
+          primaryColor: primaryColor,
           icon: Icons.color_lens_outlined,
           title: 'Paleta de colores y temas',
           trailing: Row(
@@ -78,11 +82,12 @@ class AjustesScreen extends ConsumerWidget {
         // Fila 2: Notificaciones
         _buildSettingCard(
           isDark: isDark,
+          primaryColor: primaryColor,
           icon: Icons.notifications_none_rounded,
           title: 'Notificaciones',
           trailing: Switch(
             value: ajustes.notificaciones,
-            activeColor: AppColors.primary,
+            activeColor: primaryColor,
             onChanged: (val) async {
               ref.read(ajustesProvider.notifier).alternarNotificaciones(val);
               final scheduler = ref.read(notificationSchedulerProvider);
@@ -99,11 +104,12 @@ class AjustesScreen extends ConsumerWidget {
         // Fila 3: Sonido
         _buildSettingCard(
           isDark: isDark,
+          primaryColor: primaryColor,
           icon: Icons.volume_up_outlined,
           title: 'Sonido',
           trailing: Switch(
             value: ajustes.sonido,
-            activeColor: AppColors.primary,
+            activeColor: primaryColor,
             onChanged: (val) {
               ref.read(ajustesProvider.notifier).alternarSonido(val);
             },
@@ -114,11 +120,12 @@ class AjustesScreen extends ConsumerWidget {
         // Fila 4: Vibración
         _buildSettingCard(
           isDark: isDark,
+          primaryColor: primaryColor,
           icon: Icons.vibration_rounded,
           title: 'Vibración',
           trailing: Switch(
             value: ajustes.vibracion,
-            activeColor: AppColors.primary,
+            activeColor: primaryColor,
             onChanged: (val) {
               ref.read(ajustesProvider.notifier).alternarVibracion(val);
             },
@@ -129,6 +136,7 @@ class AjustesScreen extends ConsumerWidget {
         // Fila 5: Hora predeterminada de recordatorio
         _buildSettingCard(
           isDark: isDark,
+          primaryColor: primaryColor,
           icon: Icons.access_time_rounded,
           title: 'Hora predeterminada\nde recordatorio',
           trailing: DropdownButtonHideUnderline(
@@ -160,6 +168,7 @@ class AjustesScreen extends ConsumerWidget {
         // Fila 6: Primer día de la semana
         _buildSettingCard(
           isDark: isDark,
+          primaryColor: primaryColor,
           icon: Icons.calendar_month_outlined,
           title: 'Primer día de la semana',
           trailing: DropdownButtonHideUnderline(
@@ -189,11 +198,12 @@ class AjustesScreen extends ConsumerWidget {
         // Fila 7: Eliminar completados
         _buildSettingCard(
           isDark: isDark,
+          primaryColor: primaryColor,
           icon: Icons.delete_outline_rounded,
           title: 'Eliminar completados',
           trailing: Switch(
             value: ajustes.eliminarCompletados,
-            activeColor: AppColors.primary,
+            activeColor: primaryColor,
             onChanged: (val) {
               ref.read(ajustesProvider.notifier).alternarEliminarCompletados(val);
             },
@@ -204,6 +214,7 @@ class AjustesScreen extends ConsumerWidget {
         // Fila 8: Acerca de la aplicación
         _buildSettingCard(
           isDark: isDark,
+          primaryColor: primaryColor,
           icon: Icons.info_outline_rounded,
           title: 'Acerca de la aplicación',
           trailing: const Icon(
@@ -211,60 +222,59 @@ class AjustesScreen extends ConsumerWidget {
             color: Color(0xFF94A3B8),
             size: 22,
           ),
-          onTap: () => _mostrarAcercaDe(context),
+          onTap: () => _mostrarAcercaDe(context, primaryColor),
         ),
         const SizedBox(height: 80),
       ],
     );
   }
 
-  Widget _buildThemeToggle(bool isDark, WidgetRef ref) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFE2E8F0),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      padding: const EdgeInsets.all(3),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          GestureDetector(
-            onTap: () => ref.read(ajustesProvider.notifier).alternarTema(false),
-            child: Container(
+  Widget _buildThemeToggle(bool isDark, WidgetRef ref, Color primaryColor) {
+    return GestureDetector(
+      onTap: () => ref.read(ajustesProvider.notifier).alternarTema(!isDark),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF262626) : const Color(0xFFE2E8F0),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        padding: const EdgeInsets.all(3),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: !isDark ? AppColors.primary : Colors.transparent,
+                color: !isDark ? primaryColor : Colors.transparent,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
                 Icons.wb_sunny_rounded,
                 size: 16,
-                color: !isDark ? Colors.white : const Color(0xFF64748B),
+                color: !isDark ? Colors.white : const Color(0xFF737373),
               ),
             ),
-          ),
-          GestureDetector(
-            onTap: () => ref.read(ajustesProvider.notifier).alternarTema(true),
-            child: Container(
+            Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.primary : Colors.transparent,
+                color: isDark ? primaryColor : Colors.transparent,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
                 Icons.nightlight_round,
                 size: 16,
-                color: isDark ? Colors.white : const Color(0xFF64748B),
+                color: isDark ? Colors.white : const Color(0xFF737373),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildSettingCard({
     required bool isDark,
+    required Color primaryColor,
     required IconData icon,
     required String title,
     required Widget trailing,
@@ -286,7 +296,7 @@ class AjustesScreen extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              Icon(icon, color: AppColors.primary, size: 24),
+              Icon(icon, color: primaryColor, size: 24),
               const SizedBox(width: 16),
               Expanded(
                 child: Text(
@@ -306,15 +316,15 @@ class AjustesScreen extends ConsumerWidget {
     );
   }
 
-  void _mostrarAcercaDe(BuildContext context) {
+  void _mostrarAcercaDe(BuildContext context, Color primaryColor) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.calendar_month_rounded, color: AppColors.primary),
-            SizedBox(width: 10),
-            Text('Mi Pendiente', style: TextStyle(fontWeight: FontWeight.w700)),
+            Icon(Icons.calendar_month_rounded, color: primaryColor),
+            const SizedBox(width: 10),
+            const Text('Mi Pendiente', style: TextStyle(fontWeight: FontWeight.w700)),
           ],
         ),
         content: const Column(
@@ -333,7 +343,7 @@ class AjustesScreen extends ConsumerWidget {
         ),
         actions: [
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('Cerrar', style: TextStyle(color: Colors.white)),
           ),

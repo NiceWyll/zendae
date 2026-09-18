@@ -345,10 +345,15 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Mis Logros y Racha 🔥'), findsOneWidget);
       expect(find.text('7'), findsOneWidget);
-      expect(find.text('Mejor récord histórico: 14 días'), findsOneWidget);
+      expect(find.text('Récord: 14 días'), findsOneWidget);
       expect(find.text('Hábito Inicial'), findsOneWidget);
       expect(find.text('Primera Semana'), findsOneWidget);
       expect(find.text('Tema "Atardecer" desbloqueado'), findsOneWidget);
+      expect(find.text('Constancia'), findsOneWidget);
+
+      // Cambiar al rango Leyenda
+      await tester.tap(find.text('Leyenda'));
+      await tester.pumpAndSettle();
       expect(find.text('Centenario Legendario'), findsOneWidget);
     });
   });

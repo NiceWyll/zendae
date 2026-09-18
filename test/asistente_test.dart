@@ -204,11 +204,11 @@ void main() {
   });
 
   group('Fase 9: Desbloqueo de Voz Condicionado a Racha (BotonMicrofono)', () {
-    testWidgets('muestra candado cuando la racha es menor a 50 días', (tester) async {
+    testWidgets('muestra candado cuando la racha es menor a 15 días', (tester) async {
       final repoRacha = FakeRachaRepository(
         const Racha(
-          diasActuales: 20, // Menor a 50
-          mejorRacha: 20,
+          diasActuales: 10, // Menor a 15
+          mejorRacha: 10,
           ultimaFechaCompletado: null,
           logrosDesbloqueados: [],
         ),
@@ -236,16 +236,16 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Asistente por Voz'), findsOneWidget);
-      expect(find.textContaining('Llevas 20 de 50 días'), findsOneWidget);
+      expect(find.textContaining('Llevas 10 de 15 días'), findsOneWidget);
     });
 
-    testWidgets('muestra micrófono activo cuando la racha es >= 50 días', (tester) async {
+    testWidgets('muestra micrófono activo cuando la racha es >= 15 días', (tester) async {
       final repoRacha = FakeRachaRepository(
         const Racha(
-          diasActuales: 52, // Desbloqueado!
-          mejorRacha: 52,
+          diasActuales: 16, // Desbloqueado!
+          mejorRacha: 16,
           ultimaFechaCompletado: null,
-          logrosDesbloqueados: ['dias50'],
+          logrosDesbloqueados: ['dias15'],
         ),
       );
 

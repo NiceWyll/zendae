@@ -1,8 +1,6 @@
 import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
-import '../models/pendiente_model.dart';
-import 'seed_data.dart';
 
 class AppDatabase {
   static final AppDatabase instance = AppDatabase();
@@ -45,13 +43,6 @@ class AppDatabase {
       onUpgrade: _onUpgrade,
     );
 
-    // Si la tabla existe pero está vacía, sembrar los datos iniciales
-    final countResult = await db.rawQuery('SELECT COUNT(*) as count FROM pendientes');
-    final count = Sqflite.firstIntValue(countResult) ?? 0;
-    if (count == 0) {
-      await sembrarDatos(db);
-    }
-
     return db;
   }
 
@@ -86,8 +77,6 @@ class AppDatabase {
         logros TEXT NOT NULL
       );
     ''');
-
-    await sembrarDatos(db);
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -110,9 +99,6 @@ class AppDatabase {
   }
 
   Future<void> sembrarDatos(Database db) async {
-    final tasks = SeedData.obtenerPendientesIniciales();
-    for (final task in tasks) {
-      await db.insert('pendientes', PendienteModel.toMap(task));
-    }
+    // Instalación limpia sin pendientes precargados para nuevos usuarios
   }
 }

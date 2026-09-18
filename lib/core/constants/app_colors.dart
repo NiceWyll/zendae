@@ -15,19 +15,19 @@ class AppColors {
   static const Color cardLight = Color(0xFFFFFFFF);
   static const Color borderLight = Color(0xFFEDF2F7);
 
-  // Tema Oscuro
-  static const Color backgroundDark = Color(0xFF0F172A);
-  static const Color surfaceDark = Color(0xFF1E293B);
-  static const Color cardDark = Color(0xFF1E293B);
-  static const Color borderDark = Color(0xFF334155);
+  // Tema Oscuro (Neutral profundo, sin tinte azulado)
+  static const Color backgroundDark = Color(0xFF101010);
+  static const Color surfaceDark = Color(0xFF1A1A1A);
+  static const Color cardDark = Color(0xFF1E1E1E);
+  static const Color borderDark = Color(0xFF2C2C2C);
 
   // Textos
   static const Color textPrimary = Color(0xFF0F172A);
   static const Color textSecondary = Color(0xFF64748B);
   static const Color textMuted = Color(0xFF94A3B8);
 
-  static const Color textPrimaryDark = Color(0xFFF8FAFC);
-  static const Color textSecondaryDark = Color(0xFF94A3B8);
+  static const Color textPrimaryDark = Color(0xFFF3F4F6);
+  static const Color textSecondaryDark = Color(0xFFA1A1AA);
 
   // Prioridades
   // Alta

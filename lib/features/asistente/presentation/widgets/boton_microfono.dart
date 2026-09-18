@@ -18,8 +18,9 @@ class BotonMicrofono extends ConsumerWidget {
     final racha = rachaAsync.valueOrNull;
 
     final dias = racha?.diasActuales ?? 0;
-    final vozDesbloqueada = dias >= 50 ||
-        (racha?.logrosDesbloqueados.contains(HitoRacha.dias50.name) ?? false);
+    final primaryColor = Theme.of(context).primaryColor;
+    final vozDesbloqueada = dias >= 15 ||
+        (racha?.logrosDesbloqueados.contains(HitoRacha.dias15.name) ?? false);
 
     return Material(
       color: Colors.transparent,
@@ -36,19 +37,19 @@ class BotonMicrofono extends ConsumerWidget {
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: vozDesbloqueada
-                ? const Color(0xFFEFF6FF)
+                ? primaryColor.withValues(alpha: 0.12)
                 : const Color(0xFFF1F5F9),
             shape: BoxShape.circle,
             border: Border.all(
               color: vozDesbloqueada
-                  ? const Color(0xFF93C5FD)
+                  ? primaryColor.withValues(alpha: 0.35)
                   : const Color(0xFFCBD5E1),
               width: 1.2,
             ),
           ),
           child: Icon(
             vozDesbloqueada ? Icons.mic_rounded : Icons.lock_outline_rounded,
-            color: vozDesbloqueada ? AppColors.primary : const Color(0xFF94A3B8),
+            color: vozDesbloqueada ? primaryColor : const Color(0xFF94A3B8),
             size: 20,
           ),
         ),
@@ -57,7 +58,7 @@ class BotonMicrofono extends ConsumerWidget {
   }
 
   void _mostrarDialogoBloqueo(BuildContext context, int diasLlevados) {
-    final faltan = 50 - diasLlevados;
+    final faltan = 15 - diasLlevados;
 
     showDialog(
       context: context,
@@ -98,7 +99,7 @@ class BotonMicrofono extends ConsumerWidget {
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Desbloquea el micrófono al llegar a 50 días de racha consecutiva.',
+                        'Desbloquea el micrófono al llegar a 15 días de racha consecutiva.',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -111,7 +112,7 @@ class BotonMicrofono extends ConsumerWidget {
               ),
               const SizedBox(height: 14),
               Text(
-                'Llevas $diasLlevados de 50 días (${faltan > 0 ? 'te faltan $faltan' : '¡casi listo!'}).\n\n'
+                'Llevas $diasLlevados de 15 días (${faltan > 0 ? 'te faltan $faltan' : '¡casi listo!'}).\n\n'
                 '¡Completa tus pendientes cada día para mantener encendida la llama y desbloquear el comando por voz!',
                 style: TextStyle(
                   fontSize: 13.5,
@@ -133,6 +134,7 @@ class BotonMicrofono extends ConsumerWidget {
   }
 
   void _iniciarEscucha(BuildContext context) {
+    final primaryColor = Theme.of(context).primaryColor;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -144,7 +146,7 @@ class BotonMicrofono extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.mic_rounded, color: AppColors.primary, size: 48),
+              Icon(Icons.mic_rounded, color: primaryColor, size: 48),
               const SizedBox(height: 16),
               const Text(
                 'Dictado por Voz Activo 🎙️',
@@ -163,7 +165,7 @@ class BotonMicrofono extends ConsumerWidget {
                   onTextoReconocido?.call('Recuérdame reunión con el equipo mañana a las 10am');
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: primaryColor,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),

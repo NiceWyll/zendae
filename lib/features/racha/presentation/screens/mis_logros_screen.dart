@@ -5,12 +5,21 @@ import '../../domain/entities/hito_racha.dart';
 import '../../domain/entities/racha.dart';
 import '../providers/racha_provider.dart';
 
-class MisLogrosScreen extends ConsumerWidget {
+class MisLogrosScreen extends ConsumerStatefulWidget {
   const MisLogrosScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MisLogrosScreen> createState() => _MisLogrosScreenState();
+}
+
+class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
+  RangoRacha _rangoSeleccionado = RangoRacha.bronce;
+  final Set<RangoRacha> _rangosDesbloqueadosManualmente = {};
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
     final rachaAsync = ref.watch(rachaNotifierProvider);
 
     return Scaffold(
@@ -30,9 +39,9 @@ class MisLogrosScreen extends ConsumerWidget {
         centerTitle: true,
       ),
       body: rachaAsync.when(
-        data: (racha) => _buildContenido(context, racha, isDark),
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+        data: (racha) => _buildContenido(context, racha, isDark, primaryColor),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: primaryColor),
         ),
         error: (e, _) => Center(
           child: Column(
@@ -51,40 +60,67 @@ class MisLogrosScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildContenido(BuildContext context, Racha racha, bool isDark) {
+  Widget _buildContenido(BuildContext context, Racha racha, bool isDark, Color primaryColor) {
+    final hitosDelRango = HitoRacha.values
+        .where((h) => h.rango == _rangoSeleccionado)
+        .toList();
+
+    final rangoAlcanzado = _determinarRangoAlcanzado(racha.diasActuales);
+    final estaRangoDesbloqueado = _rangoSeleccionado.diasMinimos <= racha.diasActuales ||
+        _rangosDesbloqueadosManualmente.contains(_rangoSeleccionado);
+    final puedeDesbloquearSiguiente = racha.diasActuales >= _rangoSeleccionado.diasMinimos &&
+        !_rangosDesbloqueadosManualmente.contains(_rangoSeleccionado) &&
+        _rangoSeleccionado != RangoRacha.bronce;
+
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       children: [
         // Tarjeta principal de la Racha
-        _buildHeroCard(racha, isDark),
+        _buildHeroCard(racha, isDark, rangoAlcanzado),
+
+        const SizedBox(height: 20),
+
+        // Barra de progreso hacia el siguiente hito
+        _buildProgresoSiguienteHito(racha, isDark, primaryColor),
 
         const SizedBox(height: 24),
 
-        // Barra de progreso hacia el siguiente hito
-        _buildProgresoSiguienteHito(racha, isDark),
+        // Selector de Rangos (Niveles)
+        _buildSelectorRangos(isDark, primaryColor, racha.diasActuales),
 
-        const SizedBox(height: 28),
+        const SizedBox(height: 16),
 
-        // Título de la sección de hitos
+        // Banner informativo del rango seleccionado
+        _buildBannerRango(
+          racha,
+          isDark,
+          primaryColor,
+          estaRangoDesbloqueado,
+          puedeDesbloquearSiguiente,
+        ),
+
+        const SizedBox(height: 16),
+
+        // Título de la sección
         Row(
           children: [
-            const Icon(Icons.military_tech_rounded, color: AppColors.primary, size: 24),
+            Icon(Icons.military_tech_rounded, color: primaryColor, size: 24),
             const SizedBox(width: 8),
             Text(
-              'Hitos y Recompensas',
+              'Recompensas: ${_rangoSeleccionado.nombre} ${_rangoSeleccionado.icono}',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 17,
                 fontWeight: FontWeight.w700,
                 color: isDark ? Colors.white : const Color(0xFF0F172A),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
 
-        // Lista de Hitos
-        ...HitoRacha.values.map(
-          (hito) => _buildHitoCard(hito, racha, isDark),
+        // Lista de Hitos del Rango seleccionado
+        ...hitosDelRango.map(
+          (hito) => _buildHitoCard(hito, racha, isDark, estaRangoDesbloqueado, primaryColor),
         ),
 
         const SizedBox(height: 24),
@@ -92,7 +128,14 @@ class MisLogrosScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeroCard(Racha racha, bool isDark) {
+  RangoRacha _determinarRangoAlcanzado(int dias) {
+    if (dias >= 90) return RangoRacha.leyenda;
+    if (dias >= 60) return RangoRacha.diamante;
+    if (dias >= 30) return RangoRacha.oro;
+    return RangoRacha.bronce;
+  }
+
+  Widget _buildHeroCard(Racha racha, bool isDark, RangoRacha rangoAlcanzado) {
     final tieneRacha = racha.diasActuales > 0;
 
     return Container(
@@ -103,7 +146,7 @@ class MisLogrosScreen extends ConsumerWidget {
           colors: tieneRacha
               ? [const Color(0xFFFF5722), const Color(0xFFF57C00)]
               : (isDark
-                  ? [const Color(0xFF1E293B), const Color(0xFF334155)]
+                  ? [const Color(0xFF1E1E1E), const Color(0xFF2C2C2C)]
                   : [const Color(0xFF3B82F6), const Color(0xFF1D4ED8)]),
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -141,7 +184,7 @@ class MisLogrosScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Text(
             '${racha.diasActuales}',
             style: const TextStyle(
@@ -162,35 +205,65 @@ class MisLogrosScreen extends ConsumerWidget {
               letterSpacing: 1.2,
             ),
           ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.emoji_events_rounded, color: Color(0xFFFFD700), size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  'Mejor récord histórico: ${racha.mejorRacha} ${racha.mejorRacha == 1 ? 'día' : 'días'}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
+          const SizedBox(height: 14),
+          // Badge de rango actual y récord
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-              ],
-            ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(rangoAlcanzado.icono, style: const TextStyle(fontSize: 15)),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Rango ${rangoAlcanzado.nombre}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.emoji_events_rounded, color: Color(0xFFFFD700), size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Récord: ${racha.mejorRacha} ${racha.mejorRacha == 1 ? 'día' : 'días'}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildProgresoSiguienteHito(Racha racha, bool isDark) {
+  Widget _buildProgresoSiguienteHito(Racha racha, bool isDark, Color primaryColor) {
     final proximo = racha.proximoHito;
     final progreso = racha.progresoHaciaProximoHito;
 
@@ -228,10 +301,10 @@ class MisLogrosScreen extends ConsumerWidget {
                 proximo != null
                     ? '${racha.diasActuales} / ${proximo.dias} días'
                     : '¡Todos alcanzados!',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
+                  color: primaryColor,
                 ),
               ),
             ],
@@ -242,7 +315,7 @@ class MisLogrosScreen extends ConsumerWidget {
             child: LinearProgressIndicator(
               value: progreso,
               minHeight: 12,
-              backgroundColor: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              backgroundColor: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFE2E8F0),
               valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFF5722)),
             ),
           ),
@@ -250,7 +323,7 @@ class MisLogrosScreen extends ConsumerWidget {
           Text(
             proximo != null
                 ? 'Faltan ${proximo.dias - racha.diasActuales} días para desbloquear: ${proximo.titulo}'
-                : '¡Has conquistado todos los hitos de constancia! Eres legendario.',
+                : '¡Has conquistado todos los hitos de constancia! Eres una leyenda viviente.',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -262,9 +335,199 @@ class MisLogrosScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHitoCard(HitoRacha hito, Racha racha, bool isDark) {
-    final desbloqueado = racha.logrosDesbloqueados.contains(hito.name) ||
-        racha.diasActuales >= hito.dias;
+  Widget _buildSelectorRangos(bool isDark, Color primaryColor, int diasActuales) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : const Color(0xFFE2E8F0),
+        ),
+      ),
+      child: Row(
+        children: RangoRacha.values.map((rango) {
+          final isSelected = _rangoSeleccionado == rango;
+          final desbloqueado = diasActuales >= rango.diasMinimos;
+
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _rangoSeleccionado = rango;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? (isDark ? const Color(0xFF2C2C2C) : Colors.white)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      rango.icono,
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: desbloqueado ? null : Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      rango.nombre,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected
+                            ? (isDark ? Colors.white : primaryColor)
+                            : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildBannerRango(
+    Racha racha,
+    bool isDark,
+    Color primaryColor,
+    bool estaRangoDesbloqueado,
+    bool puedeDesbloquearSiguiente,
+  ) {
+    if (puedeDesbloquearSiguiente) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFEF3C7), Color(0xFFFDE68A)],
+          ),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFF59E0B)),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Text(_rangoSeleccionado.icono, style: const TextStyle(fontSize: 26)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '¡Nivel ${_rangoSeleccionado.nombre} Disponible!',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF92400E),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Has alcanzado los ${_rangoSeleccionado.diasMinimos} días necesarios de racha.',
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          color: Color(0xFFB45309),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _rangosDesbloqueadosManualmente.add(_rangoSeleccionado);
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('🎉 ¡Nivel ${_rangoSeleccionado.nombre} desbloqueado con éxito!'),
+                      backgroundColor: const Color(0xFF10B981),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.lock_open_rounded, color: Colors.white),
+                label: Text(
+                  'Desbloquear Nivel ${_rangoSeleccionado.nombre}',
+                  style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFD97706),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (!estaRangoDesbloqueado) {
+      final faltan = _rangoSeleccionado.diasMinimos - racha.diasActuales;
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : const Color(0xFFE2E8F0),
+          ),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.lock_clock_rounded, color: Color(0xFF94A3B8), size: 24),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Alcanza ${_rangoSeleccionado.diasMinimos} días de racha para desbloquear el Nivel ${_rangoSeleccionado.nombre} (${faltan > 0 ? 'te faltan $faltan días' : 'listo para desbloquear'}).',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildHitoCard(
+    HitoRacha hito,
+    Racha racha,
+    bool isDark,
+    bool rangoDesbloqueado,
+    Color primaryColor,
+  ) {
+    final desbloqueado = rangoDesbloqueado &&
+        (racha.logrosDesbloqueados.contains(hito.name) || racha.diasActuales >= hito.dias);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -301,7 +564,7 @@ class MisLogrosScreen extends ConsumerWidget {
                     )
                   : LinearGradient(
                       colors: isDark
-                          ? [const Color(0xFF334155), const Color(0xFF1E293B)]
+                          ? [const Color(0xFF2C2C2C), const Color(0xFF1E1E1E)]
                           : [const Color(0xFFE2E8F0), const Color(0xFFCBD5E1)],
                     ),
               borderRadius: BorderRadius.circular(14),
@@ -323,12 +586,14 @@ class MisLogrosScreen extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      hito.titulo,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    Flexible(
+                      child: Text(
+                        hito.titulo,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -337,7 +602,7 @@ class MisLogrosScreen extends ConsumerWidget {
                       decoration: BoxDecoration(
                         color: desbloqueado
                             ? const Color(0xFFFFE082)
-                            : (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+                            : (isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF1F5F9)),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
