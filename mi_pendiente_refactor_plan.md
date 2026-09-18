@@ -1115,9 +1115,9 @@ class TemaApp {
 El tema elegido se guarda en `ajustes_repository` (SharedPreferences), igual que el resto de preferencias del plan original. En `Ajustes → Temas` se muestra un grid de swatches; los bloqueados se ven con candado y el texto del hito ("Desbloquea a los 30 días 🔥") en vez de ocultarse.
 
 ### Criterio de completado ✅
-- [ ] Cambiar de tema no requiere reiniciar la app
-- [ ] Los temas bloqueados no se pueden seleccionar, solo previsualizar
-- [ ] El tema elegido persiste entre sesiones
+- [x] Cambiar de tema no requiere reiniciar la app
+- [x] Los temas bloqueados no se pueden seleccionar, solo previsualizar
+- [x] El tema elegido persiste entre sesiones
 
 ---
 
@@ -1207,15 +1207,15 @@ Renovar la identidad visual ahora que el rediseño es intencional.
 |---|---|---|---|
 | 0 — Red de seguridad | ✅ Completado | 2026-09-18 | Rama refactor/arquitectura, tag pre-refactor, 9 smoke tests |
 | 1 — Dominio puro | ✅ Completado | 2026-09-18 | HoraDelDia, Repeticion, PrioridadUI, Failure/Result, 16/16 tests verdes |
-| 2 — Inyección de dependencias | ⚪ Pendiente | — | |
-| 3 — Repositorio + migraciones | ⚪ Pendiente | — | |
-| 4 — Casos de uso | ⚪ Pendiente | — | |
-| 5 — Feature-First | ⚪ Pendiente | — | |
-| 6 — AsyncValue | ⚪ Pendiente | — | |
-| 7 — Tests | ⚪ Pendiente | — | |
-| 8 — Racha y recompensas | ⚪ Pendiente | — | |
-| 9 — Chatbox / Asistente IA | ⚪ Pendiente | — | |
-| 10 — Temas de color | ⚪ Pendiente | — | |
+| 2 — Inyección de dependencias | ✅ Completado | 2026-09-18 | NotificationScheduler, Repositories via Riverpod |
+| 3 — Repositorio + migraciones | ✅ Completado | 2026-09-18 | AppDatabase unificado, onUpgrade v1->v2->v3 |
+| 4 — Casos de uso | ✅ Completado | 2026-09-18 | 5 casos de uso puros con Result y Failure |
+| 5 — Feature-First | ✅ Completado | 2026-09-18 | Estructura por features (pendientes, calendario, completados, ajustes) |
+| 6 — AsyncValue | ✅ Completado | 2026-09-18 | AsyncNotifierProvider y reactividad |
+| 7 — Tests | ✅ Completado | 2026-09-18 | Mocktail, SQLite FFI en memoria, 45+ tests unitarios y de integración |
+| 8 — Racha y recompensas | ✅ Completado | 2026-09-18 | Racha, hitos (3, 7, 14, 30, 100), Mis Logros, SQLite racha |
+| 9 — Chatbox / Asistente IA | ✅ Completado | 2026-09-18 | Asistente IA conversacional, NLP, límite diario, voz condicional |
+| 10 — Temas de color | ✅ Completado | 2026-09-18 | 6 paletas dinámicas, desbloqueo por racha, grid swatches |
 | 11 — Rediseño visual | ⚪ Pendiente | — | |
 
 **Leyenda:** ⚪ Pendiente | 🟡 En proceso | ✅ Completado | 🔴 Bloqueado

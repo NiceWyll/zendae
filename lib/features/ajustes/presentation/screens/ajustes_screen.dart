@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
 import 'package:mi_pendiente/core/providers/notification_providers.dart';
+import 'package:mi_pendiente/core/theme/tema_app.dart';
 import '../providers/ajustes_provider.dart';
+import 'selector_temas_screen.dart';
 
 class AjustesScreen extends ConsumerWidget {
   const AjustesScreen({super.key});
@@ -11,6 +13,7 @@ class AjustesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ajustes = ref.watch(ajustesProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final temaActual = TemasDisponibles.obtenerPorId(ajustes.temaId);
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -21,6 +24,54 @@ class AjustesScreen extends ConsumerWidget {
           icon: Icons.palette_outlined,
           title: 'Tema claro/oscuro',
           trailing: _buildThemeToggle(isDark, ref),
+        ),
+        const SizedBox(height: 12),
+
+        // Fila: Paleta de colores y temas
+        _buildSettingCard(
+          isDark: isDark,
+          icon: Icons.color_lens_outlined,
+          title: 'Paleta de colores y temas',
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: temaActual.colorPrimario,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: temaActual.colorPrimario.withValues(alpha: 0.35),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                temaActual.nombre,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.chevron_right,
+                color: Color(0xFF94A3B8),
+                size: 20,
+              ),
+            ],
+          ),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SelectorTemasScreen()),
+            );
+          },
         ),
         const SizedBox(height: 12),
 

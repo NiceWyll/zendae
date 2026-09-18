@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/tema_app.dart';
 import 'features/ajustes/presentation/providers/ajustes_provider.dart';
 import 'shell/splash_screen.dart';
 
@@ -12,13 +13,14 @@ class MiPendienteApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     debugPrint('🚀🚀🚀 MI_PENDIENTE_APP BUILD CALLED 🚀🚀🚀');
     final ajustes = ref.watch(ajustesProvider);
-    debugPrint('🚀🚀🚀 AJUSTES OBTAINED: ${ajustes.themeMode} 🚀🚀🚀');
+    final tema = TemasDisponibles.obtenerPorId(ajustes.temaId);
+    debugPrint('🚀🚀🚀 AJUSTES OBTAINED: ${ajustes.themeMode} / Tema: ${tema.nombre} 🚀🚀🚀');
 
     return MaterialApp(
       title: 'Mi Pendiente',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+      theme: AppTheme.crearThemeData(tema, false),
+      darkTheme: AppTheme.crearThemeData(tema, true),
       themeMode: ajustes.themeMode,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

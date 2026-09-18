@@ -5,6 +5,7 @@ import 'package:mi_pendiente/core/providers/preferences_providers.dart';
 
 class AjustesState {
   final ThemeMode themeMode;
+  final String temaId;
   final bool notificaciones;
   final bool sonido;
   final bool vibracion;
@@ -14,6 +15,7 @@ class AjustesState {
 
   const AjustesState({
     this.themeMode = ThemeMode.light,
+    this.temaId = 'clasico',
     this.notificaciones = true,
     this.sonido = true,
     this.vibracion = false,
@@ -24,6 +26,7 @@ class AjustesState {
 
   AjustesState copyWith({
     ThemeMode? themeMode,
+    String? temaId,
     bool? notificaciones,
     bool? sonido,
     bool? vibracion,
@@ -33,6 +36,7 @@ class AjustesState {
   }) {
     return AjustesState(
       themeMode: themeMode ?? this.themeMode,
+      temaId: temaId ?? this.temaId,
       notificaciones: notificaciones ?? this.notificaciones,
       sonido: sonido ?? this.sonido,
       vibracion: vibracion ?? this.vibracion,
@@ -44,23 +48,26 @@ class AjustesState {
 }
 
 class AjustesNotifier extends StateNotifier<AjustesState> {
-  final SharedPreferences prefs;
+  final SharedPreferences? prefs;
 
   AjustesNotifier(this.prefs) : super(const AjustesState()) {
     _cargarAjustes();
   }
 
   void _cargarAjustes() {
-    final isDark = prefs.getBool('es_oscuro') ?? false;
-    final notif = prefs.getBool('notificaciones') ?? true;
-    final sonido = prefs.getBool('sonido') ?? true;
-    final vibra = prefs.getBool('vibracion') ?? false;
-    final hora = prefs.getString('hora_pred') ?? '09:00';
-    final primerDia = prefs.getString('primer_dia') ?? 'Lunes';
-    final autoDel = prefs.getBool('eliminar_comp') ?? false;
+    if (prefs == null) return;
+    final isDark = prefs!.getBool('es_oscuro') ?? false;
+    final tema = prefs!.getString('tema_id') ?? 'clasico';
+    final notif = prefs!.getBool('notificaciones') ?? true;
+    final sonido = prefs!.getBool('sonido') ?? true;
+    final vibra = prefs!.getBool('vibracion') ?? false;
+    final hora = prefs!.getString('hora_pred') ?? '09:00';
+    final primerDia = prefs!.getString('primer_dia') ?? 'Lunes';
+    final autoDel = prefs!.getBool('eliminar_comp') ?? false;
 
     state = state.copyWith(
       themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+      temaId: tema,
       notificaciones: notif,
       sonido: sonido,
       vibracion: vibra,
@@ -71,42 +78,51 @@ class AjustesNotifier extends StateNotifier<AjustesState> {
   }
 
   Future<void> alternarTema(bool esOscuro) async {
-    await prefs.setBool('es_oscuro', esOscuro);
+    await prefs?.setBool('es_oscuro', esOscuro);
     state = state.copyWith(themeMode: esOscuro ? ThemeMode.dark : ThemeMode.light);
   }
 
+  Future<void> cambiarTema(String nuevoTemaId) async {
+    await prefs?.setString('tema_id', nuevoTemaId);
+    state = state.copyWith(temaId: nuevoTemaId);
+  }
+
   Future<void> alternarNotificaciones(bool valor) async {
-    await prefs.setBool('notificaciones', valor);
+    await prefs?.setBool('notificaciones', valor);
     state = state.copyWith(notificaciones: valor);
   }
 
   Future<void> alternarSonido(bool valor) async {
-    await prefs.setBool('sonido', valor);
+    await prefs?.setBool('sonido', valor);
     state = state.copyWith(sonido: valor);
   }
 
   Future<void> alternarVibracion(bool valor) async {
-    await prefs.setBool('vibracion', valor);
+    await prefs?.setBool('vibracion', valor);
     state = state.copyWith(vibracion: valor);
   }
 
   Future<void> cambiarHoraPredeterminada(String hora) async {
-    await prefs.setString('hora_pred', hora);
+    await prefs?.setString('hora_pred', hora);
     state = state.copyWith(horaPredeterminada: hora);
   }
 
   Future<void> cambiarPrimerDiaSemana(String dia) async {
-    await prefs.setString('primer_dia', dia);
+    await prefs?.setString('primer_dia', dia);
     state = state.copyWith(primerDiaSemana: dia);
   }
 
   Future<void> alternarEliminarCompletados(bool valor) async {
-    await prefs.setBool('eliminar_comp', valor);
+    await prefs?.setBool('eliminar_comp', valor);
     state = state.copyWith(eliminarCompletados: valor);
   }
 }
 
 final ajustesProvider = StateNotifierProvider<AjustesNotifier, AjustesState>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  return AjustesNotifier(prefs);
+  try {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    return AjustesNotifier(prefs);
+  } catch (_) {
+    return AjustesNotifier(null);
+  }
 });
