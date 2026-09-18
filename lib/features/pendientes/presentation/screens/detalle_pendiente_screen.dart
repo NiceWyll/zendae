@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
+import 'package:mi_pendiente/core/error/failure.dart';
 import 'package:mi_pendiente/core/utils/date_time_utils.dart';
+import 'package:mi_pendiente/core/widgets/estado_error.dart';
 import 'package:mi_pendiente/core/widgets/priority_badge.dart';
 import 'package:mi_pendiente/core/widgets/wave_background.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/providers/pendientes_provider.dart';
@@ -14,13 +16,24 @@ class DetallePendienteScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(pendientesProvider);
+    final asyncPendientes = ref.watch(pendientesProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final pendiente = state.pendientes.where((p) => p.id == pendienteId).firstOrNull;
+    final pendiente = asyncPendientes.valueOrNull?.where((p) => p.id == pendienteId).firstOrNull;
     if (pendiente == null) {
-      if (state.isLoading) {
+      if (asyncPendientes.isLoading) {
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
+      if (asyncPendientes.hasError) {
+        return Scaffold(
+          appBar: AppBar(),
+          body: EstadoError(
+            mensaje: asyncPendientes.error is Failure
+                ? (asyncPendientes.error as Failure).mensaje
+                : 'Error al cargar el pendiente',
+            onReintentar: () => ref.invalidate(pendientesProvider),
+          ),
+        );
       }
       return const Scaffold(body: Center(child: Text('Pendiente no encontrado')));
     }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
+import 'package:mi_pendiente/core/error/failure.dart';
 import 'package:mi_pendiente/core/utils/date_time_utils.dart';
+import 'package:mi_pendiente/core/widgets/estado_error.dart';
 import 'package:mi_pendiente/features/pendientes/domain/entities/pendiente.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/providers/pendientes_provider.dart';
 
@@ -10,81 +12,88 @@ class CompletadosScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(pendientesProvider);
+    final asyncCompletados = ref.watch(pendientesCompletadosProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final completados = state.pendientes.where((p) => p.estaCompletado).toList();
+    return asyncCompletados.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => EstadoError(
+        mensaje: e is Failure ? e.mensaje : 'Algo salió mal al cargar las tareas completadas',
+        onReintentar: () => ref.invalidate(pendientesProvider),
+      ),
+      data: (completados) {
+        // Agrupar por: Hoy, Ayer, Esta semana / Anteriores
+        final hoyTasks = completados.where((p) {
+          final d = p.fechaCompletado ?? p.fecha;
+          return DateTimeUtils.isToday(d);
+        }).toList();
 
-    // Agrupar por: Hoy, Ayer, Esta semana / Anteriores
-    final hoyTasks = completados.where((p) {
-      final d = p.fechaCompletado ?? p.fecha;
-      return DateTimeUtils.isToday(d);
-    }).toList();
+        final ayerTasks = completados.where((p) {
+          final d = p.fechaCompletado ?? p.fecha;
+          return DateTimeUtils.isYesterday(d);
+        }).toList();
 
-    final ayerTasks = completados.where((p) {
-      final d = p.fechaCompletado ?? p.fecha;
-      return DateTimeUtils.isYesterday(d);
-    }).toList();
+        final anterioresTasks = completados.where((p) {
+          final d = p.fechaCompletado ?? p.fecha;
+          return !DateTimeUtils.isToday(d) && !DateTimeUtils.isYesterday(d);
+        }).toList();
 
-    final anterioresTasks = completados.where((p) {
-      final d = p.fechaCompletado ?? p.fecha;
-      return !DateTimeUtils.isToday(d) && !DateTimeUtils.isYesterday(d);
-    }).toList();
+        return ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          children: [
+            // Tarjeta de felicitación y métrica semanal
+            _buildWeeklyBadgeCard(isDark, completados.length),
+            const SizedBox(height: 20),
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      children: [
-        // Tarjeta de felicitación y métrica semanal
-        _buildWeeklyBadgeCard(isDark, completados.length),
-        const SizedBox(height: 20),
-
-        if (completados.isEmpty) ...[
-          const SizedBox(height: 40),
-          Center(
-            child: Column(
-              children: [
-                Icon(
-                  Icons.check_circle_outline,
-                  size: 60,
-                  color: isDark ? AppColors.textMuted : const Color(0xFFCBD5E1),
+            if (completados.isEmpty) ...[
+              const SizedBox(height: 40),
+              Center(
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline,
+                      size: 60,
+                      color: isDark ? AppColors.textMuted : const Color(0xFFCBD5E1),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Aún no tienes pendientes completados',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? AppColors.textMuted : AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  'Aún no tienes pendientes completados',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? AppColors.textMuted : AppColors.textSecondary,
-                  ),
-                ),
+              ),
+            ] else ...[
+              // Grupo: Hoy
+              if (hoyTasks.isNotEmpty) ...[
+                _buildSectionHeader('Hoy'),
+                _buildGroupCard(isDark, hoyTasks, ref),
+                const SizedBox(height: 16),
               ],
-            ),
-          ),
-        ] else ...[
-          // Grupo: Hoy
-          if (hoyTasks.isNotEmpty) ...[
-            _buildSectionHeader('Hoy'),
-            _buildGroupCard(isDark, hoyTasks, ref),
-            const SizedBox(height: 16),
-          ],
 
-          // Grupo: Ayer
-          if (ayerTasks.isNotEmpty) ...[
-            _buildSectionHeader('Ayer'),
-            _buildGroupCard(isDark, ayerTasks, ref),
-            const SizedBox(height: 16),
-          ],
+              // Grupo: Ayer
+              if (ayerTasks.isNotEmpty) ...[
+                _buildSectionHeader('Ayer'),
+                _buildGroupCard(isDark, ayerTasks, ref),
+                const SizedBox(height: 16),
+              ],
 
-          // Grupo: Esta semana / Anteriores
-          if (anterioresTasks.isNotEmpty) ...[
-            _buildSectionHeader('Esta semana'),
-            _buildGroupCard(isDark, anterioresTasks, ref),
-            const SizedBox(height: 16),
-          ],
-        ],
+              // Grupo: Esta semana / Anteriores
+              if (anterioresTasks.isNotEmpty) ...[
+                _buildSectionHeader('Esta semana'),
+                _buildGroupCard(isDark, anterioresTasks, ref),
+                const SizedBox(height: 16),
+              ],
+            ],
 
-        const SizedBox(height: 80),
-      ],
+            const SizedBox(height: 80),
+          ],
+        );
+      },
     );
   }
 

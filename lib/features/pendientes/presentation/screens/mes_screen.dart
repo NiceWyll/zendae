@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
+import 'package:mi_pendiente/core/error/failure.dart';
 import 'package:mi_pendiente/core/utils/date_time_utils.dart';
+import 'package:mi_pendiente/core/widgets/estado_error.dart';
 import 'package:mi_pendiente/core/widgets/priority_badge.dart';
 import 'package:mi_pendiente/features/pendientes/domain/entities/pendiente.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/mappers/prioridad_ui.dart';
@@ -20,16 +22,18 @@ class _MesScreenState extends ConsumerState<MesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(pendientesProvider);
+    final asyncPendientes = ref.watch(pendientesProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final selectedDate = state.fechaSeleccionada;
+    final selectedDate = ref.watch(fechaSeleccionadaProvider);
+    final tasksForSelectedDay = ref.watch(pendientesPorFechaProvider(selectedDate)).valueOrNull ?? [];
 
-    // Tareas del día seleccionado
-    final tasksForSelectedDay = state.pendientes.where((p) {
-      return DateTimeUtils.isSameDay(p.fecha, selectedDate);
-    }).toList();
-
-    return Column(
+    return asyncPendientes.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => EstadoError(
+        mensaje: e is Failure ? e.mensaje : 'Algo salió mal al cargar el calendario',
+        onReintentar: () => ref.invalidate(pendientesProvider),
+      ),
+      data: (allTasks) => Column(
       children: [
         // Selector de mes (< Mes Año >)
         Padding(
@@ -86,7 +90,7 @@ class _MesScreenState extends ConsumerState<MesScreen> {
         // Matriz de días del mes
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _buildMonthGrid(isDark, selectedDate, state.pendientes),
+          child: _buildMonthGrid(isDark, selectedDate, allTasks),
         ),
 
         const Divider(height: 24, thickness: 1, color: Color(0xFFF1F5F9)),
@@ -198,6 +202,7 @@ class _MesScreenState extends ConsumerState<MesScreen> {
                 ),
         ),
       ],
+    ),
     );
   }
 
@@ -231,7 +236,7 @@ class _MesScreenState extends ConsumerState<MesScreen> {
       dayWidgets.add(
         InkWell(
           onTap: () {
-            ref.read(pendientesProvider.notifier).seleccionarFecha(thisDate);
+            ref.read(fechaSeleccionadaProvider.notifier).state = thisDate;
           },
           borderRadius: BorderRadius.circular(20),
           child: Column(

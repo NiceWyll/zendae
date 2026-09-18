@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
+import 'package:mi_pendiente/core/error/failure.dart';
 import 'package:mi_pendiente/core/utils/date_time_utils.dart';
+import 'package:mi_pendiente/core/widgets/estado_error.dart';
 import 'package:mi_pendiente/core/widgets/priority_badge.dart';
 import 'package:mi_pendiente/features/pendientes/domain/entities/pendiente.dart';
 import '../providers/pendientes_provider.dart';
@@ -27,56 +29,65 @@ class _SemanaScreenState extends ConsumerState<SemanaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(pendientesProvider);
+    final asyncPendientes = ref.watch(pendientesProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final now = DateTime.now();
-    final startOfWeek = DateTimeUtils.startOfWeek(now);
+    return asyncPendientes.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => EstadoError(
+        mensaje: e is Failure ? e.mensaje : 'Algo salió mal al cargar la semana',
+        onReintentar: () => ref.invalidate(pendientesProvider),
+      ),
+      data: (pendientes) {
+        final now = DateTime.now();
+        final startOfWeek = DateTimeUtils.startOfWeek(now);
 
-    // Calcular días de la semana
-    final daysOfWeek = List.generate(7, (i) => startOfWeek.add(Duration(days: i)));
+        // Calcular días de la semana
+        final daysOfWeek = List.generate(7, (i) => startOfWeek.add(Duration(days: i)));
 
-    // Calcular métricas de la semana
-    final weekTasks = state.pendientes.where((p) {
-      final diff = p.fecha.difference(startOfWeek).inDays;
-      return diff >= 0 && diff < 7;
-    }).toList();
+        // Calcular métricas de la semana
+        final weekTasks = pendientes.where((p) {
+          final diff = p.fecha.difference(startOfWeek).inDays;
+          return diff >= 0 && diff < 7;
+        }).toList();
 
-    final completedCount = weekTasks.where((p) => p.estaCompletado).length;
-    final totalCount = weekTasks.length;
-    final progress = totalCount > 0 ? (completedCount / totalCount) : 0.0;
+        final completedCount = weekTasks.where((p) => p.estaCompletado).length;
+        final totalCount = weekTasks.length;
+        final progress = totalCount > 0 ? (completedCount / totalCount) : 0.0;
 
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      children: [
-        // Tarjeta resumen semanal con mini gráfico de barras
-        _buildWeeklySummaryCard(isDark, totalCount, completedCount, progress, daysOfWeek, state.pendientes),
-        const SizedBox(height: 16),
+        return ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          children: [
+            // Tarjeta resumen semanal con mini gráfico de barras
+            _buildWeeklySummaryCard(isDark, totalCount, completedCount, progress, daysOfWeek, pendientes),
+            const SizedBox(height: 16),
 
-        // Lista de días de la semana (acordeones)
-        ...List.generate(7, (index) {
-          final dayDate = daysOfWeek[index];
-          final dayTasks = state.pendientes.where((p) {
-            return DateTimeUtils.isSameDay(p.fecha, dayDate);
-          }).toList();
+            // Lista de días de la semana (acordeones)
+            ...List.generate(7, (index) {
+              final dayDate = daysOfWeek[index];
+              final dayTasks = pendientes.where((p) {
+                return DateTimeUtils.isSameDay(p.fecha, dayDate);
+              }).toList();
 
-          final isExpanded = _expandedDays[index] ?? false;
+              final isExpanded = _expandedDays[index] ?? false;
 
-          return _buildDayAccordion(
-            index: index,
-            date: dayDate,
-            tasks: dayTasks,
-            isExpanded: isExpanded,
-            isDark: isDark,
-            onToggle: () {
-              setState(() {
-                _expandedDays[index] = !isExpanded;
-              });
-            },
-          );
-        }),
-        const SizedBox(height: 80),
-      ],
+              return _buildDayAccordion(
+                index: index,
+                date: dayDate,
+                tasks: dayTasks,
+                isExpanded: isExpanded,
+                isDark: isDark,
+                onToggle: () {
+                  setState(() {
+                    _expandedDays[index] = !isExpanded;
+                  });
+                },
+              );
+            }),
+            const SizedBox(height: 80),
+          ],
+        );
+      },
     );
   }
 

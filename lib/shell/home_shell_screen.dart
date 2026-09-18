@@ -13,6 +13,7 @@ import 'package:mi_pendiente/features/pendientes/presentation/screens/mes_screen
 import 'package:mi_pendiente/features/pendientes/presentation/screens/nuevo_pendiente_screen.dart';
 import 'package:mi_pendiente/features/completados/presentation/screens/completados_screen.dart';
 import 'package:mi_pendiente/features/ajustes/presentation/screens/ajustes_screen.dart';
+import 'package:mi_pendiente/features/pendientes/domain/entities/pendiente.dart';
 
 class HomeShellScreen extends ConsumerStatefulWidget {
   const HomeShellScreen({super.key});
@@ -29,13 +30,14 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final state = ref.watch(pendientesProvider);
+    final asyncPendientes = ref.watch(pendientesProvider);
+    final pendientes = asyncPendientes.valueOrNull ?? const <Pendiente>[];
 
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       // Drawer lateral interactivo (Menú de las 3 rayitas)
-      drawer: _buildAppDrawer(isDark, state),
+      drawer: _buildAppDrawer(isDark, pendientes),
       body: Stack(
         children: [
           // Ondas decorativas en la parte inferior
@@ -53,7 +55,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
             child: Column(
               children: [
                 // Barra superior de la aplicación con Menú y Campanita
-                _buildAppBar(isDark, state),
+                _buildAppBar(isDark, pendientes),
 
                 // Selector de pestañas (Hoy | Semana | Mes) solo cuando estamos en la pestaña 'Pendientes'
                 if (_bottomNavIndex == 0)
@@ -139,14 +141,14 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
     );
   }
 
-  Widget _buildAppBar(bool isDark, PendientesState state) {
+  Widget _buildAppBar(bool isDark, List<Pendiente> pendientes) {
     String title = 'Mis pendientes';
     if (_bottomNavIndex == 1) title = 'Calendario';
     if (_bottomNavIndex == 2) title = 'Completados';
     if (_bottomNavIndex == 3) title = 'Ajustes';
 
     // Contar tareas que tienen recordatorio activo
-    final reminderCount = state.pendientes.where((p) => p.tieneRecordatorio && !p.estaCompletado).length;
+    final reminderCount = pendientes.where((p) => p.tieneRecordatorio && !p.estaCompletado).length;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -180,7 +182,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
             children: [
               IconButton(
                 icon: const Icon(Icons.notifications_none_rounded, color: AppColors.primary, size: 28),
-                onPressed: () => _mostrarModalNotificaciones(context, state),
+                onPressed: () => _mostrarModalNotificaciones(context, pendientes),
                 tooltip: 'Recordatorios',
               ),
               if (reminderCount > 0)
@@ -213,9 +215,9 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
   }
 
   // Menú Drawer Lateral
-  Widget _buildAppDrawer(bool isDark, PendientesState state) {
-    final pendientesActivos = state.pendientes.where((p) => !p.estaCompletado).length;
-    final completados = state.pendientes.where((p) => p.estaCompletado).length;
+  Widget _buildAppDrawer(bool isDark, List<Pendiente> pendientes) {
+    final pendientesActivos = pendientes.where((p) => !p.estaCompletado).length;
+    final completados = pendientes.where((p) => p.estaCompletado).length;
 
     return Drawer(
       backgroundColor: isDark ? AppColors.backgroundDark : Colors.white,
@@ -451,8 +453,8 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
   }
 
   // Modal de la Campanita de Notificaciones
-  void _mostrarModalNotificaciones(BuildContext context, PendientesState state) {
-    final conRecordatorio = state.pendientes
+  void _mostrarModalNotificaciones(BuildContext context, List<Pendiente> pendientes) {
+    final conRecordatorio = pendientes
         .where((p) => p.tieneRecordatorio && !p.estaCompletado)
         .toList();
 

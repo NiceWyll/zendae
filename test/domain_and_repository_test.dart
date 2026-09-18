@@ -1,7 +1,12 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/error/failure.dart';
 import 'package:mi_pendiente/core/error/result.dart';
+import 'package:mi_pendiente/core/providers/clock_providers.dart';
+import 'package:mi_pendiente/core/providers/notification_providers.dart';
 import 'package:mi_pendiente/core/services/reloj.dart';
+import 'package:mi_pendiente/core/widgets/estado_error.dart';
 import 'package:mi_pendiente/features/pendientes/data/datasources/seed_data.dart';
 import 'package:mi_pendiente/features/pendientes/domain/entities/hora_del_dia.dart';
 import 'package:mi_pendiente/features/pendientes/domain/entities/pendiente.dart';
@@ -14,6 +19,7 @@ import 'package:mi_pendiente/features/pendientes/domain/usecases/crear_pendiente
 import 'package:mi_pendiente/features/pendientes/domain/usecases/eliminar_pendiente.dart';
 import 'package:mi_pendiente/features/pendientes/domain/usecases/posponer_para_manana.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/mappers/prioridad_ui.dart';
+import 'package:mi_pendiente/features/pendientes/presentation/providers/pendientes_provider.dart';
 import 'helpers/test_fakes.dart';
 
 void main() {
@@ -276,6 +282,111 @@ void main() {
 
       final list = await repo.getPendientes();
       expect(list.valorO!.isEmpty, isTrue);
+    });
+  });
+
+  group('Estados de UI con AsyncValue y Providers Derivados (Fase 6)', () {
+    testWidgets('EstadoError renderiza mensaje y ejecuta callback al presionar Reintentar', (tester) async {
+      bool reintentado = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: EstadoError(
+              mensaje: 'Error de prueba simulado',
+              onReintentar: () => reintentado = true,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Ocurrió un problema'), findsOneWidget);
+      expect(find.text('Error de prueba simulado'), findsOneWidget);
+      expect(find.text('Reintentar'), findsOneWidget);
+
+      await tester.tap(find.text('Reintentar'));
+      expect(reintentado, isTrue);
+    });
+
+    test('Providers derivados filtran correctamente por fecha, hoy y completados', () async {
+      final hoy = DateTime(2026, 9, 15, 10, 0);
+      final manana = DateTime(2026, 9, 16, 12, 0);
+      final relojFijo = RelojFijo(hoy);
+
+      final p1 = Pendiente(
+        id: 'p1',
+        titulo: 'Tarea de hoy pendiente',
+        fecha: hoy,
+        hora: const HoraDelDia(hora: 10, minuto: 0),
+        estaCompletado: false,
+      );
+      final p2 = Pendiente(
+        id: 'p2',
+        titulo: 'Tarea de hoy completada',
+        fecha: hoy,
+        hora: const HoraDelDia(hora: 11, minuto: 0),
+        estaCompletado: true,
+      );
+      final p3 = Pendiente(
+        id: 'p3',
+        titulo: 'Tarea de mañana',
+        fecha: manana,
+        hora: const HoraDelDia(hora: 9, minuto: 0),
+        estaCompletado: false,
+      );
+
+      final repo = FakeRepository([p1, p2, p3]);
+
+      final container = ProviderContainer(
+        overrides: [
+          pendienteRepositoryProvider.overrideWithValue(repo),
+          relojProvider.overrideWithValue(relojFijo),
+          notificationSchedulerProvider.overrideWithValue(FakeNotificationScheduler()),
+        ],
+      );
+
+      // Esperar carga inicial de AsyncNotifier
+      await container.read(pendientesProvider.future);
+
+      final todos = container.read(pendientesProvider).valueOrNull;
+      expect(todos?.length, 3);
+
+      final deHoy = container.read(pendientesDeHoyProvider).valueOrNull;
+      expect(deHoy?.length, 2);
+
+      final deManana = container.read(pendientesPorFechaProvider(manana)).valueOrNull;
+      expect(deManana?.length, 1);
+      expect(deManana?.first.id, 'p3');
+
+      final completados = container.read(pendientesCompletadosProvider).valueOrNull;
+      expect(completados?.length, 1);
+      expect(completados?.first.id, 'p2');
+    });
+
+    test('AlternarCompletado actualiza el estado en memoria sin parpadeo', () async {
+      final hoy = DateTime(2026, 9, 15);
+      final relojFijo = RelojFijo(hoy);
+      final p = Pendiente(
+        id: 'opt-1',
+        titulo: 'Tarea reactiva',
+        fecha: hoy,
+        hora: const HoraDelDia(hora: 10, minuto: 0),
+        estaCompletado: false,
+      );
+      final repo = FakeRepository([p]);
+
+      final container = ProviderContainer(
+        overrides: [
+          pendienteRepositoryProvider.overrideWithValue(repo),
+          relojProvider.overrideWithValue(relojFijo),
+          notificationSchedulerProvider.overrideWithValue(FakeNotificationScheduler()),
+        ],
+      );
+
+      await container.read(pendientesProvider.future);
+      expect(container.read(pendientesProvider).valueOrNull?.first.estaCompletado, isFalse);
+
+      await container.read(pendientesProvider.notifier).alternarCompletado('opt-1', true);
+      expect(container.read(pendientesProvider).valueOrNull?.first.estaCompletado, isTrue);
     });
   });
 }

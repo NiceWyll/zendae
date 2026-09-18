@@ -853,10 +853,10 @@ ref.watch(pendientesDeHoyProvider).when(
 `_EstadoError` es el único widget nuevo del refactor completo. Diséñalo con los estilos de `app_typography` y `app_colors` ya existentes para que se sienta parte de la app.
 
 ### Criterio de completado ✅
-- [ ] `PendientesState` manual eliminado; todo pasa por `AsyncValue`
-- [ ] Ninguna pantalla filtra la lista completa dentro de `build`
-- [ ] Forzando un error de DB a propósito, la app muestra el estado de error con botón reintentar en vez de crashear
-- [ ] Marcar un checkbox no produce parpadeo ni recarga completa de la lista
+- [x] `PendientesState` manual eliminado; todo pasa por `AsyncValue`
+- [x] Ninguna pantalla filtra la lista completa dentro de `build`
+- [x] Forzando un error de DB a propósito, la app muestra el estado de error con botón reintentar en vez de crashear
+- [x] Marcar un checkbox no produce parpadeo ni recarga completa de la lista
 
 ---
 
