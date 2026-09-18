@@ -50,6 +50,7 @@ class PendienteModel {
       'repetir': p.repetir.comoTexto,
       'esta_completado': p.estaCompletado ? 1 : 0,
       'fecha_completado': p.fechaCompletado?.toIso8601String(),
+      'notificacion_id': p.notificacionId,
     };
   }
 }

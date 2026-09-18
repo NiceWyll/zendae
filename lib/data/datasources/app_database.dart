@@ -1,13 +1,12 @@
 import 'dart:io';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as p;
-import '../../domain/entities/hora_del_dia.dart';
-import '../../domain/entities/pendiente.dart';
-import '../../domain/entities/prioridad.dart';
 import '../models/pendiente_model.dart';
+import 'seed_data.dart';
 
 class AppDatabase {
   static final AppDatabase instance = AppDatabase();
+  static const int _version = 2;
   Database? _database;
 
   AppDatabase({Database? db}) : _database = db;
@@ -28,7 +27,6 @@ class AppDatabase {
     String dbFullPath;
 
     if (Platform.isWindows) {
-      // En Windows usamos APPDATA directamente de dart:io (sin canales nativos, 100% seguro)
       final appData = Platform.environment['APPDATA'] ?? Platform.environment['USERPROFILE'] ?? '.';
       final folder = Directory(p.join(appData, 'MiPendiente'));
       if (!await folder.exists()) {
@@ -36,22 +34,22 @@ class AppDatabase {
       }
       dbFullPath = p.join(folder.path, filePath);
     } else {
-      // En Android e iOS usamos el getDatabasesPath estándar de sqflite
       final dbPath = await getDatabasesPath();
       dbFullPath = p.join(dbPath, filePath);
     }
 
     final db = await openDatabase(
       dbFullPath,
-      version: 1,
+      version: _version,
       onCreate: _createDB,
+      onUpgrade: _onUpgrade,
     );
 
     // Si la tabla existe pero está vacía, sembrar los datos iniciales
     final countResult = await db.rawQuery('SELECT COUNT(*) as count FROM pendientes');
     final count = Sqflite.firstIntValue(countResult) ?? 0;
     if (count == 0) {
-      await _seedInitialData(db);
+      await sembrarDatos(db);
     }
 
     return db;
@@ -71,118 +69,28 @@ class AppDatabase {
         minutos_antes INTEGER NOT NULL,
         repetir TEXT NOT NULL,
         esta_completado INTEGER NOT NULL,
-        fecha_completado TEXT
+        fecha_completado TEXT,
+        notificacion_id INTEGER
       )
     ''');
 
-    await _seedInitialData(db);
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_pendientes_fecha ON pendientes(fecha);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_pendientes_completado ON pendientes(esta_completado);');
+
+    await sembrarDatos(db);
   }
 
-  Future<void> _seedInitialData(Database db) async {
-    final now = DateTime.now();
-    final todayStr = DateTime(now.year, now.month, now.day);
-    final yesterdayStr = todayStr.subtract(const Duration(days: 1));
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE pendientes ADD COLUMN notificacion_id INTEGER;');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_pendientes_fecha ON pendientes(fecha);');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_pendientes_completado ON pendientes(esta_completado);');
+    }
+  }
 
-    final initialTasks = [
-      Pendiente(
-        id: '1',
-        titulo: 'Revisar correos',
-        descripcion: 'Responder mensajes prioritarios y archivar newsletters.',
-        fecha: todayStr,
-        hora: const HoraDelDia(hora: 8, minuto: 0),
-        prioridad: Prioridad.alta,
-        tieneRecordatorio: true,
-        minutosAntes: 10,
-        estaCompletado: false,
-      ),
-      Pendiente(
-        id: '2',
-        titulo: 'Reunión con equipo',
-        descripcion: 'Revisar avances del proyecto y definir próximos pasos.',
-        fecha: todayStr,
-        hora: const HoraDelDia(hora: 10, minuto: 30),
-        prioridad: Prioridad.media,
-        tieneRecordatorio: true,
-        minutosAntes: 15,
-        estaCompletado: true,
-        fechaCompletado: todayStr,
-      ),
-      Pendiente(
-        id: '3',
-        titulo: 'Comprar materiales',
-        descripcion: 'Adquirir libretas y suministros de oficina.',
-        fecha: todayStr,
-        hora: const HoraDelDia(hora: 15, minuto: 0),
-        prioridad: Prioridad.baja,
-        tieneRecordatorio: false,
-        minutosAntes: 10,
-        estaCompletado: false,
-      ),
-      Pendiente(
-        id: '4',
-        titulo: 'Hacer ejercicio',
-        descripcion: 'Rutina de cardio y estiramiento por 45 minutos.',
-        fecha: todayStr,
-        hora: const HoraDelDia(hora: 18, minuto: 30),
-        prioridad: Prioridad.baja,
-        tieneRecordatorio: true,
-        minutosAntes: 30,
-        estaCompletado: false,
-      ),
-      // Completados
-      Pendiente(
-        id: 'c1',
-        titulo: 'Enviar reporte semanal',
-        descripcion: 'Reporte consolidado de métricas al supervisor.',
-        fecha: todayStr,
-        hora: const HoraDelDia(hora: 9, minuto: 15),
-        prioridad: Prioridad.media,
-        estaCompletado: true,
-        fechaCompletado: todayStr,
-      ),
-      Pendiente(
-        id: 'c2',
-        titulo: 'Comprar pasajes',
-        descripcion: 'Boletos de avión para el viaje de trabajo.',
-        fecha: todayStr,
-        hora: const HoraDelDia(hora: 11, minuto: 30),
-        prioridad: Prioridad.alta,
-        estaCompletado: true,
-        fechaCompletado: todayStr,
-      ),
-      Pendiente(
-        id: 'c3',
-        titulo: 'Llamar al banco',
-        descripcion: 'Confirmar recepción de transferencia internacional.',
-        fecha: todayStr,
-        hora: const HoraDelDia(hora: 16, minuto: 45),
-        prioridad: Prioridad.baja,
-        estaCompletado: true,
-        fechaCompletado: todayStr,
-      ),
-      Pendiente(
-        id: 'c4',
-        titulo: 'Revisar presentación',
-        descripcion: 'Diapositivas finales con diseño corporativo.',
-        fecha: yesterdayStr,
-        hora: const HoraDelDia(hora: 10, minuto: 20),
-        prioridad: Prioridad.media,
-        estaCompletado: true,
-        fechaCompletado: yesterdayStr,
-      ),
-      Pendiente(
-        id: 'c5',
-        titulo: 'Pagar servicios',
-        descripcion: 'Luz, internet y agua potable del mes.',
-        fecha: yesterdayStr,
-        hora: const HoraDelDia(hora: 18, minuto: 30),
-        prioridad: Prioridad.alta,
-        estaCompletado: true,
-        fechaCompletado: yesterdayStr,
-      ),
-    ];
-
-    for (var task in initialTasks) {
+  Future<void> sembrarDatos(Database db) async {
+    final tasks = SeedData.obtenerPendientesIniciales();
+    for (final task in tasks) {
       await db.insert('pendientes', PendienteModel.toMap(task));
     }
   }

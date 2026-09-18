@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/error/result.dart';
 import '../../core/providers/database_providers.dart';
 import '../../core/providers/notification_providers.dart';
 import '../../data/datasources/app_database.dart';
@@ -53,12 +54,13 @@ class PendientesNotifier extends StateNotifier<PendientesState> {
   }
 
   Future<void> cargarPendientes() async {
-    try {
-      state = state.copyWith(isLoading: true, errorMessage: null);
-      final list = await repository.getPendientes();
-      state = state.copyWith(pendientes: list, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    final result = await repository.getPendientes();
+    switch (result) {
+      case Exito(:final valor):
+        state = state.copyWith(pendientes: valor, isLoading: false);
+      case Fallo(:final failure):
+        state = state.copyWith(isLoading: false, errorMessage: failure.mensaje);
     }
   }
 
@@ -67,7 +69,11 @@ class PendientesNotifier extends StateNotifier<PendientesState> {
   }
 
   Future<void> alternarCompletado(String id, bool valor) async {
-    await repository.alternarCompletado(id, valor);
+    final res = await repository.alternarCompletado(id, valor);
+    if (res case Fallo(:final failure)) {
+      state = state.copyWith(errorMessage: failure.mensaje);
+      return;
+    }
     if (valor) {
       await notifications.cancelarRecordatorioPorIdString(id);
     } else {
@@ -80,7 +86,11 @@ class PendientesNotifier extends StateNotifier<PendientesState> {
   }
 
   Future<void> crearPendiente(Pendiente pendiente) async {
-    await repository.insertarPendiente(pendiente);
+    final res = await repository.insertarPendiente(pendiente);
+    if (res case Fallo(:final failure)) {
+      state = state.copyWith(errorMessage: failure.mensaje);
+      return;
+    }
     if (pendiente.tieneRecordatorio) {
       await notifications.programarRecordatorioPendiente(pendiente);
     }
@@ -88,7 +98,11 @@ class PendientesNotifier extends StateNotifier<PendientesState> {
   }
 
   Future<void> actualizarPendiente(Pendiente pendiente) async {
-    await repository.actualizarPendiente(pendiente);
+    final res = await repository.actualizarPendiente(pendiente);
+    if (res case Fallo(:final failure)) {
+      state = state.copyWith(errorMessage: failure.mensaje);
+      return;
+    }
     if (pendiente.tieneRecordatorio && !pendiente.estaCompletado) {
       await notifications.programarRecordatorioPendiente(pendiente);
     } else {
@@ -98,7 +112,11 @@ class PendientesNotifier extends StateNotifier<PendientesState> {
   }
 
   Future<void> eliminarPendiente(String id) async {
-    await repository.eliminarPendiente(id);
+    final res = await repository.eliminarPendiente(id);
+    if (res case Fallo(:final failure)) {
+      state = state.copyWith(errorMessage: failure.mensaje);
+      return;
+    }
     await notifications.cancelarRecordatorioPorIdString(id);
     await cargarPendientes();
   }
@@ -107,7 +125,11 @@ class PendientesNotifier extends StateNotifier<PendientesState> {
     final task = state.pendientes.firstWhere((p) => p.id == id);
     final manana = task.fecha.add(const Duration(days: 1));
     final updated = task.copyWith(fecha: manana);
-    await repository.actualizarPendiente(updated);
+    final res = await repository.actualizarPendiente(updated);
+    if (res case Fallo(:final failure)) {
+      state = state.copyWith(errorMessage: failure.mensaje);
+      return;
+    }
     if (updated.tieneRecordatorio && !updated.estaCompletado) {
       await notifications.programarRecordatorioPendiente(updated);
     }
@@ -115,7 +137,11 @@ class PendientesNotifier extends StateNotifier<PendientesState> {
   }
 
   Future<void> restaurarCompletado(String id) async {
-    await repository.alternarCompletado(id, false);
+    final res = await repository.alternarCompletado(id, false);
+    if (res case Fallo(:final failure)) {
+      state = state.copyWith(errorMessage: failure.mensaje);
+      return;
+    }
     final task = state.pendientes.where((p) => p.id == id).firstOrNull;
     if (task != null && task.tieneRecordatorio) {
       await notifications.programarRecordatorioPendiente(task);
@@ -124,7 +150,11 @@ class PendientesNotifier extends StateNotifier<PendientesState> {
   }
 
   Future<void> eliminarTodosCompletados() async {
-    await repository.eliminarCompletados();
+    final res = await repository.eliminarCompletados();
+    if (res case Fallo(:final failure)) {
+      state = state.copyWith(errorMessage: failure.mensaje);
+      return;
+    }
     await cargarPendientes();
   }
 }

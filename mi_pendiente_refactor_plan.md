@@ -659,10 +659,10 @@ Los dos índices son gratis y aceleran directamente las vistas Hoy, Mes y Comple
 **3. Datos semilla fuera de `AppDatabase`:** muévelos a `data/datasources/seed_data.dart` y ejecútalos desde un `SembrarDatosIniciales` invocado en el bootstrap. Así puedes desactivarlos con un flag sin tocar la clase de base de datos.
 
 ### Criterio de completado ✅
-- [ ] Ningún método del repositorio lanza excepciones hacia arriba
-- [ ] Instalar la versión nueva sobre la anterior **no pierde datos** (probar con la app ya instalada, no en emulador limpio)
-- [ ] Cancelar el recordatorio de una tarea no afecta a ninguna otra
-- [ ] Crear/completar/eliminar/posponer siguen funcionando idénticamente
+- [x] Ningún método del repositorio lanza excepciones hacia arriba
+- [x] Instalar la versión nueva sobre la anterior **no pierde datos** (probar con la app ya instalada, no en emulador limpio)
+- [x] Cancelar el recordatorio de una tarea no afecta a ninguna otra
+- [x] Crear/completar/eliminar/posponer siguen funcionando idénticamente
 
 ---
 

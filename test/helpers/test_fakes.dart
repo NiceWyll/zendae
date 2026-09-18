@@ -1,3 +1,4 @@
+import 'package:mi_pendiente/core/error/result.dart';
 import 'package:mi_pendiente/domain/entities/pendiente.dart';
 import 'package:mi_pendiente/domain/repositories/pendiente_repository.dart';
 import 'package:mi_pendiente/domain/services/notification_scheduler.dart';
@@ -7,38 +8,48 @@ class FakeRepository implements PendienteRepository {
   FakeRepository([List<Pendiente>? pendientes]) : _pendientes = pendientes != null ? List.from(pendientes) : [];
 
   @override
-  Future<List<Pendiente>> getPendientes() async => List.unmodifiable(_pendientes);
+  Future<Result<List<Pendiente>>> getPendientes() async =>
+      Exito(List.unmodifiable(_pendientes));
 
   @override
-  Future<List<Pendiente>> getPendientesPorFecha(DateTime fecha) async => _pendientes;
+  Future<Result<List<Pendiente>>> getPendientesPorFecha(DateTime fecha) async =>
+      Exito(_pendientes);
 
   @override
-  Future<List<Pendiente>> getPendientesPorRango(DateTime inicio, DateTime fin) async => _pendientes;
+  Future<Result<List<Pendiente>>> getPendientesPorRango(DateTime inicio, DateTime fin) async =>
+      Exito(_pendientes);
 
   @override
-  Future<List<Pendiente>> getPendientesCompletados() async =>
-      _pendientes.where((p) => p.estaCompletado).toList();
+  Future<Result<List<Pendiente>>> getPendientesCompletados() async =>
+      Exito(_pendientes.where((p) => p.estaCompletado).toList());
 
   @override
-  Future<Pendiente?> getPendientePorId(String id) async =>
-      _pendientes.where((p) => p.id == id).firstOrNull;
+  Future<Result<Pendiente?>> getPendientePorId(String id) async =>
+      Exito(_pendientes.where((p) => p.id == id).firstOrNull);
 
   @override
-  Future<void> insertarPendiente(Pendiente pendiente) async => _pendientes.add(pendiente);
+  Future<Result<void>> insertarPendiente(Pendiente pendiente) async {
+    _pendientes.add(pendiente);
+    return const Exito(null);
+  }
 
   @override
-  Future<void> actualizarPendiente(Pendiente pendiente) async {
+  Future<Result<void>> actualizarPendiente(Pendiente pendiente) async {
     final idx = _pendientes.indexWhere((p) => p.id == pendiente.id);
     if (idx != -1) {
       _pendientes[idx] = pendiente;
     }
+    return const Exito(null);
   }
 
   @override
-  Future<void> eliminarPendiente(String id) async => _pendientes.removeWhere((p) => p.id == id);
+  Future<Result<void>> eliminarPendiente(String id) async {
+    _pendientes.removeWhere((p) => p.id == id);
+    return const Exito(null);
+  }
 
   @override
-  Future<void> alternarCompletado(String id, bool completado) async {
+  Future<Result<void>> alternarCompletado(String id, bool completado) async {
     final idx = _pendientes.indexWhere((p) => p.id == id);
     if (idx != -1) {
       _pendientes[idx] = _pendientes[idx].copyWith(
@@ -46,11 +57,14 @@ class FakeRepository implements PendienteRepository {
         fechaCompletado: completado ? DateTime.now() : null,
       );
     }
+    return const Exito(null);
   }
 
   @override
-  Future<void> eliminarCompletados() async =>
-      _pendientes.removeWhere((p) => p.estaCompletado);
+  Future<Result<void>> eliminarCompletados() async {
+    _pendientes.removeWhere((p) => p.estaCompletado);
+    return const Exito(null);
+  }
 }
 
 class FakeNotificationScheduler implements NotificationScheduler {
