@@ -17,10 +17,13 @@ class DetallePendienteScreen extends ConsumerWidget {
     final state = ref.watch(pendientesProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final pendiente = state.pendientes.firstWhere(
-      (p) => p.id == pendienteId,
-      orElse: () => throw Exception('Pendiente no encontrado'),
-    );
+    final pendiente = state.pendientes.where((p) => p.id == pendienteId).firstOrNull;
+    if (pendiente == null) {
+      if (state.isLoading) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
+      return const Scaffold(body: Center(child: Text('Pendiente no encontrado')));
+    }
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
@@ -340,9 +343,11 @@ class DetallePendienteScreen extends ConsumerWidget {
           width: 1.2,
         ),
       ),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+      child: Material(
+        type: MaterialType.transparency,
+        child: ListTile(
+          onTap: onTap,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
         leading: Icon(icon, color: color, size: 22),
         title: Text(
           label,
@@ -358,8 +363,9 @@ class DetallePendienteScreen extends ConsumerWidget {
           size: 20,
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _confirmarEliminacion(BuildContext context, WidgetRef ref, String id) {
     showDialog(
