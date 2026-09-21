@@ -218,6 +218,14 @@ class _MesScreenState extends ConsumerState<MesScreen> {
 
     final List<Widget> dayWidgets = [];
 
+    // Pre-indexar tareas del mes actual por día para búsqueda O(1) instantánea
+    final Map<int, List<Pendiente>> tasksByDay = {};
+    for (final task in allTasks) {
+      if (task.fecha.year == _currentMonth.year && task.fecha.month == _currentMonth.month) {
+        tasksByDay.putIfAbsent(task.fecha.day, () => []).add(task);
+      }
+    }
+
     // Días del mes anterior
     for (int i = startingWeekday - 1; i > 0; i--) {
       final dayNumber = prevMonthDays - i + 1;
@@ -230,10 +238,8 @@ class _MesScreenState extends ConsumerState<MesScreen> {
       final isSelected = DateTimeUtils.isSameDay(thisDate, selectedDate);
       final isToday = DateTimeUtils.isToday(thisDate);
 
-      // Buscar si este día tiene tareas y sus prioridades
-      final tasksOnThisDay = allTasks.where((t) {
-        return DateTimeUtils.isSameDay(t.fecha, thisDate);
-      }).toList();
+      // Búsqueda O(1) sin recorrer la lista completa
+      final tasksOnThisDay = tasksByDay[d] ?? const <Pendiente>[];
 
       dayWidgets.add(
         InkWell(

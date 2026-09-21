@@ -112,7 +112,7 @@ class NlpIaDatasource implements IaDatasource {
           '• "Comprar fruta el viernes a las 10:30"\n'
           '• "Hacer ejercicio todos los días a las 7am"';
     }
-    return '¡Hola! Soy tu asistente de Mi Pendiente ✨. ¿Qué tarea o recordatorio te gustaría registrar hoy?';
+    return '¡Hola! Soy tu asistente de Zendae ✨. ¿Qué tarea o recordatorio te gustaría registrar hoy?';
   }
 
   Prioridad _extraerPrioridad(String text) {

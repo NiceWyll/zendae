@@ -120,13 +120,13 @@ class NotificationServiceImpl implements NotificationScheduler {
         priority: Priority.high,
         playSound: true,
         enableVibration: true,
-        ticker: 'Recordatorio de Mi Pendiente',
+        ticker: 'Recordatorio de Zendae',
         category: AndroidNotificationCategory.reminder,
         icon: '@mipmap/ic_launcher',
         styleInformation: BigTextStyleInformation(
           cuerpo,
           contentTitle: titulo,
-          summaryText: 'Mi Pendiente',
+          summaryText: 'Zendae',
         ),
       );
 
@@ -260,6 +260,68 @@ class NotificationServiceImpl implements NotificationScheduler {
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         payload: payload,
       );
+    }
+  }
+
+  static const int idResumenMatutino = 8888;
+
+  @override
+  Future<void> programarResumenDiario({
+    required int notificacionId,
+    required String titulo,
+    required String cuerpo,
+    required int hora,
+    required int minuto,
+  }) async {
+    try {
+      final now = tz.TZDateTime.now(tz.local);
+      var scheduledDate = tz.TZDateTime(
+        tz.local,
+        now.year,
+        now.month,
+        now.day,
+        hora,
+        minuto,
+      );
+
+      if (scheduledDate.isBefore(now)) {
+        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      }
+
+      const androidDetails = AndroidNotificationDetails(
+        channelId,
+        channelName,
+        channelDescription: channelDesc,
+        importance: Importance.max,
+        priority: Priority.high,
+        playSound: true,
+        enableVibration: true,
+        category: AndroidNotificationCategory.reminder,
+        icon: '@mipmap/ic_launcher',
+      );
+
+      const details = NotificationDetails(
+        android: androidDetails,
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      );
+
+      await _plugin.zonedSchedule(
+        id: notificacionId,
+        title: titulo,
+        body: cuerpo,
+        scheduledDate: scheduledDate,
+        notificationDetails: details,
+        matchDateTimeComponents: DateTimeComponents.time,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        payload: 'resumen_matutino',
+      );
+      debugPrint('🌅 Resumen matutino agendado para $hora:${minuto.toString().padLeft(2, '0')} (ID: $notificacionId)');
+    } catch (e) {
+      debugPrint('⚠️ Error al programar resumen diario: $e');
     }
   }
 

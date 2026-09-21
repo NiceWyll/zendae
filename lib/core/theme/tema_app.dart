@@ -41,10 +41,10 @@ class TemasDisponibles {
   static const TemaApp clasico = TemaApp(
     id: 'clasico',
     nombre: 'Azul Clásico',
-    descripcion: 'Equilibrio profesional y limpio en tonos zafiro',
-    colorPrimario: Color(0xFF2563EB),
-    colorSecundario: Color(0xFF3B82F6),
-    colorAcento: Color(0xFF60A5FA),
+    descripcion: 'Equilibrio profesional y limpio en tonos azul marino profundo',
+    colorPrimario: Color(0xFF162032),
+    colorSecundario: Color(0xFF60A5FA),
+    colorAcento: Color(0xFF93C5FD),
   );
 
   static const TemaApp esmeralda = TemaApp(

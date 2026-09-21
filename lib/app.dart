@@ -11,13 +11,11 @@ class MiPendienteApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    debugPrint('🚀🚀🚀 MI_PENDIENTE_APP BUILD CALLED 🚀🚀🚀');
     final ajustes = ref.watch(ajustesProvider);
     final tema = TemasDisponibles.obtenerPorId(ajustes.temaId);
-    debugPrint('🚀🚀🚀 AJUSTES OBTAINED: ${ajustes.themeMode} / Tema: ${tema.nombre} 🚀🚀🚀');
 
     return MaterialApp(
-      title: 'Mi Pendiente',
+      title: 'Zendae',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.crearThemeData(tema, false),
       darkTheme: AppTheme.crearThemeData(tema, true),

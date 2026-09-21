@@ -25,18 +25,37 @@ class DateTimeUtils {
   }
 
   static String formatTime(dynamic time) {
+    int hour = 0;
+    int minute = 0;
     if (time is TimeOfDay) {
-      final hour = time.hour.toString().padLeft(2, '0');
-      final minute = time.minute.toString().padLeft(2, '0');
-      return '$hour:$minute';
+      hour = time.hour;
+      minute = time.minute;
+    } else if (time is DateTime) {
+      hour = time.hour;
+      minute = time.minute;
+    } else if (time != null) {
+      final str = time.toString();
+      final partes = str.split(':');
+      if (partes.length >= 2) {
+        hour = int.tryParse(partes[0].trim()) ?? 0;
+        final minutePart = partes[1].trim().split(' ')[0];
+        minute = int.tryParse(minutePart) ?? 0;
+      } else {
+        return str;
+      }
+    } else {
+      return '';
     }
-    return time.toString();
+
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final hour12 = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+    final hourStr = hour12.toString().padLeft(2, '0');
+    final minuteStr = minute.toString().padLeft(2, '0');
+    return '$hourStr:$minuteStr $period';
   }
 
   static String formatTimeOfDayString(DateTime dateTime) {
-    final hour = dateTime.hour.toString().padLeft(2, '0');
-    final minute = dateTime.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
+    return formatTime(dateTime);
   }
 
   static String getDayNameShort(DateTime date) {

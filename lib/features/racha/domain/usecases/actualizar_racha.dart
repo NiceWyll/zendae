@@ -12,7 +12,7 @@ class ActualizarRacha {
 
   Future<Result<Racha>> call() async {
     final ahora = _reloj.ahora();
-    final hoy = DateTime(ahora.year, ahora.month, ahora.day);
+    final hoyUtc = DateTime.utc(ahora.year, ahora.month, ahora.day);
     final res = await _repo.obtenerRacha();
     final actual = switch (res) {
       Exito(:final valor) => valor,
@@ -25,8 +25,8 @@ class ActualizarRacha {
     if (ultima == null) {
       nuevosDias = 1;
     } else {
-      final ultimaSoloFecha = DateTime(ultima.year, ultima.month, ultima.day);
-      final diferenciaDias = hoy.difference(ultimaSoloFecha).inDays;
+      final ultimaUtc = DateTime.utc(ultima.year, ultima.month, ultima.day);
+      final diferenciaDias = hoyUtc.difference(ultimaUtc).inDays;
 
       if (diferenciaDias == 0) {
         // Ya completó una tarea hoy: no incrementa dos veces el mismo día

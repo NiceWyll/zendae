@@ -19,6 +19,7 @@ void main() {
   });
 
   testWidgets('MiPendienteApp inicia correctamente', (WidgetTester tester) async {
+    await testPrefs.setBool('ha_visto_onboarding', true);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -31,7 +32,7 @@ void main() {
     );
 
     // Verifica que el título inicial aparezca en el Splash
-    expect(find.text('Mi Pendiente'), findsOneWidget);
+    expect(find.text('Zendae'), findsOneWidget);
     expect(find.text('Organiza tu día, semana y mes'), findsOneWidget);
 
     // Avanza el tiempo pasando el Timer del splash
@@ -63,7 +64,7 @@ void main() {
 
     // Verifica que exista la fila de Hora
     expect(find.text('Hora'), findsOneWidget);
-    expect(find.text('10:30'), findsOneWidget);
+    expect(find.text('10:30 AM'), findsOneWidget);
 
     // Toca el selector de Hora
     await tester.tap(find.text('Hora'));
@@ -71,9 +72,11 @@ void main() {
 
     // Verifica que se abra el BottomSheet estilo alarma
     expect(find.text('Ajustar Hora'), findsOneWidget);
-    expect(find.text('Desliza las ruedas para configurar tu hora preferida'), findsOneWidget);
-    expect(find.text('HORA (0-23)'), findsOneWidget);
+    expect(find.text('Desliza las ruedas y elige AM o PM'), findsOneWidget);
+    expect(find.text('HORA (1-12)'), findsOneWidget);
     expect(find.text('MINUTOS (0-59)'), findsOneWidget);
+    expect(find.text('AM'), findsNWidgets(2));
+    expect(find.text('PM'), findsOneWidget);
     expect(find.text('Confirmar hora'), findsOneWidget);
 
     // Verifica que los cuadros fijos anteriores (chips) NO existan

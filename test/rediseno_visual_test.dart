@@ -154,7 +154,7 @@ void main() {
 
       // Verifica título y hora
       expect(find.text('Diseñar nueva interfaz'), findsOneWidget);
-      expect(find.text('10:30'), findsOneWidget);
+      expect(find.text('10:30 AM'), findsOneWidget);
 
       // Tap en la tarjeta
       await tester.tap(find.text('Diseñar nueva interfaz'));
@@ -186,8 +186,8 @@ void main() {
     });
   });
 
-  group('Fase 11: SplashScreen - Integración visual con racha', () {
-    testWidgets('SplashScreen renderiza título, calendario y badge de racha activa', (tester) async {
+  group('Fase 11: SplashScreen - Identidad visual oficial', () {
+    testWidgets('SplashScreen renderiza título y subtítulo oficial', (tester) async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
 
@@ -225,9 +225,8 @@ void main() {
 
       await tester.pump();
 
-      expect(find.text('Mi Pendiente'), findsOneWidget);
+      expect(find.text('Zendae'), findsOneWidget);
       expect(find.text('Organiza tu día, semana y mes'), findsOneWidget);
-      expect(find.text('Racha activa: 7 días'), findsOneWidget);
 
       // Avanzar timers para liberar recursos del splash
       await tester.pump(const Duration(seconds: 3));

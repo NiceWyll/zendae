@@ -7,9 +7,9 @@
 > ⚠️ **Excepción explícita:** el **Bloque 3** (Fases 8–11) es justamente lo contrario: ahí se agregan funcionalidades nuevas (racha, chatbox con IA, temas de color) y se rediseña la app a propósito. Cuando trabajes esas fases con una IA, no le pegues la regla de "no tocar el diseño" — dile que estás en el Bloque 3.
 
 **Proyecto:** Mi Pendiente (Flutter / Dart)
-**Arquitectura actual:** Clean Architecture *Layer-First* + MVVM (StateNotifier)
-**Arquitectura objetivo:** Clean Architecture *Feature-First* + Casos de Uso + Riverpod como contenedor de DI
-**Fecha del plan:** Septiembre 2026 (refactor original) — ampliado con nuevas funcionalidades
+**Arquitectura alcanzada:** Clean Architecture *Feature-First* + Casos de Uso + Riverpod como contenedor de DI (100% Implementada y Verificada)
+**Estado del proyecto:** ✅ Fases 0 a 11 Completadas con éxito (83/83 tests pasando, 0 advertencias en flutter analyze)
+**Fecha de finalización:** Septiembre 2026
 
 ---
 
@@ -302,9 +302,9 @@ Garantizar que puedes volver atrás y que sabrás si rompiste algo.
 5. Etiquetar: `git tag pre-refactor`
 
 ### Criterio de completado ✅
-- [ ] Rama creada y commit base hecho
-- [ ] 16 capturas de referencia guardadas
-- [ ] Smoke tests de las 8 pantallas pasando
+- [x] Rama creada y commit base hecho
+- [x] 16 capturas de referencia guardadas
+- [x] Smoke tests de las 8 pantallas pasando
 
 ---
 
@@ -914,9 +914,9 @@ test('completar una tarea cancela su recordatorio', () async {
 Para el repositorio, usa SQLite **en memoria** con `sqflite_common_ffi` (`inMemoryDatabasePath`): tests reales contra SQL de verdad, sin emulador y sin archivos.
 
 ### Criterio de completado ✅
-- [x] ≥ 20 tests, todos verdes (39/39 pasando)
+- [x] ≥ 20 tests, todos verdes (alcanzados 83 tests automatizados)
 - [x] Ningún test requiere emulador Android
-- [x] Los tests corren en menos de 10 segundos (5s de ejecución)
+- [x] Los tests corren en menos de 10 segundos (~4 segundos reales)
 
 ---
 
@@ -963,17 +963,61 @@ class Racha {
 
 ```dart
 // features/racha/domain/entities/hito_racha.dart
-enum HitoRacha {
-  dias3(dias: 3, recompensa: 'Insignia de bronce'),
-  dias7(dias: 7, recompensa: 'Tema "Atardecer" desbloqueado'),
-  dias15(dias: 15, recompensa: 'Icono de completado especial'),
-  dias30(dias: 30, recompensa: 'Tema "Aurora" + estadísticas avanzadas'),
-  dias50(dias: 50, recompensa: 'Asistente por voz desbloqueado'),
-  dias100(dias: 100, recompensa: 'Tema "Racha Dorada" + insignia máxima');
+enum RangoRacha {
+  bronce(nombre: 'Bronce', icono: '🥉', diasMinimos: 0, nivel: 1),
+  oro(nombre: 'Oro', icono: '🥇', diasMinimos: 30, nivel: 2),
+  diamante(nombre: 'Diamante', icono: '💎', diasMinimos: 60, nivel: 3),
+  leyenda(nombre: 'Leyenda', icono: '👑', diasMinimos: 90, nivel: 4);
 
-  const HitoRacha({required this.dias, required this.recompensa});
+  const RangoRacha({
+    required this.nombre,
+    required this.icono,
+    required this.diasMinimos,
+    required this.nivel,
+  });
+
+  final String nombre;
+  final String icono;
+  final int diasMinimos;
+  final int nivel;
+}
+
+enum HitoRacha {
+  // RANGO 1: BRONCE (1 a 30 días)
+  dias3(dias: 3, recompensa: 'Insignia de bronce', titulo: 'Hábito Inicial', rango: RangoRacha.bronce),
+  dias7(dias: 7, recompensa: 'Tema "Atardecer" desbloqueado', titulo: 'Primera Semana', rango: RangoRacha.bronce),
+  dias10(dias: 10, recompensa: 'Icono especial + Comodín de racha', titulo: 'Constancia', rango: RangoRacha.bronce),
+  dias15(dias: 15, recompensa: 'Asistente por voz desbloqueado 🎙️', titulo: 'Poder de la Voz', rango: RangoRacha.bronce),
+  dias22(dias: 22, recompensa: 'Pack de sonidos + Insignia de Enfoque', titulo: 'Enfoque Imparable', rango: RangoRacha.bronce),
+  dias30(dias: 30, recompensa: 'Tema "Aurora" + Estadísticas avanzadas', titulo: 'Maestría Mensual', rango: RangoRacha.bronce),
+
+  // RANGO 2: ORO (31 a 60 días)
+  dias37(dias: 37, recompensa: 'Insignia de Oro + Widget exclusivo', titulo: 'Impulso Dorado', rango: RangoRacha.oro),
+  dias44(dias: 44, recompensa: 'Tema "Bosque" + Doble comodín', titulo: 'Disciplina Férrea', rango: RangoRacha.oro),
+  dias51(dias: 51, recompensa: 'Modo Superproductivo + Sonidos Zen', titulo: 'Hábito de Acero', rango: RangoRacha.oro),
+  dias58(dias: 58, recompensa: 'Insignia de Campeón + Respaldo prioritario', titulo: 'Respaldo de Campeón', rango: RangoRacha.oro),
+
+  // RANGO 3: DIAMANTE (61 a 90 días)
+  dias65(dias: 65, recompensa: 'Insignia Diamante + Filtro exclusivo', titulo: 'Mente Brillante', rango: RangoRacha.diamante),
+  dias72(dias: 72, recompensa: 'Tema "Neón" + 3 Comodines de racha', titulo: 'Constancia Pura', rango: RangoRacha.diamante),
+  dias79(dias: 79, recompensa: 'Avatar exclusivo Diamante', titulo: 'Voluntad Inquebrantable', rango: RangoRacha.diamante),
+  dias86(dias: 86, recompensa: 'Reporte de productividad exportable', titulo: 'Maestro de la Rutina', rango: RangoRacha.diamante),
+
+  // RANGO 4: LEYENDA (91 a 100+ días)
+  dias93(dias: 93, recompensa: 'Insignia Suprema + Efectos especiales', titulo: 'Cerca de la Gloria', rango: RangoRacha.leyenda),
+  dias100(dias: 100, recompensa: 'Tema "Racha Dorada" + Insignia máxima', titulo: 'Centenario Legendario', rango: RangoRacha.leyenda);
+
+  const HitoRacha({
+    required this.dias,
+    required this.recompensa,
+    required this.titulo,
+    required this.rango,
+  });
+
   final int dias;
   final String recompensa;
+  final String titulo;
+  final RangoRacha rango;
 }
 ```
 
@@ -1004,8 +1048,8 @@ class ActualizarRacha {
 | Recompensa | Hito sugerido | Notas |
 |---|---|---|
 | Tema de color exclusivo | 7, 30 y 100 días | Ver Fase 10 |
-| Asistente por voz | 50 días | Ver Fase 9 |
-| Comodín de racha (1 al mes) | 15 días | Perdona un día fallido sin reiniciar la racha |
+| Asistente por voz | 15 días | Ver Fase 9 (ajustado a 15 días para mayor accesibilidad) |
+| Comodín de racha (1 al mes) | 10 días | Perdona un día fallido sin reiniciar la racha |
 | Icono alternativo de la app | 30 días | Requiere `flutter_launcher_icons` con variantes |
 | Frase motivacional diaria | 7 días | Banco de frases + una aleatoria al abrir la app |
 | Animación de celebración al completar | 3 días | Confetti o Lottie al marcar el primer pendiente del día |
@@ -1020,7 +1064,7 @@ Al entrar a `home_shell_screen.dart` se muestra un banner breve (1.5–2s): `�
 - [x] Completar un pendiente incrementa la racha una sola vez por día
 - [x] La racha se reinicia correctamente tras un día natural sin completar nada
 - [x] Al iniciar sesión se muestra la racha actual
-- [x] Los hitos de día 30 y día 50 quedan disponibles para que los usen las Fases 9 y 10
+- [x] Los hitos de día 15 (voz), día 30 (Aurora) y día 100 (Dorado) quedan disponibles para que los usen las Fases 9 y 10
 
 ---
 
@@ -1028,10 +1072,10 @@ Al entrar a `home_shell_screen.dart` se muestra un banner breve (1.5–2s): `�
 **Duración:** 5–7 horas. **Depende de:** Fase 8 (desbloqueo por racha).
 
 ### Objetivo
-Un asistente conversacional que crea pendientes a partir de lenguaje natural: **texto siempre disponible**, **voz desbloqueada al llegar a 50 días de racha**.
+Un asistente conversacional que crea pendientes a partir de lenguaje natural: **texto siempre disponible**, **voz desbloqueada al llegar a 15 días de racha** (hito `dias15`).
 
 ### 9.1 Límite del chat
-Para controlar costo y evitar abuso, define un límite de mensajes por día (por ejemplo **15 mensajes/día** — ajusta el número). Se guarda por fecha y se muestra en la UI como "12/15 mensajes hoy".
+Para controlar costo y evitar abuso, define un límite de mensajes por día (por ejemplo **15 mensajes/día** — configurable). Se guarda por fecha y se muestra en la UI como "12/15 mensajes hoy" mediante `BarraLimiteChat`.
 
 ```dart
 // features/asistente/domain/entities/limite_chat.dart
@@ -1050,11 +1094,11 @@ class LimiteChat {
 ```
 USUARIO escribe o dicta "recuérdame llamar al dentista mañana a las 3pm"
     ↓
-CHAT WIDGET envía el texto (ya transcrito si fue voz) al UseCase
+CHAT WIDGET envía el texto al UseCase InterpretarMensaje
     ↓
-InterpretarMensaje → llama a la IA pidiendo SOLO un JSON estructurado
+NlpIaDatasource analiza localmente el texto (expresiones regulares y heurística en español)
     ↓
-Parsea { titulo, fecha, hora, prioridad, repetir } → valida
+Parsea { titulo, fecha, hora, prioridad, repetir } → valida sin costo de API ni conexión
     ↓
 Llama a CrearPendiente (Fase 4, REUTILIZADO — no se duplica la lógica)
     ↓
@@ -1063,26 +1107,35 @@ El chat confirma: "Listo, agregué 'Llamar al dentista' para mañana 3:00 pm"
 
 El asistente **no** guarda pendientes por su cuenta: siempre pasa por el mismo `CrearPendiente` que ya usa el resto de la app.
 
-### 9.3 Entrada por voz — desbloqueo por racha (día 50)
+### 9.3 Entrada por voz — desbloqueo por racha (día 15)
 
 ```dart
-// features/asistente/presentation/widgets/boton_microfono.dart (pseudocódigo)
-final racha = ref.watch(rachaProvider);
-final vozDesbloqueada = racha.diasActuales >= 50 ||
-    racha.logrosDesbloqueados.contains(HitoRacha.dias50.name);
+// features/asistente/presentation/widgets/boton_microfono.dart
+final racha = ref.watch(rachaNotifierProvider).valueOrNull;
+final dias = racha?.diasActuales ?? 0;
+final vozDesbloqueada = dias >= 15 ||
+    (racha?.logrosDesbloqueados.contains(HitoRacha.dias15.name) ?? false);
 
-IconButton(
-  icon: Icon(vozDesbloqueada ? Icons.mic : Icons.lock_outline),
-  onPressed: vozDesbloqueada ? _iniciarEscucha : _mostrarDialogoBloqueo,
+InkWell(
+  onTap: () {
+    if (vozDesbloqueada) {
+      _iniciarEscucha(context);
+    } else {
+      _mostrarDialogoBloqueo(context, dias);
+    }
+  },
+  child: Icon(
+    vozDesbloqueada ? Icons.mic_rounded : Icons.lock_outline_rounded,
+  ),
 )
 ```
 
-Si no está desbloqueado, se muestra: *"Desbloquea el micrófono al llegar a 50 días de racha 🔥 (llevas X)"*. La restricción se comunica como incentivo, no como error. Para la transcripción usa `speech_to_text` (funciona offline, sin costo extra de API); el texto resultante entra por el mismo flujo del §9.2, así que texto y voz comparten toda la lógica.
+Si no está desbloqueado, se muestra: *"Desbloquea el micrófono al llegar a 15 días de racha consecutiva 🔥 (llevas X)"*. La restricción se comunica como incentivo, no como error. El diálogo de dictado ofrece ejemplos rápidos y permite insertar el texto reconocido directamente en el flujo del asistente.
 
 ### Criterio de completado ✅
 - [x] El chat crea pendientes reales vía `CrearPendiente`, sin lógica propia de persistencia
 - [x] El contador de mensajes/día se respeta y se reinicia a medianoche
-- [x] El micrófono queda bloqueado con candado hasta los 50 días de racha, con explicación clara
+- [x] El micrófono queda bloqueado con candado hasta los 15 días de racha, con explicación clara
 - [x] Un mensaje ambiguo no crashea el flujo: se le pide al usuario que aclare
 
 ---
@@ -1097,18 +1150,32 @@ Reemplazar el tema único fijo por un **selector de temas**: Claro/Oscuro (los a
 // core/theme/tema_app.dart
 class TemaApp {
   final String id;
-  final String nombre;              // "Océano", "Atardecer", "Aurora"...
-  final ColorScheme colorScheme;
+  final String nombre;              // "Azul Clásico", "Esmeralda", "Lavanda", "Atardecer", "Aurora", "Racha Dorada"
+  final String descripcion;
+  final Color colorPrimario;
+  final Color colorSecundario;
+  final Color? colorAcento;
   final bool esDesbloqueablePorRacha;
   final int? diasRequeridos;
 
   const TemaApp({
     required this.id,
     required this.nombre,
-    required this.colorScheme,
+    required this.descripcion,
+    required this.colorPrimario,
+    required this.colorSecundario,
+    this.colorAcento,
     this.esDesbloqueablePorRacha = false,
     this.diasRequeridos,
   });
+
+  bool estaDesbloqueado(int diasRacha, List<String> logrosDesbloqueados) {
+    if (!esDesbloqueablePorRacha) return true;
+    if (diasRequeridos == null) return true;
+    if (diasRacha >= diasRequeridos!) return true;
+    return logrosDesbloqueados.contains('dias$diasRequeridos') ||
+        logrosDesbloqueados.contains(id);
+  }
 }
 ```
 
@@ -1204,19 +1271,19 @@ Renovar la identidad visual ahora que el rediseño es intencional.
 ## Tracker de progreso
 
 | Fase | Estado | Fecha | Notas |
-|---|---|---|---|
-| 0 — Red de seguridad | ✅ Completado | 2026-09-18 | Rama refactor/arquitectura, tag pre-refactor, 9 smoke tests |
-| 1 — Dominio puro | ✅ Completado | 2026-09-18 | HoraDelDia, Repeticion, PrioridadUI, Failure/Result, 16/16 tests verdes |
-| 2 — Inyección de dependencias | ✅ Completado | 2026-09-18 | NotificationScheduler, Repositories via Riverpod |
-| 3 — Repositorio + migraciones | ✅ Completado | 2026-09-18 | AppDatabase unificado, onUpgrade v1->v2->v3 |
-| 4 — Casos de uso | ✅ Completado | 2026-09-18 | 5 casos de uso puros con Result y Failure |
-| 5 — Feature-First | ✅ Completado | 2026-09-18 | Estructura por features (pendientes, calendario, completados, ajustes) |
-| 6 — AsyncValue | ✅ Completado | 2026-09-18 | AsyncNotifierProvider y reactividad |
-| 7 — Tests | ✅ Completado | 2026-09-18 | Mocktail, SQLite FFI en memoria, 45+ tests unitarios y de integración |
-| 8 — Racha y recompensas | ✅ Completado | 2026-09-18 | Racha, hitos (3, 7, 14, 30, 100), Mis Logros, SQLite racha |
-| 9 — Chatbox / Asistente IA | ✅ Completado | 2026-09-18 | Asistente IA conversacional, NLP, límite diario, voz condicional |
-| 10 — Temas de color | ✅ Completado | 2026-09-18 | 6 paletas dinámicas, desbloqueo por racha, grid swatches |
-| 11 — Rediseño visual | ✅ Completado | 2026-09-18 | Jerarquía Inter, TaskCard Hero, EmptyStateWidget, racha en Splash |
+|---|:---:|:---:|---|
+| 0 — Red de seguridad | ✅ Completado | Sept 2026 | Smoke tests de pantallas y baseline asegurada (`smoke_screens_test.dart`) |
+| 1 — Dominio puro | ✅ Completado | Sept 2026 | `HoraDelDia`, `Prioridad` sin Color, `Repeticion`, `Result<T>` y `Failure` puros |
+| 2 — Inyección de dependencias | ✅ Completado | Sept 2026 | `ProviderScope` con overrides en `main.dart`, sin singletons estáticos |
+| 3 — Repositorio + migraciones | ✅ Completado | Sept 2026 | `onUpgrade` SQLite, columna `notificacion_id`, índices y datos semilla externos |
+| 4 — Casos de uso | ✅ Completado | Sept 2026 | 5 casos de uso con regla de negocio real implementados y desacoplados |
+| 5 — Feature-First | ✅ Completado | Sept 2026 | Arquitectura híbrida por features (`pendientes`, `completados`, `ajustes`) |
+| 6 — AsyncValue | ✅ Completado | Sept 2026 | `AsyncNotifier`, providers derivados por fecha y manejo con `_EstadoError` |
+| 7 — Tests con dobles de prueba | ✅ Completado | Sept 2026 | Mocks con `mocktail` y SQLite FFI en memoria (83 tests automáticos verdes) |
+| 8 — Racha y recompensas | ✅ Completado | Sept 2026 | 4 ligas `RangoRacha`, 16 hitos escalonados y pantalla Mis Logros |
+| 9 — Chatbox / Asistente IA | ✅ Completado | Sept 2026 | Procesador local NLP en español, límite de mensajes y voz a los 15 días |
+| 10 — Temas de color | ✅ Completado | Sept 2026 | 6 esquemas de color con `TemaApp`, soporte claro/oscuro y desbloqueables |
+| 11 — Rediseño visual | ✅ Completado | Sept 2026 | Splash dinámico con racha, cards pulidas, feedback háptico/visual y estados vacíos |
 
 **Leyenda:** ⚪ Pendiente | 🟡 En proceso | ✅ Completado | 🔴 Bloqueado
 

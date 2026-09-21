@@ -60,15 +60,15 @@ void main() {
     test('calcula correctamente restantes y puedeEnviar', () {
       final limite = LimiteChat(
         mensajesUsadosHoy: 5,
-        mensajesMaximosPorDia: 15,
+        mensajesMaximosPorDia: 20,
         fecha: relojFijo.ahora(),
       );
       expect(limite.puedeEnviar, isTrue);
-      expect(limite.restantes, 10);
+      expect(limite.restantes, 15);
 
       final agotado = LimiteChat(
-        mensajesUsadosHoy: 15,
-        mensajesMaximosPorDia: 15,
+        mensajesUsadosHoy: 20,
+        mensajesMaximosPorDia: 20,
         fecha: relojFijo.ahora(),
       );
       expect(agotado.puedeEnviar, isFalse);
@@ -151,7 +151,7 @@ void main() {
       final caso = VerificarLimiteChat(repoAsistente);
       final res = await caso();
       expect(res, isA<Exito<LimiteChat>>());
-      expect((res as Exito<LimiteChat>).valor.mensajesMaximosPorDia, 15);
+      expect((res as Exito<LimiteChat>).valor.mensajesMaximosPorDia, 20);
     });
 
     test('EnviarMensajeChat crea pendiente vía CrearPendiente y descuenta cuota', () async {
@@ -180,8 +180,8 @@ void main() {
     });
 
     test('EnviarMensajeChat rechaza amablemente si el límite diario está agotado', () async {
-      // Agotar los 15 mensajes
-      for (int i = 0; i < 15; i++) {
+      // Agotar los 20 mensajes
+      for (int i = 0; i < 20; i++) {
         await repoAsistente.registrarMensajeEnviado();
       }
 
@@ -229,9 +229,9 @@ void main() {
 
       await tester.pumpAndSettle();
       expect(find.byIcon(Icons.lock_outline_rounded), findsOneWidget);
-      expect(find.byIcon(Icons.mic_rounded), findsNothing);
+      expect(find.byIcon(Icons.mic_rounded), findsOneWidget);
 
-      // Al tocar el candado muestra el diálogo motivacional
+      // Al tocar el botón bloqueado muestra el diálogo motivacional
       await tester.tap(find.byType(BotonMicrofono));
       await tester.pumpAndSettle();
 
@@ -283,7 +283,7 @@ void main() {
       expect(find.text('Asistente IA'), findsOneWidget);
       expect(find.text('En línea'), findsOneWidget);
       expect(find.textContaining('Cupo diario:'), findsOneWidget);
-      expect(find.textContaining('Soy tu asistente IA de Mi Pendiente'), findsOneWidget);
+      expect(find.textContaining('Soy tu asistente IA de Zendae'), findsOneWidget);
       expect(find.byType(TextField), findsOneWidget);
       expect(find.byType(BotonMicrofono), findsOneWidget);
     });

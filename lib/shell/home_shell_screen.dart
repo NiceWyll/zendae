@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
 import 'package:mi_pendiente/core/utils/date_time_utils.dart';
 import 'package:mi_pendiente/core/widgets/segmented_view_tabs.dart';
-import 'package:mi_pendiente/core/widgets/wave_background.dart';
-import 'package:mi_pendiente/core/providers/notification_providers.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/providers/pendientes_provider.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/mappers/prioridad_ui.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/screens/hoy_screen.dart';
@@ -71,58 +69,42 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final asyncPendientes = ref.watch(pendientesProvider);
-    final pendientes = asyncPendientes.valueOrNull ?? const <Pendiente>[];
+    final hoyList = ref.watch(pendientesDeHoyProvider).valueOrNull ?? [];
+    final mostrarFab = _bottomNavIndex == 1 || (_bottomNavIndex == 0 && hoyList.isNotEmpty);
 
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       // Drawer lateral interactivo (Menú de las 3 rayitas)
-      drawer: _buildAppDrawer(isDark, pendientes),
-      body: Stack(
-        children: [
-          // Ondas decorativas en la parte inferior
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: WaveBackground(
-              height: 120,
-              isDark: isDark,
+      drawer: _buildAppDrawer(isDark),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Barra superior de la aplicación con Menú y Campanita
+            _buildAppBar(isDark),
+
+            // Selector de pestañas (Hoy | Semana | Mes) solo cuando estamos en la pestaña 'Pendientes'
+            if (_bottomNavIndex == 0) ...[
+              SegmentedViewTabs(
+                selectedIndex: _topTabIndex,
+                onTabSelected: (index) {
+                  setState(() {
+                    _topTabIndex = index;
+                  });
+                },
+              ),
+            ],
+
+            // Contenido principal según la pestaña activa
+            Expanded(
+              child: _buildCurrentView(),
             ),
-          ),
-
-          SafeArea(
-            child: Column(
-              children: [
-                // Barra superior de la aplicación con Menú y Campanita
-                _buildAppBar(isDark, pendientes),
-
-                // Selector de pestañas (Hoy | Semana | Mes) solo cuando estamos en la pestaña 'Pendientes'
-                if (_bottomNavIndex == 0) ...[
-                  const BannerRachaMotivacional(),
-                  SegmentedViewTabs(
-                    selectedIndex: _topTabIndex,
-                    onTabSelected: (index) {
-                      setState(() {
-                        _topTabIndex = index;
-                      });
-                    },
-                  ),
-                ],
-
-                // Contenido principal según la pestaña activa
-                Expanded(
-                  child: _buildCurrentView(),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
 
-      // Botón flotante (+) para crear nuevo pendiente
-      floatingActionButton: (_bottomNavIndex == 0 || _bottomNavIndex == 1)
+      // Botón flotante (+) para crear nuevo pendiente (oculto en pantalla vacía para no duplicar botón)
+      floatingActionButton: mostrarFab
           ? Container(
               margin: const EdgeInsets.only(bottom: 8),
               child: FloatingActionButton(
@@ -184,7 +166,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
     );
   }
 
-  Widget _buildAppBar(bool isDark, List<Pendiente> pendientes) {
+  Widget _buildAppBar(bool isDark) {
     String title = 'Mis pendientes';
     if (_bottomNavIndex == 1) title = 'Calendario';
     if (_bottomNavIndex == 2) title = 'Completados';
@@ -192,82 +174,98 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
 
     final primaryColor = Theme.of(context).primaryColor;
 
-    // Contar tareas que tienen recordatorio activo
-    final reminderCount = pendientes.where((p) => p.tieneRecordatorio && !p.estaCompletado).length;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Botón de las 3 rayitas (Abre el Drawer lateral)
-          Builder(
-            builder: (ctx) => IconButton(
-              icon: Icon(Icons.menu_rounded, color: primaryColor, size: 28),
-              onPressed: () {
-                Scaffold.of(ctx).openDrawer();
-              },
-              tooltip: 'Menú principal',
-            ),
+          // Lado izquierdo: Botón de las 3 rayitas + Título agrupados
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Builder(
+                builder: (ctx) => InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => Scaffold.of(ctx).openDrawer(),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF1E293B)
+                          : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.borderDark
+                            : const Color(0xFFE2E8F0),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(Icons.menu_rounded, color: primaryColor, size: 22),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: primaryColor,
+                  letterSpacing: -0.3,
+                ),
+              ),
+            ],
           ),
 
-          // Título central
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: primaryColor,
-              letterSpacing: -0.3,
-            ),
-          ),
-
+          // Lado derecho: Racha y Botón '✨ IA' (sin campanita, con espacio de sobra)
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               const BannerRachaChip(compacto: true),
-              IconButton(
-                icon: const Icon(Icons.auto_awesome_rounded, color: Color(0xFF8B5CF6), size: 24),
-                tooltip: 'Asistente IA',
-                onPressed: () {
+              const SizedBox(width: 10),
+
+              // Botón estilizado '✨ IA'
+              InkWell(
+                onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const ChatScreen(),
                     ),
                   );
                 },
-              ),
-              // Campanita con badge de notificaciones
-              Stack(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.notifications_none_rounded, color: primaryColor, size: 28),
-                    onPressed: () => _mostrarModalNotificaciones(context, pendientes),
-                    tooltip: 'Recordatorios',
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFF8B5CF6).withValues(alpha: isDark ? 0.25 : 0.12),
+                        const Color(0xFF3B82F6).withValues(alpha: isDark ? 0.25 : 0.12),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFF8B5CF6).withValues(alpha: isDark ? 0.45 : 0.3),
+                      width: 1.2,
+                    ),
                   ),
-                  if (reminderCount > 0)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: AppColors.priorityAlta,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                        child: Text(
-                          '$reminderCount',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                          ),
-                          textAlign: TextAlign.center,
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.auto_awesome_rounded, color: Color(0xFF8B5CF6), size: 15),
+                      SizedBox(width: 4),
+                      Text(
+                        'IA',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF8B5CF6),
                         ),
                       ),
-                    ),
-                ],
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -277,52 +275,68 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
   }
 
   // Menú Drawer Lateral
-  Widget _buildAppDrawer(bool isDark, List<Pendiente> pendientes) {
-    final pendientesActivos = pendientes.where((p) => !p.estaCompletado).length;
-    final completados = pendientes.where((p) => p.estaCompletado).length;
+  Widget _buildAppDrawer(bool isDark) {
     final primaryColor = Theme.of(context).primaryColor;
+    final paddingTop = MediaQuery.of(context).padding.top;
 
     return Drawer(
       backgroundColor: isDark ? AppColors.backgroundDark : Colors.white,
       child: Column(
         children: [
-          // Cabecera estilizada
+          // Espacio limpio superior que respeta la barra de estado del sistema
+          SizedBox(height: paddingTop + 10),
+
+          // Tarjeta cabecera estilizada con borde redondeado y límite superior claro
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(20, 50, 20, 24),
+            margin: const EdgeInsets.symmetric(horizontal: 14),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [primaryColor.withValues(alpha: 0.82), primaryColor],
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0B0F19), Color(0xFF162032)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.1),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF162032).withValues(alpha: 0.3),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 50,
-                  height: 50,
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                        color: const Color(0xFF06B6D4).withValues(alpha: 0.25),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                  child: Icon(
-                    Icons.calendar_month_rounded,
-                    color: primaryColor,
-                    size: 30,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Image.asset(
+                      'assets/icons/logo_main.png',
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 14),
                 const Text(
-                  'Mi Pendiente',
+                  'Zendae',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 22,
@@ -331,9 +345,9 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'Organiza tu día, semana y mes',
+                  'Tu día con absoluta claridad',
                   style: TextStyle(
-                    color: Color(0xFFDBEAFE),
+                    color: Color(0xFF94A3B8),
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
                   ),
@@ -342,115 +356,37 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
             ),
           ),
 
-          // Tarjetas de métricas rápidas
+          // Tarjetas de métricas rápidas con Consumer localizado
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          '$pendientesActivos',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: primaryColor,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Activos',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDark ? Colors.white70 : const Color(0xFF64748B),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF10B981).withValues(alpha: 0.2)
-                          : const Color(0xFFECFDF5),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          '$completados',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: isDark ? const Color(0xFF34D399) : AppColors.priorityBaja,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Completos',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDark ? Colors.white70 : const Color(0xFF64748B),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const MisLogrosScreen(),
-                          ),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(12),
-                      child: Ink(
+            child: Consumer(
+              builder: (context, ref, _) {
+                final pendientes = ref.watch(pendientesProvider).valueOrNull ?? const <Pendiente>[];
+                final pendientesActivos = pendientes.where((p) => !p.estaCompletado).length;
+                final completados = pendientes.where((p) => p.estaCompletado).length;
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFFF97316).withValues(alpha: 0.2)
-                              : const Color(0xFFFFF7ED),
+                          color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Column(
                           children: [
-                            Consumer(
-                              builder: (context, ref, _) {
-                                final rachaAsync = ref.watch(rachaNotifierProvider);
-                                final dias = rachaAsync.valueOrNull?.diasActuales ?? 0;
-                                return Text(
-                                  '$dias 🔥',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w800,
-                                    color: isDark ? const Color(0xFFFB923C) : const Color(0xFFEA580C),
-                                  ),
-                                );
-                              },
+                            Text(
+                              '$pendientesActivos',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: primaryColor,
+                              ),
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Racha',
+                              'Activos',
                               style: TextStyle(
                                 fontSize: 11,
                                 color: isDark ? Colors.white70 : const Color(0xFF64748B),
@@ -461,9 +397,95 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                         ),
                       ),
                     ),
-                  ),
-                ),
-              ],
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF10B981).withValues(alpha: 0.2)
+                              : const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              '$completados',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: isDark ? const Color(0xFF34D399) : AppColors.priorityBaja,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Completos',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const MisLogrosScreen(),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Ink(
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? const Color(0xFFF97316).withValues(alpha: 0.2)
+                                  : const Color(0xFFFFF7ED),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              children: [
+                                Consumer(
+                                  builder: (context, ref, _) {
+                                    final rachaAsync = ref.watch(rachaNotifierProvider);
+                                    final dias = rachaAsync.valueOrNull?.diasActuales ?? 0;
+                                    return Text(
+                                      '$dias 🔥',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: isDark ? const Color(0xFFFB923C) : const Color(0xFFEA580C),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Racha',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
 
@@ -527,6 +549,54 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                     );
                   },
                 ),
+                Consumer(
+                  builder: (context, ref, _) {
+                    final reminderCount = ref.watch(
+                      pendientesProvider.select(
+                        (asyncP) => asyncP.valueOrNull
+                                ?.where((p) => p.tieneRecordatorio && !p.estaCompletado)
+                                .length ??
+                            0,
+                      ),
+                    );
+                    return ListTile(
+                      leading: const Icon(
+                        Icons.notifications_none_rounded,
+                        color: Color(0xFF64748B),
+                      ),
+                      title: const Text(
+                        'Recordatorios',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      trailing: reminderCount > 0
+                          ? Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.priorityAlta,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '$reminderCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            )
+                          : null,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      onTap: () {
+                        Navigator.pop(context);
+                        final pendientes = ref.read(pendientesProvider).valueOrNull ?? const <Pendiente>[];
+                        _mostrarModalNotificaciones(context, pendientes);
+                      },
+                    );
+                  },
+                ),
                 _buildDrawerItem(
                   icon: Icons.settings_outlined,
                   label: 'Ajustes',
@@ -567,7 +637,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
-              'Mi Pendiente · v1.0.0 (MVP)',
+              'Zendae · v1.0.0',
               style: TextStyle(
                 fontSize: 12,
                 color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8),
@@ -724,39 +794,6 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                     },
                   ),
                 ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  icon: const Icon(Icons.notifications_active_rounded, color: Colors.white),
-                  label: const Text(
-                    '🔔 Probar notificación ("Ver nubecita")',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
-                  ),
-                  onPressed: () async {
-                    final notificaciones = ref.read(notificationSchedulerProvider);
-                    await notificaciones.pedirPermisos();
-                    await notificaciones.mostrarNotificacionInmediata(
-                      titulo: '¡Tienes un pendiente programado!',
-                      cuerpo: 'Reunión con el equipo - Tienes este pendiente ahora',
-                    );
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text('🚀 ¡Notificación enviada! Revisa la parte superior de tu pantalla.'),
-                          backgroundColor: Theme.of(context).primaryColor,
-                          duration: const Duration(seconds: 3),
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ),
             ],
           ),
         );

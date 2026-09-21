@@ -291,7 +291,7 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
               trailing: DropdownButtonHideUnderline(
                 child: DropdownButton<Prioridad>(
                   value: _prioridad,
-                  icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.primary),
+                  icon: Icon(Icons.keyboard_arrow_down, color: primaryColor),
                   items: Prioridad.values.map((p) {
                     return DropdownMenuItem(
                       value: p,
@@ -330,8 +330,8 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
               label: 'Recordatorio',
               trailing: Switch(
                 value: _tieneRecordatorio,
-                activeThumbColor: AppColors.primary,
-                activeTrackColor: AppColors.primaryBgLight,
+                activeThumbColor: primaryColor,
+                activeTrackColor: isDark ? primaryColor.withValues(alpha: 0.3) : AppColors.primaryBgLight,
                 onChanged: (val) => setState(() => _tieneRecordatorio = val),
               ),
             ),
@@ -346,7 +346,7 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
                 trailing: DropdownButtonHideUnderline(
                   child: DropdownButton<int>(
                     value: _minutosAntes,
-                    icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.primary),
+                    icon: Icon(Icons.keyboard_arrow_down, color: primaryColor),
                     items: const [
                       DropdownMenuItem(value: 5, child: Text('5 minutos antes')),
                       DropdownMenuItem(value: 10, child: Text('10 minutos antes')),
@@ -354,10 +354,10 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
                       DropdownMenuItem(value: 30, child: Text('30 minutos antes')),
                       DropdownMenuItem(value: 60, child: Text('1 hora antes')),
                     ],
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+                      color: primaryColor,
                     ),
                     onChanged: (val) {
                       if (val != null) setState(() => _minutosAntes = val);
@@ -376,17 +376,17 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
               trailing: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value: _repetir,
-                  icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.primary),
+                  icon: Icon(Icons.keyboard_arrow_down, color: primaryColor),
                   items: const [
                     DropdownMenuItem(value: 'No repetir', child: Text('No repetir')),
                     DropdownMenuItem(value: 'Diario', child: Text('Diario')),
                     DropdownMenuItem(value: 'Semanal', child: Text('Semanal')),
                     DropdownMenuItem(value: 'Mensual', child: Text('Mensual')),
                   ],
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+                    color: primaryColor,
                   ),
                   onChanged: (val) {
                     if (val != null) setState(() => _repetir = val);
@@ -511,6 +511,7 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
   }
 
   Widget _buildMiniCalendar(bool isDark) {
+    final primaryColor = Theme.of(context).primaryColor;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -528,7 +529,7 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: const Icon(Icons.chevron_left, color: AppColors.primary, size: 24),
+                icon: Icon(Icons.chevron_left, color: primaryColor, size: 24),
                 onPressed: () {
                   setState(() {
                     _fechaSeleccionada = DateTime(
@@ -541,14 +542,14 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
               ),
               Text(
                 DateTimeUtils.formatMonthYear(_fechaSeleccionada),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
+                  color: primaryColor,
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.chevron_right, color: AppColors.primary, size: 24),
+                icon: Icon(Icons.chevron_right, color: primaryColor, size: 24),
                 onPressed: () {
                   setState(() {
                     _fechaSeleccionada = DateTime(
@@ -585,6 +586,7 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
   }
 
   Widget _buildMiniGridDays(bool isDark) {
+    final primaryColor = Theme.of(context).primaryColor;
     final firstDay = DateTime(_fechaSeleccionada.year, _fechaSeleccionada.month, 1);
     final daysInMonth = DateTime(_fechaSeleccionada.year, _fechaSeleccionada.month + 1, 0).day;
     final startWeekday = firstDay.weekday; // 1: Lun ... 7: Dom
@@ -610,7 +612,7 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
           child: Container(
             margin: const EdgeInsets.all(2),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : (isToday ? AppColors.primaryBgLight : Colors.transparent),
+              color: isSelected ? primaryColor : (isToday ? AppColors.primaryBgLight : Colors.transparent),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -621,7 +623,7 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
                   fontWeight: isSelected || isToday ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected
                       ? Colors.white
-                      : (isToday ? AppColors.primary : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimary)),
+                      : (isToday ? primaryColor : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimary)),
                 ),
               ),
             ),
@@ -689,17 +691,20 @@ class _AlarmaTimePickerSheet extends StatefulWidget {
 }
 
 class _AlarmaTimePickerSheetState extends State<_AlarmaTimePickerSheet> {
-  late int _selectedHour;
+  static const List<int> _hours = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+  late int _selectedHourIndex;
   late int _selectedMinute;
+  late bool _isAm;
   late FixedExtentScrollController _hourController;
   late FixedExtentScrollController _minuteController;
 
   @override
   void initState() {
     super.initState();
-    _selectedHour = widget.horaInicial.hour;
+    _isAm = widget.horaInicial.hour < 12;
+    _selectedHourIndex = widget.horaInicial.hour % 12;
     _selectedMinute = widget.horaInicial.minute;
-    _hourController = FixedExtentScrollController(initialItem: _selectedHour);
+    _hourController = FixedExtentScrollController(initialItem: _selectedHourIndex);
     _minuteController = FixedExtentScrollController(initialItem: _selectedMinute);
   }
 
@@ -710,19 +715,56 @@ class _AlarmaTimePickerSheetState extends State<_AlarmaTimePickerSheet> {
     super.dispose();
   }
 
-  String _formatPeriod(int hour) {
-    if (hour >= 12) {
-      final h12 = hour == 12 ? 12 : hour - 12;
-      return '$h12:${_selectedMinute.toString().padLeft(2, '0')} PM';
+  int get _hour24 {
+    final h = _hours[_selectedHourIndex];
+    if (_isAm) {
+      return h == 12 ? 0 : h;
     } else {
-      final h12 = hour == 0 ? 12 : hour;
-      return '$h12:${_selectedMinute.toString().padLeft(2, '0')} AM';
+      return h == 12 ? 12 : h + 12;
     }
+  }
+
+  String get _displayHour => _hours[_selectedHourIndex].toString().padLeft(2, '0');
+  String get _displayMinute => _selectedMinute.toString().padLeft(2, '0');
+
+  Widget _buildAmPmButton(String label, bool isSelected, VoidCallback onTap, bool isDark) {
+    final primaryColor = Theme.of(context).primaryColor;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? primaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: primaryColor.withValues(alpha: 0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected
+                ? Colors.white
+                : (isDark ? Colors.white60 : const Color(0xFF64748B)),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
+    final primaryColor = Theme.of(context).primaryColor;
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.only(
@@ -751,21 +793,21 @@ class _AlarmaTimePickerSheetState extends State<_AlarmaTimePickerSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.alarm_rounded, color: AppColors.primary, size: 22),
+                Icon(Icons.alarm_rounded, color: primaryColor, size: 22),
                 const SizedBox(width: 8),
                 Text(
                   'Ajustar Hora',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.textPrimaryDark : AppColors.primary,
+                    color: isDark ? AppColors.textPrimaryDark : primaryColor,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 4),
             Text(
-              'Desliza las ruedas para configurar tu hora preferida',
+              'Desliza las ruedas y elige AM o PM',
               style: TextStyle(
                 fontSize: 12,
                 color: isDark ? AppColors.textSecondaryDark : const Color(0xFF64748B),
@@ -773,36 +815,64 @@ class _AlarmaTimePickerSheetState extends State<_AlarmaTimePickerSheet> {
             ),
             const SizedBox(height: 16),
 
-            // Display Digital Grande
+            // Display Digital Grande con AM/PM y Selector
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
               decoration: BoxDecoration(
                 color: isDark ? AppColors.cardDark : AppColors.primaryBgLight,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.3),
+                  color: primaryColor.withValues(alpha: 0.3),
                   width: 1.5,
                 ),
               ),
               child: Column(
                 children: [
-                  Text(
-                    '${_selectedHour.toString().padLeft(2, '0')} : ${_selectedMinute.toString().padLeft(2, '0')}',
-                    style: const TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
-                      letterSpacing: 3,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        '$_displayHour : $_displayMinute',
+                        style: TextStyle(
+                          fontSize: 38,
+                          fontWeight: FontWeight.w800,
+                          color: primaryColor,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _isAm ? 'AM' : 'PM',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: primaryColor,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    _formatPeriod(_selectedHour),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.textSecondaryDark : const Color(0xFF64748B),
+                  const SizedBox(height: 10),
+                  // Selector interactivo de botones AM / PM
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.all(3),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildAmPmButton('AM', _isAm, () {
+                          setState(() => _isAm = true);
+                        }, isDark),
+                        const SizedBox(width: 4),
+                        _buildAmPmButton('PM', !_isAm, () {
+                          setState(() => _isAm = false);
+                        }, isDark),
+                      ],
                     ),
                   ),
                 ],
@@ -828,7 +898,7 @@ class _AlarmaTimePickerSheetState extends State<_AlarmaTimePickerSheet> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       Text(
-                        'HORA (0-23)',
+                        'HORA (1-12)',
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -856,7 +926,7 @@ class _AlarmaTimePickerSheetState extends State<_AlarmaTimePickerSheet> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Rueda de Horas
+                        // Rueda de Horas (12 a 11)
                         Expanded(
                           child: CupertinoPicker(
                             scrollController: _hourController,
@@ -865,29 +935,30 @@ class _AlarmaTimePickerSheetState extends State<_AlarmaTimePickerSheet> {
                             selectionOverlay: Container(
                               margin: const EdgeInsets.symmetric(horizontal: 8),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.12),
+                                color: primaryColor.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: AppColors.primary.withValues(alpha: 0.4),
+                                  color: primaryColor.withValues(alpha: 0.4),
                                   width: 1.5,
                                 ),
                               ),
                             ),
                             onSelectedItemChanged: (int index) {
                               setState(() {
-                                _selectedHour = index % 24;
+                                _selectedHourIndex = index % 12;
                               });
                             },
-                            children: List.generate(24, (index) {
-                              final isSelected = index == _selectedHour;
+                            children: List.generate(12, (index) {
+                              final isSelected = index == _selectedHourIndex;
+                              final hourText = _hours[index].toString().padLeft(2, '0');
                               return Center(
                                 child: Text(
-                                  index.toString().padLeft(2, '0'),
+                                  hourText,
                                   style: TextStyle(
                                     fontSize: isSelected ? 26 : 20,
                                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                                     color: isSelected
-                                        ? AppColors.primary
+                                        ? primaryColor
                                         : (isDark ? Colors.white54 : const Color(0xFF64748B)),
                                   ),
                                 ),
@@ -897,14 +968,14 @@ class _AlarmaTimePickerSheetState extends State<_AlarmaTimePickerSheet> {
                         ),
 
                         // Separador ":"
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Text(
                             ':',
                             style: TextStyle(
                               fontSize: 32,
                               fontWeight: FontWeight.w900,
-                              color: AppColors.primary,
+                              color: primaryColor,
                             ),
                           ),
                         ),
@@ -918,10 +989,10 @@ class _AlarmaTimePickerSheetState extends State<_AlarmaTimePickerSheet> {
                             selectionOverlay: Container(
                               margin: const EdgeInsets.symmetric(horizontal: 8),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.12),
+                                color: primaryColor.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: AppColors.primary.withValues(alpha: 0.4),
+                                  color: primaryColor.withValues(alpha: 0.4),
                                   width: 1.5,
                                 ),
                               ),
@@ -940,7 +1011,7 @@ class _AlarmaTimePickerSheetState extends State<_AlarmaTimePickerSheet> {
                                     fontSize: isSelected ? 26 : 20,
                                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                                     color: isSelected
-                                        ? AppColors.primary
+                                        ? primaryColor
                                         : (isDark ? Colors.white54 : const Color(0xFF64748B)),
                                   ),
                                 ),
@@ -962,7 +1033,7 @@ class _AlarmaTimePickerSheetState extends State<_AlarmaTimePickerSheet> {
               height: 50,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: primaryColor,
                   elevation: 2,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
@@ -976,7 +1047,7 @@ class _AlarmaTimePickerSheetState extends State<_AlarmaTimePickerSheet> {
                   ),
                 ),
                 onPressed: () {
-                  widget.onHoraConfirmada(TimeOfDay(hour: _selectedHour, minute: _selectedMinute));
+                  widget.onHoraConfirmada(TimeOfDay(hour: _hour24, minute: _selectedMinute));
                   Navigator.pop(context);
                 },
               ),

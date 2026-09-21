@@ -9,7 +9,7 @@ class AsistenteLocalDatasource {
   static const String _keyUsados = 'asistente_mensajes_usados';
   static const String _keyFecha = 'asistente_fecha_limite';
   static const String _keyHistorial = 'asistente_historial_mensajes';
-  static const int _maxPorDia = 15;
+  static const int _maxPorDia = 20;
 
   const AsistenteLocalDatasource({required this.prefs});
 

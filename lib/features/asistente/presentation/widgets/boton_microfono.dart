@@ -47,11 +47,40 @@ class BotonMicrofono extends ConsumerWidget {
               width: 1.2,
             ),
           ),
-          child: Icon(
-            vozDesbloqueada ? Icons.mic_rounded : Icons.lock_outline_rounded,
-            color: vozDesbloqueada ? primaryColor : const Color(0xFF94A3B8),
-            size: 20,
-          ),
+          child: vozDesbloqueada
+              ? Icon(
+                  Icons.mic_rounded,
+                  color: primaryColor,
+                  size: 20,
+                )
+              : Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    const Icon(
+                      Icons.mic_rounded,
+                      color: Color(0xFF94A3B8),
+                      size: 20,
+                    ),
+                    Positioned(
+                      right: -3,
+                      bottom: -3,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF64748B),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 1),
+                        ),
+                        child: const Icon(
+                          Icons.lock_outline_rounded,
+                          size: 9,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
         ),
       ),
     );

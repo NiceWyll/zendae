@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Primarios y de marca
-  static const Color primary = Color(0xFF1E60F0);
-  static const Color primaryLight = Color(0xFF4B83F4);
-  static const Color primaryDark = Color(0xFF1345B5);
-  static const Color primaryBgLight = Color(0xFFEFF5FF);
+  // Primarios y de marca (Azul oscuro en modo claro / Azul Zafiro en modo oscuro)
+  static const Color primary = Color(0xFF162032);
+  static const Color primaryLight = Color(0xFF60A5FA);
+  static const Color primaryDark = Color(0xFF0B0F19);
+  static const Color primaryBgLight = Color(0xFFF1F5F9);
 
   // Fondos y superficies
   static const Color backgroundLight = Color(0xFFF7FAFC);

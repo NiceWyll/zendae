@@ -145,7 +145,7 @@ class BannerRachaMotivacional extends ConsumerWidget {
         ? (racha.proximoHito != null
             ? 'Faltan ${racha.proximoHito!.dias - dias} días para: ${racha.proximoHito!.titulo}'
             : '¡Racha legendaria completada!')
-        : 'Completa al menos un pendiente hoy para encender el fuego';
+        : 'Completa un pendiente hoy para encender tu racha';
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
 import 'package:mi_pendiente/core/providers/notification_providers.dart';
 import 'package:mi_pendiente/core/theme/tema_app.dart';
+import 'package:mi_pendiente/features/pendientes/presentation/providers/usecase_providers.dart';
 import '../providers/ajustes_provider.dart';
 import 'selector_temas_screen.dart';
 
@@ -93,6 +94,14 @@ class AjustesScreen extends ConsumerWidget {
               final scheduler = ref.read(notificationSchedulerProvider);
               if (val) {
                 await scheduler.pedirPermisos();
+                if (ajustes.resumenMatutino) {
+                  final horaParts = ajustes.horaResumenMatutino.split(':');
+                  await ref.read(programarResumenMatutinoProvider)(
+                    habilitado: true,
+                    hora: int.parse(horaParts[0]),
+                    minuto: int.parse(horaParts[1]),
+                  );
+                }
               } else {
                 await scheduler.cancelarTodas();
               }
@@ -100,6 +109,73 @@ class AjustesScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
+
+        // Fila 2.1: Resumen matutino diario ("Tu Plan de Hoy")
+        _buildSettingCard(
+          isDark: isDark,
+          primaryColor: primaryColor,
+          icon: Icons.wb_sunny_outlined,
+          title: 'Resumen matutino diario\n("Tu Plan de Hoy")',
+          trailing: Switch(
+            value: ajustes.resumenMatutino && ajustes.notificaciones,
+            activeColor: primaryColor,
+            onChanged: ajustes.notificaciones
+                ? (val) async {
+                    await ref.read(ajustesProvider.notifier).alternarResumenMatutino(val);
+                    final horaParts = ajustes.horaResumenMatutino.split(':');
+                    await ref.read(programarResumenMatutinoProvider)(
+                      habilitado: val,
+                      hora: int.parse(horaParts[0]),
+                      minuto: int.parse(horaParts[1]),
+                    );
+                  }
+                : null,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Fila 2.2: Hora del resumen matutino
+        if (ajustes.resumenMatutino && ajustes.notificaciones) ...[
+          _buildSettingCard(
+            isDark: isDark,
+            primaryColor: primaryColor,
+            icon: Icons.alarm_rounded,
+            title: 'Hora del resumen matutino',
+            trailing: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: ajustes.horaResumenMatutino,
+                icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
+                items: const [
+                  DropdownMenuItem(value: '06:30', child: Text('06:30 AM')),
+                  DropdownMenuItem(value: '07:00', child: Text('07:00 AM')),
+                  DropdownMenuItem(value: '07:30', child: Text('07:30 AM')),
+                  DropdownMenuItem(value: '08:00', child: Text('08:00 AM')),
+                  DropdownMenuItem(value: '08:30', child: Text('08:30 AM')),
+                  DropdownMenuItem(value: '09:00', child: Text('09:00 AM')),
+                  DropdownMenuItem(value: '09:30', child: Text('09:30 AM')),
+                  DropdownMenuItem(value: '10:00', child: Text('10:00 AM')),
+                ],
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                ),
+                onChanged: (val) async {
+                  if (val != null) {
+                    await ref.read(ajustesProvider.notifier).cambiarHoraResumenMatutino(val);
+                    final horaParts = val.split(':');
+                    await ref.read(programarResumenMatutinoProvider)(
+                      habilitado: true,
+                      hora: int.parse(horaParts[0]),
+                      minuto: int.parse(horaParts[1]),
+                    );
+                  }
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
 
         // Fila 3: Sonido
         _buildSettingCard(
@@ -324,7 +400,7 @@ class AjustesScreen extends ConsumerWidget {
           children: [
             Icon(Icons.calendar_month_rounded, color: primaryColor),
             const SizedBox(width: 10),
-            const Text('Mi Pendiente', style: TextStyle(fontWeight: FontWeight.w700)),
+            const Text('Zendae', style: TextStyle(fontWeight: FontWeight.w700)),
           ],
         ),
         content: const Column(

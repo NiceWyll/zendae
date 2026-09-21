@@ -12,6 +12,8 @@ class AjustesState {
   final String horaPredeterminada;
   final String primerDiaSemana;
   final bool eliminarCompletados;
+  final bool resumenMatutino;
+  final String horaResumenMatutino;
 
   const AjustesState({
     this.themeMode = ThemeMode.light,
@@ -22,6 +24,8 @@ class AjustesState {
     this.horaPredeterminada = '09:00',
     this.primerDiaSemana = 'Lunes',
     this.eliminarCompletados = false,
+    this.resumenMatutino = true,
+    this.horaResumenMatutino = '08:00',
   });
 
   AjustesState copyWith({
@@ -33,6 +37,8 @@ class AjustesState {
     String? horaPredeterminada,
     String? primerDiaSemana,
     bool? eliminarCompletados,
+    bool? resumenMatutino,
+    String? horaResumenMatutino,
   }) {
     return AjustesState(
       themeMode: themeMode ?? this.themeMode,
@@ -43,6 +49,8 @@ class AjustesState {
       horaPredeterminada: horaPredeterminada ?? this.horaPredeterminada,
       primerDiaSemana: primerDiaSemana ?? this.primerDiaSemana,
       eliminarCompletados: eliminarCompletados ?? this.eliminarCompletados,
+      resumenMatutino: resumenMatutino ?? this.resumenMatutino,
+      horaResumenMatutino: horaResumenMatutino ?? this.horaResumenMatutino,
     );
   }
 }
@@ -64,6 +72,8 @@ class AjustesNotifier extends StateNotifier<AjustesState> {
     final hora = prefs!.getString('hora_pred') ?? '09:00';
     final primerDia = prefs!.getString('primer_dia') ?? 'Lunes';
     final autoDel = prefs!.getBool('eliminar_comp') ?? false;
+    final resumen = prefs!.getBool('resumen_matutino') ?? true;
+    final horaResumen = prefs!.getString('hora_resumen_matutino') ?? '08:00';
 
     state = state.copyWith(
       themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
@@ -74,6 +84,8 @@ class AjustesNotifier extends StateNotifier<AjustesState> {
       horaPredeterminada: hora,
       primerDiaSemana: primerDia,
       eliminarCompletados: autoDel,
+      resumenMatutino: resumen,
+      horaResumenMatutino: horaResumen,
     );
   }
 
@@ -115,6 +127,16 @@ class AjustesNotifier extends StateNotifier<AjustesState> {
   Future<void> alternarEliminarCompletados(bool valor) async {
     await prefs?.setBool('eliminar_comp', valor);
     state = state.copyWith(eliminarCompletados: valor);
+  }
+
+  Future<void> alternarResumenMatutino(bool valor) async {
+    await prefs?.setBool('resumen_matutino', valor);
+    state = state.copyWith(resumenMatutino: valor);
+  }
+
+  Future<void> cambiarHoraResumenMatutino(String hora) async {
+    await prefs?.setString('hora_resumen_matutino', hora);
+    state = state.copyWith(horaResumenMatutino: hora);
   }
 }
 

@@ -69,7 +69,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     if (mensajes.isEmpty) {
       final bienvenida = MensajeChat(
         id: 'bienvenida',
-        texto: '¡Hola! 👋 Soy tu asistente IA de Mi Pendiente ✨.\n\n'
+        texto: '¡Hola! 👋 Soy tu asistente IA de Zendae ✨.\n\n'
             'Puedo programar recordatorios y organizar tus pendientes en lenguaje natural.\n\n'
             'Prueba diciendo:\n'
             '• "Recuérdame llamar al dentista mañana a las 3pm"\n'

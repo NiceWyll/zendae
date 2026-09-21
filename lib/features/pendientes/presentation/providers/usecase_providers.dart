@@ -7,6 +7,7 @@ import '../../domain/usecases/alternar_completado.dart';
 import '../../domain/usecases/crear_pendiente.dart';
 import '../../domain/usecases/eliminar_pendiente.dart';
 import '../../domain/usecases/posponer_para_manana.dart';
+import '../../domain/usecases/programar_resumen_matutino.dart';
 import 'pendientes_provider.dart';
 
 final alternarCompletadoProvider = Provider<AlternarCompletado>((ref) {
@@ -49,3 +50,12 @@ final eliminarPendienteProvider = Provider<EliminarPendiente>((ref) {
     ref.watch(notificationSchedulerProvider),
   );
 });
+
+final programarResumenMatutinoProvider = Provider<ProgramarResumenMatutino>((ref) {
+  return ProgramarResumenMatutino(
+    ref.watch(pendienteRepositoryProvider),
+    ref.watch(notificationSchedulerProvider),
+    ref.watch(relojProvider),
+  );
+});
+

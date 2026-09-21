@@ -53,10 +53,6 @@ class CompletadosScreen extends ConsumerWidget {
                 mensaje: 'Completa tus pendientes diarios para verlos registrados aquí y sumar progreso en tu racha.',
               ),
             ] else ...[
-              // Tarjeta de felicitación y métrica semanal
-              _buildWeeklyBadgeCard(context, isDark, completados.length),
-              const SizedBox(height: 20),
-
               // Grupo: Hoy
               if (hoyTasks.isNotEmpty) ...[
                 _buildSectionHeader(context, 'Hoy', isDark),
@@ -99,7 +95,7 @@ class CompletadosScreen extends ConsumerWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),

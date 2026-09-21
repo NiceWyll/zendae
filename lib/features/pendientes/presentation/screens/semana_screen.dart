@@ -45,30 +45,53 @@ class _SemanaScreenState extends ConsumerState<SemanaScreen> {
         // Calcular días de la semana
         final daysOfWeek = List.generate(7, (i) => startOfWeek.add(Duration(days: i)));
 
-        // Calcular métricas de la semana
-        final weekTasks = pendientes.where((p) {
-          final diff = p.fecha.difference(startOfWeek).inDays;
-          return diff >= 0 && diff < 7;
-        }).toList();
+        // Indexar pendientes por día de la semana (0 a 6) en una sola pasada O(N)
+        final tasksByDay = List.generate(7, (_) => <Pendiente>[]);
+        int completedCount = 0;
+        int totalCount = 0;
 
-        final completedCount = weekTasks.where((p) => p.estaCompletado).length;
-        final totalCount = weekTasks.length;
+        for (final p in pendientes) {
+          final pDate = DateTime(p.fecha.year, p.fecha.month, p.fecha.day);
+          final sDate = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+          final diff = pDate.difference(sDate).inDays;
+          if (diff >= 0 && diff < 7) {
+            tasksByDay[diff].add(p);
+            totalCount++;
+            if (p.estaCompletado) completedCount++;
+          }
+        }
+
+        for (final dayTasks in tasksByDay) {
+          dayTasks.sort((a, b) {
+            final aMinutos = a.hora.hora * 60 + a.hora.minuto;
+            final bMinutos = b.hora.hora * 60 + b.hora.minuto;
+            if (aMinutos != bMinutos) {
+              return aMinutos.compareTo(bMinutos);
+            }
+            return a.titulo.compareTo(b.titulo);
+          });
+        }
+
         final progress = totalCount > 0 ? (completedCount / totalCount) : 0.0;
 
         return ListView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           children: [
             // Tarjeta resumen semanal con mini gráfico de barras
-            _buildWeeklySummaryCard(isDark, totalCount, completedCount, progress, daysOfWeek, pendientes),
+            _buildWeeklySummaryCard(
+              isDark: isDark,
+              total: totalCount,
+              completed: completedCount,
+              progress: progress,
+              daysOfWeek: daysOfWeek,
+              dayCounts: tasksByDay.map((l) => l.length).toList(),
+            ),
             const SizedBox(height: 16),
 
             // Lista de días de la semana (acordeones)
             ...List.generate(7, (index) {
               final dayDate = daysOfWeek[index];
-              final dayTasks = pendientes.where((p) {
-                return DateTimeUtils.isSameDay(p.fecha, dayDate);
-              }).toList();
-
+              final dayTasks = tasksByDay[index];
               final isExpanded = _expandedDays[index] ?? false;
 
               return _buildDayAccordion(
@@ -91,15 +114,14 @@ class _SemanaScreenState extends ConsumerState<SemanaScreen> {
     );
   }
 
-  Widget _buildWeeklySummaryCard(
-    bool isDark,
-    int total,
-    int completed,
-    double progress,
-    List<DateTime> daysOfWeek,
-    List<Pendiente> allTasks,
-  ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget _buildWeeklySummaryCard({
+    required bool isDark,
+    required int total,
+    required int completed,
+    required double progress,
+    required List<DateTime> daysOfWeek,
+    required List<int> dayCounts,
+  }) {
     final primaryColor = Theme.of(context).primaryColor;
 
     return Container(
@@ -113,7 +135,7 @@ class _SemanaScreenState extends ConsumerState<SemanaScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -164,10 +186,9 @@ class _SemanaScreenState extends ConsumerState<SemanaScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: List.generate(7, (i) {
-              final dayDate = daysOfWeek[i];
-              final count = allTasks.where((p) => DateTimeUtils.isSameDay(p.fecha, dayDate)).length;
+              final count = dayCounts[i];
               final height = (count * 6.0 + 8.0).clamp(10.0, 38.0);
-              final isToday = DateTimeUtils.isToday(dayDate);
+              final isToday = DateTimeUtils.isToday(daysOfWeek[i]);
 
               return Container(
                 width: 4.5,
@@ -204,7 +225,7 @@ class _SemanaScreenState extends ConsumerState<SemanaScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isToday
-              ? AppColors.primary.withOpacity(0.5)
+              ? AppColors.primary.withValues(alpha: 0.5)
               : (isDark ? AppColors.borderDark : const Color(0xFFEDF2F7)),
           width: 1.2,
         ),

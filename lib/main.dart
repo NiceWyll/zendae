@@ -13,7 +13,6 @@ import 'features/pendientes/data/datasources/app_database.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  debugPrint('🚀🚀🚀 MI_PENDIENTE_APP_STARTED 🚀🚀🚀');
 
   FlutterError.onError = (details) {
     debugPrint('🛑 FLUTTER ERROR: ${details.exceptionAsString()}');

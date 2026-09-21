@@ -99,4 +99,13 @@ class FakeNotificationScheduler implements NotificationScheduler {
     required String cuerpo,
     String? payload,
   }) async {}
+
+  @override
+  Future<void> programarResumenDiario({
+    required int notificacionId,
+    required String titulo,
+    required String cuerpo,
+    required int hora,
+    required int minuto,
+  }) async {}
 }

@@ -3,6 +3,7 @@ import 'package:mi_pendiente/core/error/result.dart';
 import 'package:mi_pendiente/core/providers/clock_providers.dart';
 import 'package:mi_pendiente/core/providers/database_providers.dart';
 import 'package:mi_pendiente/core/utils/date_time_utils.dart';
+import 'package:mi_pendiente/features/ajustes/presentation/providers/ajustes_provider.dart';
 import 'package:mi_pendiente/features/racha/presentation/providers/racha_provider.dart';
 import '../../data/datasources/app_database.dart';
 import '../../data/repositories/pendiente_repository_impl.dart';
@@ -38,6 +39,20 @@ class PendientesNotifier extends AsyncNotifier<List<Pendiente>> {
     ref.read(fechaSeleccionadaProvider.notifier).state = fecha;
   }
 
+  void _sincronizarResumenMatutino() {
+    try {
+      final ajustes = ref.read(ajustesProvider);
+      if (ajustes.notificaciones && ajustes.resumenMatutino) {
+        final horaParts = ajustes.horaResumenMatutino.split(':');
+        ref.read(programarResumenMatutinoProvider)(
+          habilitado: true,
+          hora: int.parse(horaParts[0]),
+          minuto: int.parse(horaParts[1]),
+        );
+      }
+    } catch (_) {}
+  }
+
   Future<void> alternarCompletado(String id, [bool? forzarValor]) async {
     final currentList = state.valueOrNull ?? [];
     final task = currentList.where((p) => p.id == id).firstOrNull;
@@ -55,6 +70,7 @@ class PendientesNotifier extends AsyncNotifier<List<Pendiente>> {
         if (valor.estaCompletado) {
           ref.read(rachaNotifierProvider.notifier).refrescar();
         }
+        _sincronizarResumenMatutino();
       case Fallo(:final failure):
         ref.read(mensajeErrorProvider.notifier).state = failure.mensaje;
     }
@@ -70,6 +86,7 @@ class PendientesNotifier extends AsyncNotifier<List<Pendiente>> {
           ...?state.valueOrNull,
           valor,
         ]);
+        _sincronizarResumenMatutino();
       case Fallo(:final failure):
         ref.read(mensajeErrorProvider.notifier).state = failure.mensaje;
     }
@@ -85,6 +102,7 @@ class PendientesNotifier extends AsyncNotifier<List<Pendiente>> {
           for (final p in state.valueOrNull ?? <Pendiente>[])
             if (p.id == valor.id) valor else p,
         ]);
+        _sincronizarResumenMatutino();
       case Fallo(:final failure):
         ref.read(mensajeErrorProvider.notifier).state = failure.mensaje;
     }
@@ -102,6 +120,7 @@ class PendientesNotifier extends AsyncNotifier<List<Pendiente>> {
           for (final p in state.valueOrNull ?? <Pendiente>[])
             if (p.id != id) p,
         ]);
+        _sincronizarResumenMatutino();
       case Fallo(:final failure):
         ref.read(mensajeErrorProvider.notifier).state = failure.mensaje;
     }
@@ -121,6 +140,7 @@ class PendientesNotifier extends AsyncNotifier<List<Pendiente>> {
           for (final p in state.valueOrNull ?? <Pendiente>[])
             if (p.id == valor.id) valor else p,
         ]);
+        _sincronizarResumenMatutino();
       case Fallo(:final failure):
         ref.read(mensajeErrorProvider.notifier).state = failure.mensaje;
     }
@@ -139,6 +159,7 @@ class PendientesNotifier extends AsyncNotifier<List<Pendiente>> {
           for (final p in state.valueOrNull ?? <Pendiente>[])
             if (!p.estaCompletado) p,
         ]);
+        _sincronizarResumenMatutino();
       case Fallo(:final failure):
         ref.read(mensajeErrorProvider.notifier).state = failure.mensaje;
     }
@@ -152,7 +173,18 @@ final pendientesProvider =
 final pendientesPorFechaProvider =
     Provider.family<AsyncValue<List<Pendiente>>, DateTime>((ref, fecha) {
   return ref.watch(pendientesProvider).whenData(
-        (lista) => lista.where((p) => DateTimeUtils.isSameDay(p.fecha, fecha)).toList(),
+        (lista) {
+          final filtrados = lista.where((p) => DateTimeUtils.isSameDay(p.fecha, fecha)).toList();
+          filtrados.sort((a, b) {
+            final aMinutos = a.hora.hora * 60 + a.hora.minuto;
+            final bMinutos = b.hora.hora * 60 + b.hora.minuto;
+            if (aMinutos != bMinutos) {
+              return aMinutos.compareTo(bMinutos);
+            }
+            return a.titulo.compareTo(b.titulo);
+          });
+          return filtrados;
+        },
       );
 });
 
