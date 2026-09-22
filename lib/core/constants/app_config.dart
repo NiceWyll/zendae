@@ -1,8 +1,8 @@
 class AppConfig {
   AppConfig._();
 
-  /// Cuando es true, todos los temas, asistente por voz, logros y rangos
-  /// están 100% desbloqueados desde el primer momento, sin restringir
-  /// el conteo ni la motivación de la racha diaria.
-  static bool todoDesbloqueado = true;
+  /// Por defecto es FALSE para la versión oficial (retos, candados y
+  /// progresión por días de racha para todos los usuarios y amigos).
+  /// Solo se activa en builds personales de Williams cuando se solicita.
+  static bool todoDesbloqueado = false;
 }
