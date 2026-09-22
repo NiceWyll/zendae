@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_config.dart';
 
 class TemaApp {
   final String id;
@@ -22,6 +23,7 @@ class TemaApp {
   });
 
   bool estaDesbloqueado(int diasRacha, List<String> logrosDesbloqueados) {
+    if (AppConfig.todoDesbloqueado) return true;
     if (!esDesbloqueablePorRacha) return true;
     if (diasRequeridos == null) return true;
 

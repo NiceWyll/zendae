@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:mi_pendiente/core/constants/app_config.dart';
 import 'package:mi_pendiente/core/error/result.dart';
 import 'package:mi_pendiente/core/services/reloj.dart';
 import 'package:mi_pendiente/features/pendientes/domain/entities/hora_del_dia.dart';
@@ -205,6 +206,9 @@ void main() {
 
   group('Fase 9: Desbloqueo de Voz Condicionado a Racha (BotonMicrofono)', () {
     testWidgets('muestra candado cuando la racha es menor a 15 días', (tester) async {
+      AppConfig.todoDesbloqueado = false;
+      addTearDown(() => AppConfig.todoDesbloqueado = true);
+
       final repoRacha = FakeRachaRepository(
         const Racha(
           diasActuales: 10, // Menor a 15

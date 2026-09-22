@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mi_pendiente/core/constants/app_config.dart';
 import 'package:mi_pendiente/core/error/result.dart';
 import 'package:mi_pendiente/core/providers/preferences_providers.dart';
 import 'package:mi_pendiente/core/theme/app_theme.dart';
@@ -59,6 +60,9 @@ void main() {
     });
 
     test('Temas exclusivos se desbloquean al alcanzar los días de racha exactos o por logro', () {
+      AppConfig.todoDesbloqueado = false;
+      addTearDown(() => AppConfig.todoDesbloqueado = true);
+
       final atardecer = TemasDisponibles.obtenerPorId('atardecer');
       final aurora = TemasDisponibles.obtenerPorId('aurora');
       final dorado = TemasDisponibles.obtenerPorId('dorado');
@@ -228,6 +232,9 @@ void main() {
     });
 
     testWidgets('Tocar un tema bloqueado muestra diálogo explicativo con días faltantes', (tester) async {
+      AppConfig.todoDesbloqueado = false;
+      addTearDown(() => AppConfig.todoDesbloqueado = true);
+
       tester.view.physicalSize = const Size(800, 1400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {

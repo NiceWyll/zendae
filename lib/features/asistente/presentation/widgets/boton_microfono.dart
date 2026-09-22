@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
+import 'package:mi_pendiente/core/constants/app_config.dart';
 import 'package:mi_pendiente/features/racha/domain/entities/hito_racha.dart';
 import 'package:mi_pendiente/features/racha/presentation/providers/racha_provider.dart';
 
@@ -19,7 +20,8 @@ class BotonMicrofono extends ConsumerWidget {
 
     final dias = racha?.diasActuales ?? 0;
     final primaryColor = Theme.of(context).primaryColor;
-    final vozDesbloqueada = dias >= 15 ||
+    final vozDesbloqueada = AppConfig.todoDesbloqueado ||
+        dias >= 15 ||
         (racha?.logrosDesbloqueados.contains(HitoRacha.dias15.name) ?? false);
 
     return Material(

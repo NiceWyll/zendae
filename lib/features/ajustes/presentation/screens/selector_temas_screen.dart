@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
+import 'package:mi_pendiente/core/constants/app_config.dart';
 import 'package:mi_pendiente/features/racha/presentation/providers/racha_provider.dart';
 import '../widgets/selector_temas_grid.dart';
 
@@ -77,7 +78,9 @@ class SelectorTemasScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Completa tareas diarias para desbloquear temas exclusivos a los 7, 30 y 100 días.',
+                        AppConfig.todoDesbloqueado
+                            ? '¡Todos los temas y colores están 100% desbloqueados para ti!'
+                            : 'Completa tareas diarias para desbloquear temas exclusivos a los 7, 30 y 100 días.',
                         style: TextStyle(
                           fontSize: 12.5,
                           color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF3B82F6),

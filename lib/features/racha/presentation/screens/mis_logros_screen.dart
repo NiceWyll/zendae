@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
+import 'package:mi_pendiente/core/constants/app_config.dart';
 import '../../domain/entities/hito_racha.dart';
 import '../../domain/entities/racha.dart';
 import '../providers/racha_provider.dart';
@@ -66,9 +67,11 @@ class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
         .toList();
 
     final rangoAlcanzado = _determinarRangoAlcanzado(racha.diasActuales);
-    final estaRangoDesbloqueado = _rangoSeleccionado.diasMinimos <= racha.diasActuales ||
+    final estaRangoDesbloqueado = AppConfig.todoDesbloqueado ||
+        _rangoSeleccionado.diasMinimos <= racha.diasActuales ||
         _rangosDesbloqueadosManualmente.contains(_rangoSeleccionado);
-    final puedeDesbloquearSiguiente = racha.diasActuales >= _rangoSeleccionado.diasMinimos &&
+    final puedeDesbloquearSiguiente = !AppConfig.todoDesbloqueado &&
+        racha.diasActuales >= _rangoSeleccionado.diasMinimos &&
         !_rangosDesbloqueadosManualmente.contains(_rangoSeleccionado) &&
         _rangoSeleccionado != RangoRacha.bronce;
 
@@ -348,7 +351,7 @@ class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
       child: Row(
         children: RangoRacha.values.map((rango) {
           final isSelected = _rangoSeleccionado == rango;
-          final desbloqueado = diasActuales >= rango.diasMinimos;
+          final desbloqueado = AppConfig.todoDesbloqueado || diasActuales >= rango.diasMinimos;
 
           return Expanded(
             child: GestureDetector(
@@ -530,8 +533,9 @@ class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
     bool rangoDesbloqueado,
     Color primaryColor,
   ) {
-    final desbloqueado = rangoDesbloqueado &&
-        (racha.logrosDesbloqueados.contains(hito.name) || racha.diasActuales >= hito.dias);
+    final desbloqueado = AppConfig.todoDesbloqueado ||
+        (rangoDesbloqueado &&
+            (racha.logrosDesbloqueados.contains(hito.name) || racha.diasActuales >= hito.dias));
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
