@@ -1,8 +1,7 @@
 class AppConfig {
   AppConfig._();
 
-  /// Por defecto es FALSE para la versión oficial (retos, candados y
-  /// progresión por días de racha para todos los usuarios y amigos).
-  /// Solo se activa en builds personales de Williams cuando se solicita.
-  static bool todoDesbloqueado = false;
+  /// Activado para el build de iPhone personal de Williams con todas
+  /// las funciones desbloqueadas (micrófono, temas, etc.).
+  static bool todoDesbloqueado = true;
 }

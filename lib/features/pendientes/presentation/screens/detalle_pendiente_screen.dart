@@ -292,8 +292,16 @@ class DetallePendienteScreen extends ConsumerWidget {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: const Text('Pendiente postergado para mañana con éxito'),
-                          backgroundColor: primaryColor,
+                          content: const Text(
+                            'Pendiente postergado para mañana con éxito',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                          ),
+                          backgroundColor: isDark ? const Color(0xFF1E293B) : primaryColor,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: isDark ? const BorderSide(color: Color(0xFF334155), width: 1.2) : BorderSide.none,
+                          ),
                         ),
                       );
                       Navigator.of(context).pop();

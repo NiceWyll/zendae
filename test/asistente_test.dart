@@ -114,6 +114,58 @@ void main() {
       expect(p.repetir, Repeticion.diario);
     });
 
+    test('interpreta el ejemplo del usuario: "mañana llamar al doctor a las 12 pm alto"', () async {
+      final res = await nlp.interpretarTexto(
+        'mañana llamar al doctor a las 12 pm alto',
+        relojFijo.ahora(), // 2026-09-18 (viernes)
+      );
+
+      expect(res.esConversacional, isFalse);
+      expect(res.pendiente, isNotNull);
+      final p = res.pendiente!;
+
+      // 1. Título limpio de la tarea
+      expect(p.titulo, 'Llamar al doctor');
+      // 2. Fecha calculada: mañana (19 de septiembre)
+      expect(p.fecha.year, 2026);
+      expect(p.fecha.month, 9);
+      expect(p.fecha.day, 19);
+      // 3. Hora: 12:00 PM (mediodía)
+      expect(p.hora.hora, 12);
+      expect(p.hora.minuto, 0);
+      // 4. Prioridad: "alto" mapeado a alta
+      expect(p.prioridad, Prioridad.alta);
+    });
+
+    test('interpreta fechas relativas como "el próximo lunes", días del mes "el 25" y sin tilde "manana"', () async {
+      // 1. El próximo lunes (desde viernes 18 -> lunes 21)
+      final resLunes = await nlp.interpretarTexto(
+        'el próximo lunes entregar informe a las 10 am',
+        relojFijo.ahora(),
+      );
+      expect(resLunes.pendiente?.titulo, 'Entregar informe');
+      expect(resLunes.pendiente?.fecha.day, 21);
+      expect(resLunes.pendiente?.hora.hora, 10);
+
+      // 2. Día específico del mes "el 25"
+      final resDia = await nlp.interpretarTexto(
+        'pagar internet el 25 a las 4 pm bajo',
+        relojFijo.ahora(),
+      );
+      expect(resDia.pendiente?.titulo, 'Pagar internet');
+      expect(resDia.pendiente?.fecha.day, 25);
+      expect(resDia.pendiente?.hora.hora, 16);
+      expect(resDia.pendiente?.prioridad, Prioridad.baja);
+
+      // 3. Sin tilde "manana"
+      final resSinTilde = await nlp.interpretarTexto(
+        'manana sacar la basura a las 8 am',
+        relojFijo.ahora(),
+      );
+      expect(resSinTilde.pendiente?.titulo, 'Sacar la basura');
+      expect(resSinTilde.pendiente?.fecha.day, 19);
+    });
+
     test('reconoce saludos y consultas conversacionales sin crear tareas erróneas', () async {
       final res = await nlp.interpretarTexto('Hola qué puedes hacer?', relojFijo.ahora());
 

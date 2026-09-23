@@ -49,13 +49,13 @@ class NlpIaDatasource implements IaDatasource {
     // 3. Extracción de repetición
     final repeticion = _extraerRepeticion(lower);
 
-    // 4. Extracción de fecha
+    // 4. Extracción de fecha relativa o absoluta
     final fecha = _extraerFecha(lower, ahora);
 
     // 5. Extracción de hora
     final hora = _extraerHora(lower, ahora);
 
-    // 6. Extracción y limpieza del título
+    // 6. Extracción y limpieza exhaustiva del título de la tarea
     final titulo = _extraerTitulo(cleanPrompt);
 
     if (titulo.length < 2) {
@@ -67,8 +67,11 @@ class NlpIaDatasource implements IaDatasource {
 
     final horaFormateada = '${hora.hora.toString().padLeft(2, '0')}:${hora.minuto.toString().padLeft(2, '0')}';
     final fechaTexto = _describirFecha(fecha, ahora);
+    final prioridadTexto = prioridad == Prioridad.alta
+        ? ' (prioridad alta)'
+        : (prioridad == Prioridad.baja ? ' (prioridad baja)' : '');
 
-    final respuesta = '¡Listo! Programé **"$titulo"** para $fechaTexto a las $horaFormateada.';
+    final respuesta = '¡Listo! Programé **"$titulo"** para $fechaTexto a las $horaFormateada$prioridadTexto.';
 
     final pendiente = PendienteParseado(
       titulo: titulo,
@@ -116,12 +119,25 @@ class NlpIaDatasource implements IaDatasource {
   }
 
   Prioridad _extraerPrioridad(String text) {
-    if (text.contains('prioridad alta') || text.contains('urgente') || text.contains('muy importante')) {
+    // Alta prioridad: alta, alto, urgente, urgentisimo, muy importante, maxima
+    final regexAlta = RegExp(
+      r'\b(prioridad\s+alta|alta\s+prioridad|con\s+prioridad\s+alta|urgente|urgentisimo|muy\s+importante|maxima|maximo|alta|alto)\b',
+      caseSensitive: false,
+    );
+    if (regexAlta.hasMatch(text)) {
       return Prioridad.alta;
     }
-    if (text.contains('prioridad baja') || text.contains('sin prisa') || text.contains('poco urgente')) {
+
+    // Baja prioridad: baja, bajo, sin prisa, poco urgente, minima
+    final regexBaja = RegExp(
+      r'\b(prioridad\s+baja|baja\s+prioridad|con\s+prioridad\s+baja|sin\s+prisa|poco\s+urgente|minima|minimo|baja|bajo)\b',
+      caseSensitive: false,
+    );
+    if (regexBaja.hasMatch(text)) {
       return Prioridad.baja;
     }
+
+    // Media prioridad explícita o por defecto
     return Prioridad.media;
   }
 
@@ -141,42 +157,95 @@ class NlpIaDatasource implements IaDatasource {
   DateTime _extraerFecha(String text, DateTime ahora) {
     final hoy = DateTime(ahora.year, ahora.month, ahora.day);
 
-    if (text.contains('pasado mañana')) {
+    // 1. "pasado mañana" / "pasado manana"
+    if (text.contains('pasado manana') || text.contains('pasado mañana')) {
       return hoy.add(const Duration(days: 2));
     }
-    if (text.contains('mañana')) {
+
+    // 2. "mañana" / "manana" (al inicio, en medio o al final)
+    if (RegExp(r'\b(manana|mañana)\b', caseSensitive: false).hasMatch(text)) {
       return hoy.add(const Duration(days: 1));
     }
-    if (text.contains('hoy')) {
-      return hoy;
+
+    // 3. Día de un mes específico: "el 16 de mayo", "16 de octubre", etc.
+    const meses = {
+      'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4,
+      'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8,
+      'septiembre': 9, 'setiembre': 9, 'octubre': 10,
+      'noviembre': 11, 'diciembre': 12,
+    };
+    final regexDiaMes = RegExp(
+      r'\b(?:el\s+(?:dia\s+)?)?(\d{1,2})\s+de\s+([a-z]+)\b',
+      caseSensitive: false,
+    );
+    final matchDiaMes = regexDiaMes.firstMatch(text);
+    if (matchDiaMes != null) {
+      final dia = int.tryParse(matchDiaMes.group(1)!) ?? 0;
+      final nombreMes = matchDiaMes.group(2)!.toLowerCase();
+      if (meses.containsKey(nombreMes) && dia >= 1 && dia <= 31) {
+        final mes = meses[nombreMes]!;
+        int anio = ahora.year;
+        if (mes < ahora.month || (mes == ahora.month && dia < ahora.day)) {
+          anio += 1;
+        }
+        return DateTime(anio, mes, dia);
+      }
     }
 
+    // 4. Día específico del mes corriente: "el 16", "para el 16", "el dia 16"
+    final regexDiaSolo = RegExp(
+      r'\b(?:para\s+el|el\s+dia|el)\s+(\d{1,2})\b',
+      caseSensitive: false,
+    );
+    final matchDiaSolo = regexDiaSolo.firstMatch(text);
+    if (matchDiaSolo != null) {
+      final dia = int.tryParse(matchDiaSolo.group(1)!) ?? 0;
+      if (dia >= 1 && dia <= 31) {
+        int anio = ahora.year;
+        int mes = ahora.month;
+        if (dia < ahora.day) {
+          // Si el día ya pasó este mes, se asume para el próximo mes
+          mes += 1;
+          if (mes > 12) {
+            mes = 1;
+            anio += 1;
+          }
+        }
+        return DateTime(anio, mes, dia);
+      }
+    }
+
+    // 5. Días de la semana ("el próximo lunes", "el lunes", "este viernes", etc.)
     final diasSemana = {
       'lunes': DateTime.monday,
       'martes': DateTime.tuesday,
       'miercoles': DateTime.wednesday,
-      'miércoles': DateTime.wednesday,
       'jueves': DateTime.thursday,
       'viernes': DateTime.friday,
       'sabado': DateTime.saturday,
-      'sábado': DateTime.saturday,
       'domingo': DateTime.sunday,
     };
 
     for (final entry in diasSemana.entries) {
-      if (text.contains(entry.key)) {
+      final reg = RegExp('\\b(?:el\\s+)?(?:proximo|este)?\\s*${entry.key}\\b', caseSensitive: false);
+      if (reg.hasMatch(text)) {
         int diff = entry.value - ahora.weekday;
         if (diff <= 0) diff += 7; // Próximo día de la semana
         return hoy.add(Duration(days: diff));
       }
     }
 
+    // 6. "hoy"
+    if (RegExp(r'\bhoy\b', caseSensitive: false).hasMatch(text)) {
+      return hoy;
+    }
+
     return hoy;
   }
 
   HoraDelDia _extraerHora(String text, DateTime ahora) {
-    // 1. Formato 12h: "3:30 pm", "4pm", "11am", "8 am", "5:15 p.m."
-    final regex12h = RegExp(r'(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)', caseSensitive: false);
+    // 1. Formato 12h: "12 pm", "12:30 pm", "4pm", "11am", "8 am", "5:15 p.m."
+    final regex12h = RegExp(r'\b(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)\b', caseSensitive: false);
     final match12h = regex12h.firstMatch(text);
     if (match12h != null) {
       int h = int.parse(match12h.group(1)!);
@@ -190,8 +259,8 @@ class NlpIaDatasource implements IaDatasource {
       return HoraDelDia(hora: h.clamp(0, 23), minuto: m.clamp(0, 59));
     }
 
-    // 2. Formato 24h: "a las 15:30", "18:00", "09:45"
-    final regex24h = RegExp(r'(\d{1,2}):(\d{2})');
+    // 2. Formato 24h: "15:30", "18:00", "09:45"
+    final regex24h = RegExp(r'\b([01]?\d|2[0-3]):([0-5]\d)\b');
     final match24h = regex24h.firstMatch(text);
     if (match24h != null) {
       int h = int.parse(match24h.group(1)!);
@@ -199,22 +268,24 @@ class NlpIaDatasource implements IaDatasource {
       return HoraDelDia(hora: h.clamp(0, 23), minuto: m.clamp(0, 59));
     }
 
-    // 3. Formato simple: "a las 4 de la tarde", "a las 9 de la noche", "a las 8 de la mañana"
-    final regexSimple = RegExp(r'a las (\d{1,2})(?:\s*(de la mañana|de la tarde|de la noche))?', caseSensitive: false);
+    // 3. Formato simple: "a las 4 de la tarde", "a las 12", "a las 9 de la noche", "a las 8 de la mañana"
+    final regexSimple = RegExp(r'\ba\s+las\s+(\d{1,2})(?::(\d{2}))?\s*(de\s+la\s+mañana|de\s+la\s+manana|de\s+la\s+tarde|de\s+la\s+noche)?\b', caseSensitive: false);
     final matchSimple = regexSimple.firstMatch(text);
     if (matchSimple != null) {
       int h = int.parse(matchSimple.group(1)!);
-      final periodo = matchSimple.group(2)?.toLowerCase() ?? '';
+      int m = matchSimple.group(2) != null ? int.parse(matchSimple.group(2)!) : 0;
+      final periodo = matchSimple.group(3)?.toLowerCase() ?? '';
       if ((periodo.contains('tarde') || periodo.contains('noche')) && h < 12) {
         h += 12;
       }
-      return HoraDelDia(hora: h.clamp(0, 23), minuto: 0);
+      return HoraDelDia(hora: h.clamp(0, 23), minuto: m.clamp(0, 59));
     }
 
     // 4. Períodos generales del día
+    if (text.contains('al mediodia') || text.contains('al medio dia')) return const HoraDelDia(hora: 12, minuto: 0);
     if (text.contains('en la noche')) return const HoraDelDia(hora: 20, minuto: 0);
     if (text.contains('en la tarde')) return const HoraDelDia(hora: 16, minuto: 0);
-    if (text.contains('en la mañana')) return const HoraDelDia(hora: 9, minuto: 0);
+    if (text.contains('en la manana') || text.contains('en la mañana')) return const HoraDelDia(hora: 9, minuto: 0);
 
     // Por defecto: 1 hora después o 10:00 AM
     int defaultHour = ahora.hour + 1;
@@ -225,42 +296,79 @@ class NlpIaDatasource implements IaDatasource {
   String _extraerTitulo(String prompt) {
     String cleaned = prompt;
 
-    // Quitar prefijos comunes
+    // 1. Quitar prefijos comunes de comando al inicio
     final prefijos = [
       RegExp(r'^(por favor\s*)?(recuérdame|recordarme|recuerdame)\s*(de\s*|que\s*)?', caseSensitive: false),
-      RegExp(r'^(por favor\s*)?(anota|anotar|crear|agrega|agregar|nueva tarea|nuevo pendiente)\s*(para\s*|que\s*)?', caseSensitive: false),
-      RegExp(r'^(pon un recordatorio para|haz un recordatorio para|programa)\s*', caseSensitive: false),
+      RegExp(r'^(por favor\s*)?(anota|anotar|crear|agrega|agregar|nueva tarea|nuevo pendiente|programa|programar)\s*(para\s*|que\s*)?', caseSensitive: false),
+      RegExp(r'^(pon un recordatorio para|haz un recordatorio para)\s*', caseSensitive: false),
+      RegExp(r'^por favor\s*', caseSensitive: false),
     ];
 
     for (final p in prefijos) {
       cleaned = cleaned.replaceFirst(p, '');
     }
 
-    // Quitar sufijos de hora/fecha/prioridad del título para que quede limpio
-    final patronesSufijo = [
-      RegExp(r'\s*(hoy|mañana|pasado mañana)(\s+a las\s+\d{1,2}(:\d{2})?\s*(am|pm)?)?', caseSensitive: false),
-      RegExp(r'\s*el\s+(lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo)(\s+a las\s+\d{1,2}(:\d{2})?\s*(am|pm)?)?', caseSensitive: false),
-      RegExp(r'\s*a las\s+\d{1,2}(:\d{2})?\s*(am|pm|de la mañana|de la tarde|de la noche)?', caseSensitive: false),
-      RegExp(r'\s*\d{1,2}(:\d{2})?\s*(am|pm)', caseSensitive: false),
-      RegExp(r'\s*con prioridad\s+(alta|media|baja)', caseSensitive: false),
-      RegExp(r'\s*prioridad\s+(alta|media|baja)', caseSensitive: false),
-      RegExp(r'\s*(urgente|muy importante)', caseSensitive: false),
-      RegExp(r'\s*(todos los días|todos los dias|cada día|cada dia|diario|semanal|mensual)', caseSensitive: false),
+    // 2. Quitar componentes temporales (fecha y hora) de cualquier parte de la frase
+    final patronesTemporales = [
+      // Fechas relativas
+      RegExp(r'\b(pasado mañana|pasado manana)\b', caseSensitive: false),
+      RegExp(r'\b(mañana|manana)\b', caseSensitive: false),
+      RegExp(r'\bhoy\b', caseSensitive: false),
+      // Días de semana
+      RegExp(r'\b(el\s+)?(próximo|proximo|este)?\s*(lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo)\b', caseSensitive: false),
+      // Días del mes: "el 16 de mayo", "el 16", "para el 16"
+      RegExp(r'\b(?:para\s+el|el\s+dia|el)?\s*\d{1,2}\s+de\s+[a-z]+\b', caseSensitive: false),
+      RegExp(r'\b(?:para\s+el|el\s+dia|el)\s+\d{1,2}\b', caseSensitive: false),
+      // Horas
+      RegExp(r'\ba\s+las\s+\d{1,2}(:\d{2})?\s*(am|pm|a\.m\.|p\.m\.|de la mañana|de la tarde|de la noche)?\b', caseSensitive: false),
+      RegExp(r'\b\d{1,2}(:\d{2})?\s*(am|pm|a\.m\.|p\.m\.)\b', caseSensitive: false),
+      RegExp(r'\b([01]?\d|2[0-3]):[0-5]\d\b', caseSensitive: false),
+      RegExp(r'\b(al mediodía|al mediodia|en la mañana|en la manana|en la tarde|en la noche)\b', caseSensitive: false),
     ];
 
-    for (final pat in patronesSufijo) {
-      cleaned = cleaned.replaceAll(pat, '');
+    for (final pat in patronesTemporales) {
+      cleaned = cleaned.replaceAll(pat, ' ');
     }
 
-    // Capitalizar la primera letra
+    // 3. Quitar expresiones de prioridad de cualquier parte
+    final patronesPrioridad = [
+      RegExp(r'\b(con\s+prioridad|prioridad)\s+(alta|media|baja)\b', caseSensitive: false),
+      RegExp(r'\b(muy importante|urgente|urgentisimo)\b', caseSensitive: false),
+      RegExp(r'\b(sin prisa|poco urgente)\b', caseSensitive: false),
+      RegExp(r'\b(alta|alto|media|medio|baja|bajo)\b', caseSensitive: false),
+    ];
+
+    for (final pat in patronesPrioridad) {
+      cleaned = cleaned.replaceAll(pat, ' ');
+    }
+
+    // 4. Quitar repetición
+    final patronesRepeticion = [
+      RegExp(r'\b(todos los días|todos los dias|cada día|cada dia|diario|diariamente)\b', caseSensitive: false),
+      RegExp(r'\b(todas las semanas|cada semana|semanal|semanalmente)\b', caseSensitive: false),
+      RegExp(r'\b(todos los meses|cada mes|mensual|mensualmente)\b', caseSensitive: false),
+    ];
+
+    for (final pat in patronesRepeticion) {
+      cleaned = cleaned.replaceAll(pat, ' ');
+    }
+
+    // 5. Limpieza de preposiciones sueltas al inicio o final (ej: "para", "de", "a")
     cleaned = cleaned.trim();
+    cleaned = cleaned.replaceFirst(RegExp(r'^(para|de|a)\s+', caseSensitive: false), '');
+    cleaned = cleaned.replaceFirst(RegExp(r'\s+(para|de|a|con)$', caseSensitive: false), '');
+
+    // 6. Colapsar espacios múltiples
+    cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();
+
     if (cleaned.isEmpty) return 'Pendiente';
     return cleaned[0].toUpperCase() + cleaned.substring(1);
   }
 
   String _describirFecha(DateTime fecha, DateTime ahora) {
     final hoy = DateTime(ahora.year, ahora.month, ahora.day);
-    final diff = fecha.difference(hoy).inDays;
+    final target = DateTime(fecha.year, fecha.month, fecha.day);
+    final diff = target.difference(hoy).inDays;
 
     if (diff == 0) return 'hoy';
     if (diff == 1) return 'mañana';

@@ -102,12 +102,38 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
       if (mounted) {
         final esHoy = DateTimeUtils.isToday(nuevo.fecha);
         final fechaTexto = esHoy ? 'Hoy' : DateTimeUtils.formatDayMonth(nuevo.fecha);
+        final isDark = Theme.of(context).brightness == Brightness.dark;
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('¡Pendiente "$titulo" guardado para $fechaTexto!'),
-            backgroundColor: AppColors.primary,
+            content: Row(
+              children: [
+                Icon(
+                  Icons.check_circle_rounded,
+                  color: isDark ? const Color(0xFF34D399) : const Color(0xFF6EE7B7),
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '¡Pendiente "$titulo" guardado para $fechaTexto!',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: isDark ? const Color(0xFF1E293B) : AppColors.primary,
             behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: isDark
+                  ? const BorderSide(color: Color(0xFF334155), width: 1.2)
+                  : BorderSide.none,
+            ),
             duration: const Duration(seconds: 3),
           ),
         );
