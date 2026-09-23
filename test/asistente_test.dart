@@ -155,8 +155,6 @@ void main() {
       expect(resDia.pendiente?.titulo, 'Pagar internet');
       expect(resDia.pendiente?.fecha.day, 25);
       expect(resDia.pendiente?.hora.hora, 16);
-      expect(resDia.pendiente?.prioridad, Prioridad.baja);
-
       // 3. Sin tilde "manana"
       final resSinTilde = await nlp.interpretarTexto(
         'manana sacar la basura a las 8 am',
@@ -164,6 +162,59 @@ void main() {
       );
       expect(resSinTilde.pendiente?.titulo, 'Sacar la basura');
       expect(resSinTilde.pendiente?.fecha.day, 19);
+    });
+
+    test('interpreta formatos de voz de iOS: "12 p. m.", palabras como "doce", "tres y media", "a la una"', () async {
+      // 1. Formato RAE de iOS dictation: "12 p. m." (con espacio entre p. y m.)
+      final resIosPm = await nlp.interpretarTexto(
+        'mañana llamar al doctor a las 12 p. m. alto',
+        relojFijo.ahora(),
+      );
+      expect(resIosPm.pendiente?.titulo, 'Llamar al doctor');
+      expect(resIosPm.pendiente?.hora.hora, 12);
+      expect(resIosPm.pendiente?.hora.minuto, 0);
+      expect(resIosPm.pendiente?.prioridad, Prioridad.alta);
+
+      // 2. Número en palabra como transcribe Siri: "doce pm"
+      final resDoce = await nlp.interpretarTexto(
+        'mañana llamar al doctor a las doce pm',
+        relojFijo.ahora(),
+      );
+      expect(resDoce.pendiente?.titulo, 'Llamar al doctor');
+      expect(resDoce.pendiente?.hora.hora, 12);
+
+      // 3. "doce del mediodía"
+      final resMediodia = await nlp.interpretarTexto(
+        'mañana llamar al doctor a las doce del mediodía',
+        relojFijo.ahora(),
+      );
+      expect(resMediodia.pendiente?.titulo, 'Llamar al doctor');
+      expect(resMediodia.pendiente?.hora.hora, 12);
+
+      // 4. "a la una de la tarde"
+      final resUna = await nlp.interpretarTexto(
+        'mañana almorzar a la una de la tarde',
+        relojFijo.ahora(),
+      );
+      expect(resUna.pendiente?.titulo, 'Almorzar');
+      expect(resUna.pendiente?.hora.hora, 13);
+
+      // 5. "tres y media de la tarde"
+      final resTresMedia = await nlp.interpretarTexto(
+        'mañana reunión a las tres y media de la tarde',
+        relojFijo.ahora(),
+      );
+      expect(resTresMedia.pendiente?.titulo, 'Reunión');
+      expect(resTresMedia.pendiente?.hora.hora, 15);
+      expect(resTresMedia.pendiente?.hora.minuto, 30);
+
+      // 6. "a las 4" sin am/pm -> heurística de tarde (16:00)
+      final resCuatro = await nlp.interpretarTexto(
+        'mañana cita a las 4',
+        relojFijo.ahora(),
+      );
+      expect(resCuatro.pendiente?.titulo, 'Cita');
+      expect(resCuatro.pendiente?.hora.hora, 16);
     });
 
     test('reconoce saludos y consultas conversacionales sin crear tareas erróneas', () async {

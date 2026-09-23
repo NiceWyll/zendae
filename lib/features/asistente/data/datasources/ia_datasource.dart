@@ -243,51 +243,143 @@ class NlpIaDatasource implements IaDatasource {
     return hoy;
   }
 
-  HoraDelDia _extraerHora(String text, DateTime ahora) {
-    // 1. Formato 12h: "12 pm", "12:30 pm", "4pm", "11am", "8 am", "5:15 p.m."
-    final regex12h = RegExp(r'\b(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)\b', caseSensitive: false);
-    final match12h = regex12h.firstMatch(text);
-    if (match12h != null) {
-      int h = int.parse(match12h.group(1)!);
-      int m = match12h.group(2) != null ? int.parse(match12h.group(2)!) : 0;
-      final periodo = match12h.group(3)!.toLowerCase();
+  HoraDelDia _extraerHora(String rawText, DateTime ahora) {
+    // 0. Pre-normalizar texto para variantes de am/pm de Siri / iOS dictation
+    String text = rawText
+        .replaceAll(RegExp(r'\bp\.\s*m\.?\b', caseSensitive: false), 'pm')
+        .replaceAll(RegExp(r'\ba\.\s*m\.?\b', caseSensitive: false), 'am')
+        .replaceAll(RegExp(r'\bdel\s+mediod[ií]a\b', caseSensitive: false), 'pm')
+        .replaceAll(RegExp(r'\bdel\s+d[ií]a\b', caseSensitive: false), 'pm')
+        .replaceAll(RegExp(r'\bde\s+la\s+tarde\b', caseSensitive: false), 'pm')
+        .replaceAll(RegExp(r'\bde\s+la\s+noche\b', caseSensitive: false), 'pm')
+        .replaceAll(RegExp(r'\bde\s+la\s+ma[nñ]ana\b', caseSensitive: false), 'am');
 
-      final esPm = periodo.contains('pm') || periodo.contains('p.m.');
-      if (esPm && h < 12) h += 12;
-      if (!esPm && h == 12) h = 0;
+    const mapaPalabrasHora = {
+      'una': 1, 'un': 1, 'uno': 1,
+      'dos': 2, 'tres': 3, 'cuatro': 4,
+      'cinco': 5, 'seis': 6, 'siete': 7,
+      'ocho': 8, 'nueve': 9, 'diez': 10,
+      'once': 11, 'doce': 12,
+    };
 
+    const mapaMinutos = {
+      'media': 30, 'treinta': 30,
+      'cuarto': 15, 'quince': 15,
+      'veinte': 20, 'veinticinco': 25,
+      'cuarenta': 40, 'cuarenta y cinco': 45,
+      'cincuenta': 50, 'diez': 10, 'cinco': 5,
+    };
+
+    // 1. Formato con dos puntos: "12:30 pm", "15:30", "08:00 am", "4:15"
+    final regexColon = RegExp(r'\b([01]?\d|2[0-3]):([0-5]\d)\s*(am|pm)?\b', caseSensitive: false);
+    final matchColon = regexColon.firstMatch(text);
+    if (matchColon != null) {
+      int h = int.parse(matchColon.group(1)!);
+      int m = int.parse(matchColon.group(2)!);
+      final periodo = matchColon.group(3)?.toLowerCase();
+      if (periodo == 'pm' && h < 12) h += 12;
+      if (periodo == 'am' && h == 12) h = 0;
       return HoraDelDia(hora: h.clamp(0, 23), minuto: m.clamp(0, 59));
     }
 
-    // 2. Formato 24h: "15:30", "18:00", "09:45"
-    final regex24h = RegExp(r'\b([01]?\d|2[0-3]):([0-5]\d)\b');
-    final match24h = regex24h.firstMatch(text);
-    if (match24h != null) {
-      int h = int.parse(match24h.group(1)!);
-      int m = int.parse(match24h.group(2)!);
-      return HoraDelDia(hora: h.clamp(0, 23), minuto: m.clamp(0, 59));
+    // 2. Número con AM/PM directo: "12 pm", "12pm", "3am", "11 pm"
+    final regexNumAmPm = RegExp(r'\b(\d{1,2})\s*(am|pm)\b', caseSensitive: false);
+    final matchNumAmPm = regexNumAmPm.firstMatch(text);
+    if (matchNumAmPm != null) {
+      int h = int.parse(matchNumAmPm.group(1)!);
+      final periodo = matchNumAmPm.group(2)!.toLowerCase();
+      if (periodo == 'pm' && h < 12) h += 12;
+      if (periodo == 'am' && h == 12) h = 0;
+      return HoraDelDia(hora: h.clamp(0, 23), minuto: 0);
     }
 
-    // 3. Formato simple: "a las 4 de la tarde", "a las 12", "a las 9 de la noche", "a las 8 de la mañana"
-    final regexSimple = RegExp(r'\ba\s+las\s+(\d{1,2})(?::(\d{2}))?\s*(de\s+la\s+mañana|de\s+la\s+manana|de\s+la\s+tarde|de\s+la\s+noche)?\b', caseSensitive: false);
-    final matchSimple = regexSimple.firstMatch(text);
-    if (matchSimple != null) {
-      int h = int.parse(matchSimple.group(1)!);
-      int m = matchSimple.group(2) != null ? int.parse(matchSimple.group(2)!) : 0;
-      final periodo = matchSimple.group(3)?.toLowerCase() ?? '';
-      if ((periodo.contains('tarde') || periodo.contains('noche')) && h < 12) {
+    // 3. Palabra de hora con AM/PM: "doce pm", "tres pm", "diez am"
+    final regexPalabraAmPm = RegExp(
+      r'\b(una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce)\s*(am|pm)\b',
+      caseSensitive: false,
+    );
+    final matchPalabraAmPm = regexPalabraAmPm.firstMatch(text);
+    if (matchPalabraAmPm != null) {
+      final palabra = matchPalabraAmPm.group(1)!.toLowerCase();
+      int h = mapaPalabrasHora[palabra] ?? 12;
+      final periodo = matchPalabraAmPm.group(2)!.toLowerCase();
+      if (periodo == 'pm' && h < 12) h += 12;
+      if (periodo == 'am' && h == 12) h = 0;
+      return HoraDelDia(hora: h.clamp(0, 23), minuto: 0);
+    }
+
+    // 4. Con prefijo "a las / a la / para las / para la" y dígitos:
+    // Ej: "a las 12", "a las 3 y media", "a la 1", "para las 4 y 30", "a las 5 pm"
+    final regexPrefijoDigitos = RegExp(
+      r'\b(?:a\s+las?|para\s+las?)\s+(\d{1,2})(?:\s*(?:y|:)\s*(\d{1,2}|media|cuarto|treinta|quince|veinte))?\s*(am|pm)?\b',
+      caseSensitive: false,
+    );
+    final matchPrefijoDigitos = regexPrefijoDigitos.firstMatch(text);
+    if (matchPrefijoDigitos != null) {
+      int h = int.parse(matchPrefijoDigitos.group(1)!);
+      int m = 0;
+      final minutoMatch = matchPrefijoDigitos.group(2)?.toLowerCase();
+      if (minutoMatch != null) {
+        m = int.tryParse(minutoMatch) ?? mapaMinutos[minutoMatch] ?? 0;
+      }
+      final periodo = matchPrefijoDigitos.group(3)?.toLowerCase();
+
+      if (periodo == 'pm' && h < 12) {
         h += 12;
+      } else if (periodo == 'am' && h == 12) {
+        h = 0;
+      } else if (periodo == null) {
+        // Heurística cotidiana si no especificó am/pm:
+        // 1..6 -> tarde (13:00..18:00)
+        // 12 -> mediodía (12:00)
+        // 7..11 -> mañana (07:00..11:00)
+        if (h >= 1 && h <= 6) h += 12;
       }
       return HoraDelDia(hora: h.clamp(0, 23), minuto: m.clamp(0, 59));
     }
 
-    // 4. Períodos generales del día
-    if (text.contains('al mediodia') || text.contains('al medio dia')) return const HoraDelDia(hora: 12, minuto: 0);
-    if (text.contains('en la noche')) return const HoraDelDia(hora: 20, minuto: 0);
-    if (text.contains('en la tarde')) return const HoraDelDia(hora: 16, minuto: 0);
-    if (text.contains('en la manana') || text.contains('en la mañana')) return const HoraDelDia(hora: 9, minuto: 0);
+    // 5. Con prefijo "a las / a la / para las / para la" y PALABRAS:
+    // Ej: "a las doce", "a las tres y media", "a la una", "para las cuatro"
+    final regexPrefijoPalabras = RegExp(
+      r'\b(?:a\s+las?|para\s+las?)\s+(una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce)(?:\s*(?:y|con)\s*(\d{1,2}|media|cuarto|treinta|quince|veinte))?\s*(am|pm)?\b',
+      caseSensitive: false,
+    );
+    final matchPrefijoPalabras = regexPrefijoPalabras.firstMatch(text);
+    if (matchPrefijoPalabras != null) {
+      final palabraHora = matchPrefijoPalabras.group(1)!.toLowerCase();
+      int h = mapaPalabrasHora[palabraHora] ?? 12;
+      int m = 0;
+      final minutoMatch = matchPrefijoPalabras.group(2)?.toLowerCase();
+      if (minutoMatch != null) {
+        m = int.tryParse(minutoMatch) ?? mapaMinutos[minutoMatch] ?? 0;
+      }
+      final periodo = matchPrefijoPalabras.group(3)?.toLowerCase();
 
-    // Por defecto: 1 hora después o 10:00 AM
+      if (periodo == 'pm' && h < 12) {
+        h += 12;
+      } else if (periodo == 'am' && h == 12) {
+        h = 0;
+      } else if (periodo == null) {
+        if (h >= 1 && h <= 6) h += 12;
+      }
+      return HoraDelDia(hora: h.clamp(0, 23), minuto: m.clamp(0, 59));
+    }
+
+    // 6. Expresiones generales del día sin hora numérica:
+    if (rawText.contains('al mediodia') || rawText.contains('al medio dia') || rawText.contains('al mediodía')) {
+      return const HoraDelDia(hora: 12, minuto: 0);
+    }
+    if (rawText.contains('en la noche') || rawText.contains('de noche')) {
+      return const HoraDelDia(hora: 20, minuto: 0);
+    }
+    if (rawText.contains('en la tarde') || rawText.contains('de tarde')) {
+      return const HoraDelDia(hora: 16, minuto: 0);
+    }
+    if (rawText.contains('en la manana') || rawText.contains('en la mañana') || rawText.contains('por la mañana')) {
+      return const HoraDelDia(hora: 9, minuto: 0);
+    }
+
+    // 7. Por defecto: 1 hora después o 10:00 AM
     int defaultHour = ahora.hour + 1;
     if (defaultHour >= 24) defaultHour = 9;
     return HoraDelDia(hora: defaultHour, minuto: 0);
@@ -319,11 +411,14 @@ class NlpIaDatasource implements IaDatasource {
       // Días del mes: "el 16 de mayo", "el 16", "para el 16"
       RegExp(r'\b(?:para\s+el|el\s+dia|el)?\s*\d{1,2}\s+de\s+[a-z]+\b', caseSensitive: false),
       RegExp(r'\b(?:para\s+el|el\s+dia|el)\s+\d{1,2}\b', caseSensitive: false),
-      // Horas
-      RegExp(r'\ba\s+las\s+\d{1,2}(:\d{2})?\s*(am|pm|a\.m\.|p\.m\.|de la mañana|de la tarde|de la noche)?\b', caseSensitive: false),
-      RegExp(r'\b\d{1,2}(:\d{2})?\s*(am|pm|a\.m\.|p\.m\.)\b', caseSensitive: false),
+      // Horas con conectores: "a las 12", "a las doce", "a la 1", "para las 3 y media", etc.
+      RegExp(r'\b(?:a\s+las?|para\s+las?)\s+(?:\d{1,2}|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce)(?:\s*(?:y|:|con)\s*(?:\d{1,2}|media|cuarto|treinta|quince|veinte))?(?:\s*(?:am|pm|[ap]\.\s*m\.?|de\s+la\s+mañana|de\s+la\s+manana|de\s+la\s+tarde|de\s+la\s+noche|del\s+mediodía|del\s+mediodia|del\s+día|del\s+dia))?', caseSensitive: false),
+      RegExp(r'\b(?:\d{1,2}|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce)\s*(?:am|pm|[ap]\.\s*m\.?)', caseSensitive: false),
       RegExp(r'\b([01]?\d|2[0-3]):[0-5]\d\b', caseSensitive: false),
       RegExp(r'\b(al mediodía|al mediodia|en la mañana|en la manana|en la tarde|en la noche)\b', caseSensitive: false),
+      RegExp(r'\b(?:del\s+mediod[ií]a|de\s+la\s+tarde|de\s+la\s+noche|de\s+la\s+ma[nñ]ana)\b', caseSensitive: false),
+      RegExp(r'[ap]\.\s*m\.?', caseSensitive: false),
+      RegExp(r'\b(am|pm)\b', caseSensitive: false),
     ];
 
     for (final pat in patronesTemporales) {
