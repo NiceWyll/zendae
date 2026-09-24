@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -328,6 +329,7 @@ class _ModalEscuchaVozState extends State<_ModalEscuchaVoz>
   bool _estaEscuchando = false;
   bool _procesando = false;
   String? _mensajeError;
+  Timer? _silencioTimer;
 
   @override
   void initState() {
@@ -357,10 +359,14 @@ class _ModalEscuchaVozState extends State<_ModalEscuchaVoz>
           },
           onStatus: (status) {
             debugPrint('Speech status: $status');
-            // Detección automática de silencio: cuando el usuario para de hablar
+            // Detección automática de silencio: cuando el motor detiene la escucha
             if (status == 'done' || status == 'notListening') {
               if (mounted && _estaEscuchando && !_procesando) {
-                _concluirYEnviar();
+                if (_palabrasReconocidas.trim().isNotEmpty) {
+                  _concluirYEnviar();
+                } else {
+                  setState(() => _estaEscuchando = false);
+                }
               }
             }
           },
@@ -402,18 +408,24 @@ class _ModalEscuchaVozState extends State<_ModalEscuchaVoz>
             setState(() {
               _palabrasReconocidas = result.recognizedWords;
             });
-            // Si el motor ya considera el resultado final
-            if (result.finalResult && _palabrasReconocidas.trim().isNotEmpty) {
+
+            // Reiniciar el temporizador de 5 segundos de silencio tras cada palabra detectada
+            _reiniciarTemporizadorSilencio();
+
+            // Si el motor ya finalizó por completo y no está escuchando
+            if (result.finalResult &&
+                !widget.speechToText.isListening &&
+                _palabrasReconocidas.trim().isNotEmpty) {
               _concluirYEnviar();
             }
           }
         },
-        listenFor: const Duration(seconds: 30),
-        pauseFor: const Duration(seconds: 2), // Detiene automáticamente tras 2 segundos de silencio
+        listenFor: const Duration(seconds: 60),
+        pauseFor: const Duration(seconds: 5), // Detiene automáticamente tras al menos 5 segundos de silencio
         partialResults: true,
         localeId: localeId,
         cancelOnError: true,
-        listenMode: ListenMode.confirmation,
+        listenMode: ListenMode.dictation,
       );
     } catch (e) {
       if (mounted) {
@@ -424,7 +436,19 @@ class _ModalEscuchaVozState extends State<_ModalEscuchaVoz>
     }
   }
 
+  void _reiniciarTemporizadorSilencio() {
+    _silencioTimer?.cancel();
+    if (_palabrasReconocidas.trim().isNotEmpty) {
+      _silencioTimer = Timer(const Duration(seconds: 5), () {
+        if (mounted && _estaEscuchando && !_procesando) {
+          _concluirYEnviar();
+        }
+      });
+    }
+  }
+
   Future<void> _concluirYEnviar() async {
+    _silencioTimer?.cancel();
     if (_procesando) return;
     _procesando = true;
 
@@ -442,6 +466,7 @@ class _ModalEscuchaVozState extends State<_ModalEscuchaVoz>
 
   @override
   void dispose() {
+    _silencioTimer?.cancel();
     _pulseController.dispose();
     if (widget.speechToText.isListening) {
       widget.speechToText.stop();
@@ -534,7 +559,7 @@ class _ModalEscuchaVozState extends State<_ModalEscuchaVoz>
             )
           else
             Text(
-              'Habla con naturalidad. Se detendrá y enviará automáticamente al detectar silencio.',
+              'Habla con naturalidad. Tras 5 segundos de silencio o tocando "Enviar ahora", tu mensaje se enviará.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
