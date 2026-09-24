@@ -9,6 +9,8 @@ class AjustesState {
   final bool notificaciones;
   final bool sonido;
   final bool vibracion;
+  final String sonidoPendientes;
+  final String sonidoClases;
   final String horaPredeterminada;
   final String primerDiaSemana;
   final bool eliminarCompletados;
@@ -20,7 +22,9 @@ class AjustesState {
     this.temaId = 'clasico',
     this.notificaciones = true,
     this.sonido = true,
-    this.vibracion = false,
+    this.vibracion = true,
+    this.sonidoPendientes = 'campana',
+    this.sonidoClases = 'zen',
     this.horaPredeterminada = '09:00',
     this.primerDiaSemana = 'Lunes',
     this.eliminarCompletados = false,
@@ -34,6 +38,8 @@ class AjustesState {
     bool? notificaciones,
     bool? sonido,
     bool? vibracion,
+    String? sonidoPendientes,
+    String? sonidoClases,
     String? horaPredeterminada,
     String? primerDiaSemana,
     bool? eliminarCompletados,
@@ -46,6 +52,8 @@ class AjustesState {
       notificaciones: notificaciones ?? this.notificaciones,
       sonido: sonido ?? this.sonido,
       vibracion: vibracion ?? this.vibracion,
+      sonidoPendientes: sonidoPendientes ?? this.sonidoPendientes,
+      sonidoClases: sonidoClases ?? this.sonidoClases,
       horaPredeterminada: horaPredeterminada ?? this.horaPredeterminada,
       primerDiaSemana: primerDiaSemana ?? this.primerDiaSemana,
       eliminarCompletados: eliminarCompletados ?? this.eliminarCompletados,
@@ -68,7 +76,9 @@ class AjustesNotifier extends StateNotifier<AjustesState> {
     final tema = prefs!.getString('tema_id') ?? 'clasico';
     final notif = prefs!.getBool('notificaciones') ?? true;
     final sonido = prefs!.getBool('sonido') ?? true;
-    final vibra = prefs!.getBool('vibracion') ?? false;
+    final vibra = prefs!.getBool('vibracion') ?? true;
+    final sonidoPend = prefs!.getString('sonido_pendientes') ?? 'campana';
+    final sonidoClas = prefs!.getString('sonido_clases') ?? 'zen';
     final hora = prefs!.getString('hora_pred') ?? '09:00';
     final primerDia = prefs!.getString('primer_dia') ?? 'Lunes';
     final autoDel = prefs!.getBool('eliminar_comp') ?? false;
@@ -81,6 +91,8 @@ class AjustesNotifier extends StateNotifier<AjustesState> {
       notificaciones: notif,
       sonido: sonido,
       vibracion: vibra,
+      sonidoPendientes: sonidoPend,
+      sonidoClases: sonidoClas,
       horaPredeterminada: hora,
       primerDiaSemana: primerDia,
       eliminarCompletados: autoDel,
@@ -112,6 +124,16 @@ class AjustesNotifier extends StateNotifier<AjustesState> {
   Future<void> alternarVibracion(bool valor) async {
     await prefs?.setBool('vibracion', valor);
     state = state.copyWith(vibracion: valor);
+  }
+
+  Future<void> cambiarSonidoPendientes(String soundId) async {
+    await prefs?.setString('sonido_pendientes', soundId);
+    state = state.copyWith(sonidoPendientes: soundId);
+  }
+
+  Future<void> cambiarSonidoClases(String soundId) async {
+    await prefs?.setString('sonido_clases', soundId);
+    state = state.copyWith(sonidoClases: soundId);
   }
 
   Future<void> cambiarHoraPredeterminada(String hora) async {

@@ -195,7 +195,9 @@ class _SemanaScreenState extends ConsumerState<SemanaScreen> {
                 height: height,
                 margin: const EdgeInsets.symmetric(horizontal: 2),
                 decoration: BoxDecoration(
-                  color: isToday ? AppColors.primary : const Color(0xFF93C5FD),
+                  color: isToday
+                      ? (isDark ? Theme.of(context).colorScheme.primary : Theme.of(context).primaryColor)
+                      : (isDark ? const Color(0xFF475569) : const Color(0xFF93C5FD)),
                   borderRadius: BorderRadius.circular(3),
                 ),
               );
@@ -225,7 +227,9 @@ class _SemanaScreenState extends ConsumerState<SemanaScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isToday
-              ? AppColors.primary.withValues(alpha: 0.5)
+              ? (isDark
+                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.6)
+                  : Theme.of(context).primaryColor.withValues(alpha: 0.5))
               : (isDark ? AppColors.borderDark : const Color(0xFFEDF2F7)),
           width: 1.2,
         ),
@@ -250,15 +254,15 @@ class _SemanaScreenState extends ConsumerState<SemanaScreen> {
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: isToday
-                              ? AppColors.primary
-                              : (isDark ? AppColors.textPrimaryDark : AppColors.textPrimary),
+                              ? (isDark ? Theme.of(context).colorScheme.primary : Theme.of(context).primaryColor)
+                              : (isDark ? Colors.white : AppColors.textPrimary),
                         ),
                       ),
                       Text(
                         dayMonth,
                         style: TextStyle(
                           fontSize: 12,
-                          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                          color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -268,10 +272,12 @@ class _SemanaScreenState extends ConsumerState<SemanaScreen> {
                   // Cantidad de pendientes
                   Text(
                     '${tasks.length} ${tasks.length == 1 ? "pendiente" : "pendientes"}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+                      color: isDark
+                          ? (tasks.isEmpty ? const Color(0xFFCBD5E1) : Theme.of(context).colorScheme.primary)
+                          : (tasks.isEmpty ? const Color(0xFF64748B) : Theme.of(context).primaryColor),
                     ),
                   ),
                   const SizedBox(width: 8),

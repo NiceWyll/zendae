@@ -9,11 +9,15 @@ abstract interface class NotificationScheduler {
     String? payload,
   });
 
-  Future<void> programarRecordatorioPendiente(Pendiente pendiente);
+  Future<void> programarRecordatorioPendiente(Pendiente pendiente, {String? sonido, bool vibracion = true});
+
+  Future<void> programarRecordatorioClase(dynamic clase, {String? sonido, bool vibracion = true});
 
   Future<void> cancelarRecordatorio(int notificacionId);
 
   Future<void> cancelarRecordatorioPorIdString(String pendienteId);
+
+  Future<void> cancelarRecordatorioClase(String claseId);
 
   Future<void> cancelarTodas();
 
@@ -24,6 +28,14 @@ abstract interface class NotificationScheduler {
     required String titulo,
     required String cuerpo,
     String? payload,
+    String? sonido,
+    bool vibracion = true,
+  });
+
+  Future<void> probarSonido({
+    required String soundId,
+    required String tipo,
+    bool vibracion = true,
   });
 
   Future<void> programarResumenDiario({

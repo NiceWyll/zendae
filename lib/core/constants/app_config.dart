@@ -5,3 +5,4 @@ class AppConfig {
   /// las funciones desbloqueadas (micrófono, temas, etc.).
   static bool todoDesbloqueado = true;
 }
+

@@ -78,13 +78,19 @@ class FakeNotificationScheduler implements NotificationScheduler {
   }) async {}
 
   @override
-  Future<void> programarRecordatorioPendiente(Pendiente pendiente) async {}
+  Future<void> programarRecordatorioPendiente(Pendiente pendiente, {String? sonido, bool vibracion = true}) async {}
+
+  @override
+  Future<void> programarRecordatorioClase(dynamic clase, {String? sonido, bool vibracion = true}) async {}
 
   @override
   Future<void> cancelarRecordatorio(int notificacionId) async {}
 
   @override
   Future<void> cancelarRecordatorioPorIdString(String pendienteId) async {}
+
+  @override
+  Future<void> cancelarRecordatorioClase(String claseId) async {}
 
   @override
   Future<void> cancelarTodas() async {}
@@ -98,6 +104,15 @@ class FakeNotificationScheduler implements NotificationScheduler {
     required String titulo,
     required String cuerpo,
     String? payload,
+    String? sonido,
+    bool vibracion = true,
+  }) async {}
+
+  @override
+  Future<void> probarSonido({
+    required String soundId,
+    required String tipo,
+    bool vibracion = true,
   }) async {}
 
   @override

@@ -17,6 +17,8 @@ import 'package:mi_pendiente/features/racha/presentation/widgets/banner_racha.da
 import 'package:mi_pendiente/features/racha/presentation/screens/mis_logros_screen.dart';
 import 'package:mi_pendiente/features/racha/presentation/providers/racha_provider.dart';
 import 'package:mi_pendiente/features/asistente/presentation/screens/chat_screen.dart';
+import 'package:mi_pendiente/features/horario/presentation/screens/horario_screen.dart';
+import 'package:mi_pendiente/features/calendario_general/presentation/screens/calendario_general_screen.dart';
 
 class HomeShellScreen extends ConsumerStatefulWidget {
   const HomeShellScreen({super.key});
@@ -267,6 +269,46 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                   ),
                 ),
               ),
+
+              // Menú de los 3 puntos (opciones personales)
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert_rounded, color: primaryColor),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                color: isDark ? AppColors.cardDark : Colors.white,
+                tooltip: 'Más opciones',
+                onSelected: (value) {
+                  if (value == 'horario') {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const HorarioScreen(),
+                      ),
+                    );
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem<String>(
+                    value: 'horario',
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.calendar_view_week_rounded,
+                          color: Color(0xFF6366F1),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Horario',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ],
@@ -512,6 +554,19 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                   onTap: () {
                     Navigator.pop(context);
                     setState(() => _bottomNavIndex = 1);
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.calendar_view_week_rounded,
+                  label: 'Horario',
+                  isSelected: false,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const HorarioScreen(),
+                      ),
+                    );
                   },
                 ),
                 _buildDrawerItem(
@@ -815,8 +870,8 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
           default:
             view = const HoyScreen(key: ValueKey('hoy_default'));
         }
-      case 1: // Calendario directo
-        view = const MesScreen(key: ValueKey('mes_directo'));
+      case 1: // Calendario general de la app (todo en conjunto: pendientes + horario con filtros)
+        view = const CalendarioGeneralScreen(key: ValueKey('calendario_general'));
       case 2: // Completados
         view = const CompletadosScreen(key: ValueKey('completados'));
       case 3: // Ajustes

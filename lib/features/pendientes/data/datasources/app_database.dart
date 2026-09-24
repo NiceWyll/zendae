@@ -4,7 +4,7 @@ import 'package:path/path.dart' as p;
 
 class AppDatabase {
   static final AppDatabase instance = AppDatabase();
-  static const int _version = 3;
+  static const int _version = 4;
   Database? _database;
 
   AppDatabase({Database? db}) : _database = db;
@@ -77,6 +77,25 @@ class AppDatabase {
         logros TEXT NOT NULL
       );
     ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS clases (
+        id TEXT PRIMARY KEY,
+        nombre TEXT NOT NULL,
+        dia_semana INTEGER NOT NULL,
+        hora_inicio INTEGER NOT NULL,
+        minuto_inicio INTEGER NOT NULL,
+        hora_fin INTEGER NOT NULL,
+        minuto_fin INTEGER NOT NULL,
+        fecha_inicio TEXT NOT NULL,
+        fecha_fin TEXT NOT NULL,
+        minutos_antes INTEGER NOT NULL,
+        color_value INTEGER NOT NULL,
+        aula TEXT,
+        notificacion_id INTEGER
+      );
+    ''');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_clases_dia ON clases(dia_semana);');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -95,6 +114,26 @@ class AppDatabase {
           logros TEXT NOT NULL
         );
       ''');
+    }
+    if (oldVersion < 4) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS clases (
+          id TEXT PRIMARY KEY,
+          nombre TEXT NOT NULL,
+          dia_semana INTEGER NOT NULL,
+          hora_inicio INTEGER NOT NULL,
+          minuto_inicio INTEGER NOT NULL,
+          hora_fin INTEGER NOT NULL,
+          minuto_fin INTEGER NOT NULL,
+          fecha_inicio TEXT NOT NULL,
+          fecha_fin TEXT NOT NULL,
+          minutos_antes INTEGER NOT NULL,
+          color_value INTEGER NOT NULL,
+          aula TEXT,
+          notificacion_id INTEGER
+        );
+      ''');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_clases_dia ON clases(dia_semana);');
     }
   }
 

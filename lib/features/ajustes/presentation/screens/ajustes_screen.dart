@@ -4,7 +4,9 @@ import 'package:mi_pendiente/core/constants/app_colors.dart';
 import 'package:mi_pendiente/core/providers/notification_providers.dart';
 import 'package:mi_pendiente/core/theme/tema_app.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/providers/usecase_providers.dart';
+import 'package:mi_pendiente/core/constants/app_sounds.dart';
 import '../providers/ajustes_provider.dart';
+import '../widgets/selector_sonido_dialog.dart';
 import 'selector_temas_screen.dart';
 
 class AjustesScreen extends ConsumerWidget {
@@ -208,6 +210,78 @@ class AjustesScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
+
+        // Fila 4.1: Sonido para Pendientes
+        if (ajustes.sonido) ...[
+          _buildSettingCard(
+            isDark: isDark,
+            primaryColor: primaryColor,
+            icon: Icons.notifications_active_rounded,
+            title: 'Sonido para Pendientes',
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  SonidosDisponibles.obtenerPorId(ajustes.sonidoPendientes).nombre,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
+              ],
+            ),
+            onTap: () {
+              SelectorSonidoDialog.mostrar(
+                context: context,
+                sonidoActualId: ajustes.sonidoPendientes,
+                tipo: 'pendiente',
+                vibracionActiva: ajustes.vibracion,
+                onSonidoSeleccionado: (nuevoId) {
+                  ref.read(ajustesProvider.notifier).cambiarSonidoPendientes(nuevoId);
+                },
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+
+          // Fila 4.2: Sonido para Horario de Clases
+          _buildSettingCard(
+            isDark: isDark,
+            primaryColor: primaryColor,
+            icon: Icons.school_rounded,
+            title: 'Sonido para Horario (Clases)',
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  SonidosDisponibles.obtenerPorId(ajustes.sonidoClases).nombre,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right, color: Color(0xFF94A3B8), size: 20),
+              ],
+            ),
+            onTap: () {
+              SelectorSonidoDialog.mostrar(
+                context: context,
+                sonidoActualId: ajustes.sonidoClases,
+                tipo: 'clase',
+                vibracionActiva: ajustes.vibracion,
+                onSonidoSeleccionado: (nuevoId) {
+                  ref.read(ajustesProvider.notifier).cambiarSonidoClases(nuevoId);
+                },
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+        ],
 
         // Fila 5: Hora predeterminada de recordatorio
         _buildSettingCard(

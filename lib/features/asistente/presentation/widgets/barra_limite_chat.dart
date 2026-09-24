@@ -16,14 +16,18 @@ class BarraLimiteChat extends StatelessWidget {
     final restantes = limite.restantes;
     final porcentaje = limite.mensajesUsadosHoy / limite.mensajesMaximosPorDia;
 
+    final themeColor = isDark
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).primaryColor;
+
     final colorEstado = restantes <= 3
         ? AppColors.priorityAlta
-        : (restantes <= 7 ? const Color(0xFFF59E0B) : AppColors.primary);
+        : (restantes <= 7 ? const Color(0xFFF59E0B) : themeColor);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDark : const Color(0xFFF8FAFC),
+        color: isDark ? (Theme.of(context).cardTheme.color ?? AppColors.cardDark) : const Color(0xFFF8FAFC),
         border: Border(
           bottom: BorderSide(
             color: isDark ? AppColors.borderDark : const Color(0xFFE2E8F0),
@@ -43,8 +47,8 @@ class BarraLimiteChat extends StatelessWidget {
             'Cupo diario: ',
             style: TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+              fontWeight: FontWeight.w600,
+              color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF64748B),
             ),
           ),
           Text(

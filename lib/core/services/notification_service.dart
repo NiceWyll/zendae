@@ -1,9 +1,12 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:mi_pendiente/core/constants/app_sounds.dart';
 import 'package:mi_pendiente/features/pendientes/domain/entities/pendiente.dart';
+import 'package:mi_pendiente/features/horario/domain/entities/clase.dart';
 import 'package:mi_pendiente/features/pendientes/domain/services/notification_scheduler.dart';
 
 class NotificationServiceImpl implements NotificationScheduler {
@@ -17,6 +20,8 @@ class NotificationServiceImpl implements NotificationScheduler {
   static const String channelId = 'mi_pendiente_alarmas';
   static const String channelName = 'Recordatorios de Pendientes';
   static const String channelDesc = 'Alertas flotantes y recordatorios importantes de tus pendientes';
+
+  static final Int64List _vibrationPattern = Int64List.fromList([0, 500, 250, 500]);
 
   bool _initialized = false;
 
@@ -49,25 +54,62 @@ class NotificationServiceImpl implements NotificationScheduler {
         },
       );
 
-      // 4. Crear canal de alta prioridad (heads-up / nubecita flotante)
+      // 4. Crear canales en Android con soporte explícito de sonido y vibración
       if (Platform.isAndroid) {
         final androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
         if (androidPlugin != null) {
-          const channel = AndroidNotificationChannel(
+          // Canal general de compatibilidad
+          final defaultChannel = AndroidNotificationChannel(
             channelId,
             channelName,
             description: channelDesc,
-            importance: Importance.max, // Máxima prioridad para mostrar banner flotante ("la nubecita")
+            importance: Importance.max,
             playSound: true,
             enableVibration: true,
+            vibrationPattern: _vibrationPattern,
             showBadge: true,
           );
-          await androidPlugin.createNotificationChannel(channel);
+          await androidPlugin.createNotificationChannel(defaultChannel);
+
+          // Canales dedicados por cada sonido disponible para Pendientes y Clases
+          for (final s in SonidosDisponibles.lista) {
+            final soundResource = s.id == 'default' ? null : RawResourceAndroidNotificationSound(s.id);
+
+            // Canal para Pendientes
+            await androidPlugin.createNotificationChannel(
+              AndroidNotificationChannel(
+                'canal_pendientes_${s.id}',
+                'Pendientes - ${s.nombre}',
+                description: 'Recordatorios de pendientes con tono ${s.nombre}',
+                importance: Importance.max,
+                playSound: true,
+                sound: soundResource,
+                enableVibration: true,
+                vibrationPattern: _vibrationPattern,
+                showBadge: true,
+              ),
+            );
+
+            // Canal para Clases
+            await androidPlugin.createNotificationChannel(
+              AndroidNotificationChannel(
+                'canal_clases_${s.id}',
+                'Clases - ${s.nombre}',
+                description: 'Avisos de horario de clases con tono ${s.nombre}',
+                importance: Importance.max,
+                playSound: true,
+                sound: soundResource,
+                enableVibration: true,
+                vibrationPattern: _vibrationPattern,
+                showBadge: true,
+              ),
+            );
+          }
         }
       }
 
       _initialized = true;
-      debugPrint('✅ NotificationService inicializado correctamente');
+      debugPrint('✅ NotificationService inicializado con canales de sonido y vibración');
     } catch (e) {
       debugPrint('⚠️ Error al inicializar NotificationService: $e');
     }
@@ -103,24 +145,33 @@ class NotificationServiceImpl implements NotificationScheduler {
     return false;
   }
 
-  /// Dispara una notificación inmediata de alta prioridad con banner emergente ("la nubecita")
+  /// Dispara una notificación inmediata de alta prioridad con banner emergente, sonido y vibración
   @override
   Future<void> mostrarNotificacionInmediata({
     int id = 9999,
     required String titulo,
     required String cuerpo,
     String? payload,
+    String? sonido,
+    bool vibracion = true,
+    String tipo = 'pendiente',
   }) async {
     try {
+      final sId = sonido ?? (tipo == 'clase' ? 'zen' : 'campana');
+      final chId = tipo == 'clase' ? 'canal_clases_$sId' : 'canal_pendientes_$sId';
+      final chName = tipo == 'clase' ? 'Horario de Clases' : 'Recordatorios de Pendientes';
+
       final androidDetails = AndroidNotificationDetails(
-        channelId,
-        channelName,
-        channelDescription: channelDesc,
+        chId,
+        chName,
+        channelDescription: 'Notificación con sonido y vibración activa',
         importance: Importance.max,
         priority: Priority.high,
         playSound: true,
-        enableVibration: true,
-        ticker: 'Recordatorio de Zendae',
+        sound: sId == 'default' ? null : RawResourceAndroidNotificationSound(sId),
+        enableVibration: vibracion,
+        vibrationPattern: vibracion ? _vibrationPattern : null,
+        ticker: 'Zendae',
         category: AndroidNotificationCategory.reminder,
         icon: '@mipmap/ic_launcher',
         styleInformation: BigTextStyleInformation(
@@ -130,13 +181,16 @@ class NotificationServiceImpl implements NotificationScheduler {
         ),
       );
 
+      final darwinDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+        sound: sId == 'default' ? null : '$sId.wav',
+      );
+
       final details = NotificationDetails(
         android: androidDetails,
-        iOS: const DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-        ),
+        iOS: darwinDetails,
       );
 
       await _plugin.show(
@@ -146,10 +200,29 @@ class NotificationServiceImpl implements NotificationScheduler {
         notificationDetails: details,
         payload: payload,
       );
-      debugPrint('🚀 Notificación inmediata lanzada exitosamente: $titulo');
+      debugPrint('🚀 Notificación inmediata lanzada exitosamente con sonido $sId');
     } catch (e) {
       debugPrint('⚠️ Error al mostrar notificación inmediata: $e');
     }
+  }
+
+  /// Permite al usuario probar el sonido y vibración desde Ajustes
+  @override
+  Future<void> probarSonido({
+    required String soundId,
+    required String tipo,
+    bool vibracion = true,
+  }) async {
+    final nombreSonido = SonidosDisponibles.obtenerPorId(soundId).nombre;
+    final esClase = tipo == 'clase';
+    await mostrarNotificacionInmediata(
+      id: 7777,
+      titulo: esClase ? '🎓 Tono de Clases: $nombreSonido' : '🔔 Tono de Pendientes: $nombreSonido',
+      cuerpo: 'Esta es una vista previa del sonido y la vibración configurada.',
+      sonido: soundId,
+      vibracion: vibracion,
+      tipo: tipo,
+    );
   }
 
   /// Implementación del contrato NotificationScheduler
@@ -160,23 +233,48 @@ class NotificationServiceImpl implements NotificationScheduler {
     required String cuerpo,
     required DateTime cuando,
     String? payload,
+    String? sonido,
+    bool vibracion = true,
+    String tipo = 'pendiente',
   }) async {
     final tzDate = tz.TZDateTime.from(cuando, tz.local);
+    final sId = sonido ?? (tipo == 'clase' ? 'zen' : 'campana');
+    final chId = tipo == 'clase' ? 'canal_clases_$sId' : 'canal_pendientes_$sId';
+    final chName = tipo == 'clase' ? 'Horario de Clases' : 'Recordatorios de Pendientes';
+
     await _agendarZoned(
       id: notificacionId,
       titulo: titulo,
       cuerpo: cuerpo,
       date: tzDate,
       payload: payload,
+      channelId: chId,
+      channelName: chName,
+      soundId: sId,
+      vibracion: vibracion,
     );
   }
 
-  /// Método de conveniencia para la entidad Pendiente
+  /// Método para la entidad Pendiente con sonido y vibración configurables
   @override
-  Future<void> programarRecordatorioPendiente(Pendiente pendiente) async {
+  Future<void> programarRecordatorioPendiente(
+    Pendiente pendiente, {
+    String? sonido,
+    bool vibracion = true,
+  }) async {
     if (!pendiente.tieneRecordatorio) return;
 
     try {
+      String soundId = sonido ?? 'campana';
+      bool vibra = vibracion;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        if (sonido == null) {
+          soundId = prefs.getString('sonido_pendientes') ?? 'campana';
+        }
+        vibra = prefs.getBool('vibracion') ?? true;
+      } catch (_) {}
+
       final int notifId = pendiente.notificacionId ?? (pendiente.id.hashCode & 0x7fffffff);
       final scheduledDate = pendiente.momentoDeAviso;
       final now = DateTime.now();
@@ -189,6 +287,9 @@ class NotificationServiceImpl implements NotificationScheduler {
             cuerpo: '${pendiente.titulo}${pendiente.descripcion != null ? ' - ${pendiente.descripcion}' : ''}',
             cuando: pendiente.fechaHoraCompleta,
             payload: pendiente.id,
+            sonido: soundId,
+            vibracion: vibra,
+            tipo: 'pendiente',
           );
         }
         return;
@@ -204,9 +305,104 @@ class NotificationServiceImpl implements NotificationScheduler {
         cuerpo: aviso,
         cuando: scheduledDate,
         payload: pendiente.id,
+        sonido: soundId,
+        vibracion: vibra,
+        tipo: 'pendiente',
       );
     } catch (e) {
       debugPrint('⚠️ Error al programar recordatorio para pendiente ${pendiente.id}: $e');
+    }
+  }
+
+  /// Método para la entidad Clase (Horario) con sonido independiente y control estricto de vigencia
+  @override
+  Future<void> programarRecordatorioClase(
+    dynamic claseObj, {
+    String? sonido,
+    bool vibracion = true,
+  }) async {
+    try {
+      final Clase clase = claseObj is Clase
+          ? claseObj
+          : Clase.fromMap(claseObj as Map<String, dynamic>);
+
+      final now = DateTime.now();
+      final finDia = DateTime(clase.fechaFin.year, clase.fechaFin.month, clase.fechaFin.day, 23, 59, 59);
+
+      // Fuera del rango de fecha de inicio/fin del curso, no debe llegar ninguna notificación
+      if (now.isAfter(finDia)) {
+        debugPrint('🚫 Clase ${clase.nombre} ya finalizó su periodo de vigencia. No se agenda notificación.');
+        return;
+      }
+
+      String soundId = sonido ?? 'zen';
+      bool vibra = vibracion;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        if (sonido == null) {
+          soundId = prefs.getString('sonido_clases') ?? 'zen';
+        }
+        vibra = prefs.getBool('vibracion') ?? true;
+      } catch (_) {}
+
+      // Encontrar la próxima ocurrencia de esta clase
+      DateTime proximaSesion = DateTime(now.year, now.month, now.day);
+      while (proximaSesion.weekday != clase.diaSemana) {
+        proximaSesion = proximaSesion.add(const Duration(days: 1));
+      }
+
+      DateTime momentoClase = DateTime(
+        proximaSesion.year,
+        proximaSesion.month,
+        proximaSesion.day,
+        clase.horaInicio,
+        clase.minutoInicio,
+      );
+
+      DateTime momentoAviso = momentoClase.subtract(Duration(minutes: clase.minutosAntes));
+
+      // Si el aviso de hoy ya pasó, pasar a la próxima semana
+      if (momentoAviso.isBefore(now)) {
+        proximaSesion = proximaSesion.add(const Duration(days: 7));
+        momentoClase = DateTime(
+          proximaSesion.year,
+          proximaSesion.month,
+          proximaSesion.day,
+          clase.horaInicio,
+          clase.minutoInicio,
+        );
+        momentoAviso = momentoClase.subtract(Duration(minutes: clase.minutosAntes));
+      }
+
+      // Verificar que la fecha de la sesión no supere la fecha de fin de vigencia
+      final fechaSesionPura = DateTime(proximaSesion.year, proximaSesion.month, proximaSesion.day);
+      final iniPura = DateTime(clase.fechaInicio.year, clase.fechaInicio.month, clase.fechaInicio.day);
+      final finPura = DateTime(clase.fechaFin.year, clase.fechaFin.month, clase.fechaFin.day);
+
+      if (fechaSesionPura.isBefore(iniPura) || fechaSesionPura.isAfter(finPura)) {
+        debugPrint('🚫 La próxima sesión cae fuera del rango (${clase.fechaInicio} a ${clase.fechaFin}). No se agenda.');
+        return;
+      }
+
+      final notifId = clase.notificacionId ?? (clase.id.hashCode & 0x7fffffff);
+
+      final String cuerpo = clase.minutosAntes > 0
+          ? 'Empieza en ${clase.minutosAntes} min (${clase.horarioFormateado})${clase.aula != null ? " en ${clase.aula}" : ""}'
+          : '¡Es hora de tu clase! (${clase.horarioFormateado})${clase.aula != null ? " en ${clase.aula}" : ""}';
+
+      await programarRecordatorio(
+        notificacionId: notifId,
+        titulo: '🎓 Próxima clase: ${clase.nombre}',
+        cuerpo: cuerpo,
+        cuando: momentoAviso,
+        payload: 'clase_${clase.id}',
+        sonido: soundId,
+        vibracion: vibra,
+        tipo: 'clase',
+      );
+      debugPrint('📅 Clase ${clase.nombre} agendada para $momentoAviso con tono $soundId');
+    } catch (e) {
+      debugPrint('⚠️ Error al programar recordatorio de clase: $e');
     }
   }
 
@@ -216,26 +412,38 @@ class NotificationServiceImpl implements NotificationScheduler {
     required String cuerpo,
     required tz.TZDateTime date,
     String? payload,
+    String channelId = channelId,
+    String channelName = channelName,
+    String channelDesc = channelDesc,
+    String? soundId,
+    bool vibracion = true,
   }) async {
-    const androidDetails = AndroidNotificationDetails(
+    final sId = soundId ?? 'campana';
+
+    final androidDetails = AndroidNotificationDetails(
       channelId,
       channelName,
       channelDescription: channelDesc,
       importance: Importance.max,
       priority: Priority.high,
       playSound: true,
-      enableVibration: true,
+      sound: sId == 'default' ? null : RawResourceAndroidNotificationSound(sId),
+      enableVibration: vibracion,
+      vibrationPattern: vibracion ? _vibrationPattern : null,
       category: AndroidNotificationCategory.reminder,
       icon: '@mipmap/ic_launcher',
     );
 
-    const details = NotificationDetails(
+    final iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+      sound: sId == 'default' ? null : '$sId.wav',
+    );
+
+    final details = NotificationDetails(
       android: androidDetails,
-      iOS: DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-      ),
+      iOS: iosDetails,
     );
 
     try {
@@ -248,7 +456,7 @@ class NotificationServiceImpl implements NotificationScheduler {
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         payload: payload,
       );
-      debugPrint('📅 Recordatorio programado para: $date (ID: $id)');
+      debugPrint('📅 Recordatorio programado para: $date (ID: $id, Canal: $channelId, Sonido: $sId)');
     } catch (exactError) {
       debugPrint('⚠️ Intento con inexactAllowWhileIdle por: $exactError');
       await _plugin.zonedSchedule(
@@ -288,7 +496,7 @@ class NotificationServiceImpl implements NotificationScheduler {
         scheduledDate = scheduledDate.add(const Duration(days: 1));
       }
 
-      const androidDetails = AndroidNotificationDetails(
+      final androidDetails = AndroidNotificationDetails(
         channelId,
         channelName,
         channelDescription: channelDesc,
@@ -296,13 +504,14 @@ class NotificationServiceImpl implements NotificationScheduler {
         priority: Priority.high,
         playSound: true,
         enableVibration: true,
+        vibrationPattern: _vibrationPattern,
         category: AndroidNotificationCategory.reminder,
         icon: '@mipmap/ic_launcher',
       );
 
-      const details = NotificationDetails(
+      final details = NotificationDetails(
         android: androidDetails,
-        iOS: DarwinNotificationDetails(
+        iOS: const DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
@@ -338,6 +547,12 @@ class NotificationServiceImpl implements NotificationScheduler {
   @override
   Future<void> cancelarRecordatorioPorIdString(String pendienteId) async {
     final int notifId = pendienteId.hashCode & 0x7fffffff;
+    await cancelarRecordatorio(notifId);
+  }
+
+  @override
+  Future<void> cancelarRecordatorioClase(String claseId) async {
+    final int notifId = claseId.hashCode & 0x7fffffff;
     await cancelarRecordatorio(notifId);
   }
 
