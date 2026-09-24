@@ -6,3 +6,5 @@ class AppConfig {
   static bool todoDesbloqueado = true;
 }
 
+
+

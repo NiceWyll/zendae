@@ -269,46 +269,6 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                   ),
                 ),
               ),
-
-              // Menú de los 3 puntos (opciones personales)
-              PopupMenuButton<String>(
-                icon: Icon(Icons.more_vert_rounded, color: primaryColor),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                color: isDark ? AppColors.cardDark : Colors.white,
-                tooltip: 'Más opciones',
-                onSelected: (value) {
-                  if (value == 'horario') {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const HorarioScreen(),
-                      ),
-                    );
-                  }
-                },
-                itemBuilder: (context) => [
-                  PopupMenuItem<String>(
-                    value: 'horario',
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.calendar_view_week_rounded,
-                          color: Color(0xFF6366F1),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Horario',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? Colors.white : AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
             ],
           ),
         ],
