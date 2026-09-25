@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,7 +66,21 @@ class SelectorTemasGrid extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         onTap: () {
           if (estaDesbloqueado) {
-            ref.read(ajustesProvider.notifier).cambiarTema(tema.id);
+            if (tema.id == 'fondo_personalizado') {
+              final path = ref.read(ajustesProvider).fondoPersonalizadoPath;
+              if (path != null && File(path).existsSync()) {
+                ref.read(ajustesProvider.notifier).cambiarTema(tema.id);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Sube primero tu fondo en la sección de arriba con el botón "Subir fondo".'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            } else {
+              ref.read(ajustesProvider.notifier).cambiarTema(tema.id);
+            }
           } else {
             _mostrarDialogoBloqueo(context, tema, diasRacha);
           }

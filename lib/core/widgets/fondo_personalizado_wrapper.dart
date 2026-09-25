@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/ajustes/presentation/providers/ajustes_provider.dart';
 
-/// Wrapper de pantalla completa para fondo animado personalizado con difuminado/blur.
-/// EXCLUSIVO PARA ANDROID: En iOS o Web no se activa ni genera sobrecoste alguno.
+/// Wrapper de pantalla completa para fondo personalizado con difuminado/blur.
+/// Soporta Android e iOS con aceleración por hardware y mínimo consumo.
 class FondoPersonalizadoWrapper extends ConsumerWidget {
   final Widget child;
 
@@ -14,9 +14,7 @@ class FondoPersonalizadoWrapper extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Exclusivo para Android
-    final esAndroid = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
-    if (!esAndroid) {
+    if (kIsWeb) {
       return child;
     }
 

@@ -12,16 +12,14 @@ import 'package:mi_pendiente/features/racha/presentation/providers/racha_provide
 import '../providers/ajustes_provider.dart';
 import 'dialogo_preview_fondo.dart';
 
-/// Sección de personalización de fondo animado EXCLUSIVA para Android.
-/// En iOS no se muestra en lo absoluto.
+/// Sección de personalización de fondo animado e imagen disponible en Android e iOS.
 class SeccionFondoPersonalizado extends ConsumerWidget {
   const SeccionFondoPersonalizado({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 1. Verificación estricta de plataforma: EXCLUSIVO PARA ANDROID
-    final esAndroid = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
-    if (!esAndroid) {
+    // Disponible en plataformas móviles (Android e iOS)
+    if (kIsWeb) {
       return const SizedBox.shrink();
     }
 
@@ -64,7 +62,7 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Cabecera con badge Exclusivo Android
+          // Cabecera con badge
           Row(
             children: [
               Container(
@@ -75,7 +73,7 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
                   ),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.movie_filter_rounded, color: Colors.white, size: 20),
+                child: const Icon(Icons.wallpaper_rounded, color: Colors.white, size: 20),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -86,7 +84,7 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            'Fondo Animado Personalizado',
+                            'Fondo Personalizado',
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
@@ -99,15 +97,15 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF10B981).withOpacity(0.15),
+                            color: const Color(0xFF8B5CF6).withOpacity(0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Text(
-                            'ANDROID',
+                            'GIF / FOTO',
                             style: TextStyle(
                               fontSize: 9.5,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF10B981),
+                              color: Color(0xFF8B5CF6),
                             ),
                           ),
                         ),
@@ -116,8 +114,8 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
                     const SizedBox(height: 2),
                     Text(
                       tieneFondoActivo
-                          ? 'Fondo animado en bucle activo con difuminado'
-                          : 'Sube tu propio GIF o video corto en bucle (máx 10 MB)',
+                          ? 'Fondo activo con difuminado dinámico'
+                          : 'Sube tu propio GIF animado, foto o imagen (máx 10 MB)',
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
@@ -182,10 +180,10 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () => _seleccionarArchivo(context, ref),
+                    onPressed: () => _mostrarOpcionesDeOrigen(context, ref),
                     icon: const Icon(Icons.upload_file_rounded, size: 18),
                     label: Text(
-                      tieneFondoActivo ? 'Cambiar fondo' : 'Subir fondo animado',
+                      tieneFondoActivo ? 'Cambiar fondo' : 'Subir fondo (Archivos o Fotos)',
                       style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                     ),
                     style: ElevatedButton.styleFrom(
@@ -216,7 +214,7 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Restaurar defecto', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+                    child: const Text('Restaurar', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                   ),
                 ],
               ],
@@ -235,7 +233,7 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
                 const SizedBox(width: 5),
                 Expanded(
                   child: Text(
-                    'Límite máx: 10 MB. Se valida antes de cargar para proteger tu memoria y batería.',
+                    'Límite máx: 10 MB. Puedes subir desde la app Archivos o tu Galería de Fotos.',
                     style: TextStyle(
                       fontSize: 11,
                       color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
@@ -250,17 +248,97 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
     );
   }
 
-  Future<void> _seleccionarArchivo(BuildContext context, WidgetRef ref) async {
+  void _mostrarOpcionesDeOrigen(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Seleccionar fondo',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Elige desde dónde deseas cargar tu fondo (máx. 10 MB):',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF8B5CF6).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.folder_open_rounded, color: Color(0xFF8B5CF6)),
+                ),
+                title: const Text('Archivos del dispositivo', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                subtitle: const Text('GIFs, WebP o imágenes en Archivos / iCloud / Descargas', style: TextStyle(fontSize: 12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _seleccionarArchivo(context, ref, desdeGaleria: false);
+                },
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3B82F6).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.photo_library_rounded, color: Color(0xFF3B82F6)),
+                ),
+                title: const Text('Galería de Fotos', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                subtitle: const Text('Fotos, imágenes o capturas de tu biblioteca', style: TextStyle(fontSize: 12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _seleccionarArchivo(context, ref, desdeGaleria: true);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _seleccionarArchivo(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool desdeGaleria,
+  }) async {
     try {
-      final files = await FilePicker.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['gif', 'webp', 'mp4', 'png', 'jpg', 'jpeg'],
-      );
+      final files = desdeGaleria
+          ? await FilePicker.pickFiles(type: FileType.image)
+          : await FilePicker.pickFiles(
+              type: FileType.custom,
+              allowedExtensions: ['gif', 'webp', 'png', 'jpg', 'jpeg'],
+            );
 
       if (files.isEmpty) return;
 
       final file = files.first;
-      final tamanoBytes = await file.length() ?? file.lengthSync() ?? 0;
+      final tamanoBytes = file.lengthSync() ?? (await file.length()) ?? 0;
       const limiteBytes = 10 * 1024 * 1024; // 10 MB
 
       // VALIDACIÓN ESTRICTA DEL LÍMITE DE 10 MB ANTES DE PROCESAR
@@ -270,7 +348,7 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '⚠️ El archivo seleccionado pesa $mb MB y supera el límite máximo permitido de 10 MB. Elige un GIF o video más corto para no agotar tu batería.',
+                '⚠️ El archivo seleccionado pesa $mb MB y supera el límite máximo permitido de 10 MB. Elige una imagen o GIF de menor tamaño.',
               ),
               backgroundColor: const Color(0xFFEF4444),
               behavior: SnackBarBehavior.floating,
@@ -282,7 +360,7 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
       }
 
       File? fileLocal;
-      if (file.path != null) {
+      if (file.path != null && file.path!.isNotEmpty) {
         fileLocal = File(file.path!);
       } else {
         final bytes = await file.readAsBytes();
@@ -290,6 +368,19 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
         final tempFile = File(p.join(tempDir.path, file.name));
         await tempFile.writeAsBytes(bytes);
         fileLocal = tempFile;
+      }
+
+      if (!fileLocal.existsSync()) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo abrir el archivo seleccionado.'),
+              backgroundColor: Colors.redAccent,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
       }
 
       // MOSTRAR VISTA PREVIA CON DIFUMINADO ANTES DE GUARDAR
@@ -306,6 +397,7 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
           SnackBar(
             content: Text('No se pudo abrir el selector: $e'),
             backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }

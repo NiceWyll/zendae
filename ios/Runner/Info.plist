@@ -30,6 +30,8 @@
 	<string>Zendae necesita acceso a tu micrófono para dictar tus tareas y notas por voz.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Zendae utiliza el reconocimiento de voz para transcribir lo que dices y agendar tus pendientes automáticamente.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Zendae necesita acceso a tus fotos para que puedas seleccionar una imagen o GIF de fondo personalizado.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

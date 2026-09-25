@@ -120,14 +120,14 @@ class TemasDisponibles {
 
   static const TemaApp fondoPersonalizado = TemaApp(
     id: 'fondo_personalizado',
-    nombre: 'Fondo Animado',
-    descripcion: 'Sube tu propio GIF o video corto en bucle con difuminado (Exclusivo Android)',
+    nombre: 'Fondo Personalizado',
+    descripcion: 'Sube tu propio GIF animado o imagen con difuminado dinámico',
     colorPrimario: Color(0xFF8B5CF6),
     colorSecundario: Color(0xFF06B6D4),
     colorAcento: Color(0xFFEC4899),
     esDesbloqueablePorRacha: true,
     diasRequeridos: 10,
-    esExclusivoAndroid: true,
+    esExclusivoAndroid: false,
   );
 
   static const TemaApp aurora = TemaApp(

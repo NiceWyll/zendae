@@ -19,7 +19,7 @@ void main() {
       expect(ids, contains('fondo_personalizado'));
     });
 
-    test('Fondo personalizado es EXCLUSIVO para Android y se filtra en iOS', () {
+    test('Fondo personalizado está disponible en plataformas móviles', () {
       final temasAndroid = TemasDisponibles.todosParaPlataforma(esAndroid: true);
       final temasIOS = TemasDisponibles.todosParaPlataforma(esAndroid: false);
 
@@ -27,7 +27,7 @@ void main() {
       final tieneFondoIOS = temasIOS.any((t) => t.id == 'fondo_personalizado');
 
       expect(tieneFondoAndroid, isTrue, reason: 'En Android debe estar presente');
-      expect(tieneFondoIOS, isFalse, reason: 'En iOS debe estar estrictamente oculto');
+      expect(tieneFondoIOS, isTrue, reason: 'En iOS ahora también está disponible para personalización');
     });
 
     test('Límite de tamaño: validación de 10 MB', () {
