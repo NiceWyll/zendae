@@ -10,6 +10,7 @@ class TemaApp {
   final Color? colorAcento;
   final bool esDesbloqueablePorRacha;
   final int? diasRequeridos;
+  final bool esExclusivoAndroid;
 
   const TemaApp({
     required this.id,
@@ -20,6 +21,7 @@ class TemaApp {
     this.colorAcento,
     this.esDesbloqueablePorRacha = false,
     this.diasRequeridos,
+    this.esExclusivoAndroid = false,
   });
 
   bool estaDesbloqueado(int diasRacha, List<String> logrosDesbloqueados) {
@@ -67,6 +69,33 @@ class TemasDisponibles {
     colorAcento: Color(0xFFA78BFA),
   );
 
+  static const TemaApp zafiro = TemaApp(
+    id: 'zafiro',
+    nombre: 'Zafiro Real',
+    descripcion: 'Fuerza y elegancia con tonos azul eléctrico y cobalto',
+    colorPrimario: Color(0xFF1E40AF),
+    colorSecundario: Color(0xFF3B82F6),
+    colorAcento: Color(0xFF60A5FA),
+  );
+
+  static const TemaApp cerezo = TemaApp(
+    id: 'cerezo',
+    nombre: 'Sakura Carmesí',
+    descripcion: 'Frescura y vitalidad con carmesí suave y rosa magenta',
+    colorPrimario: Color(0xFFBE123C),
+    colorSecundario: Color(0xFFF43F5E),
+    colorAcento: Color(0xFFFDA4AF),
+  );
+
+  static const TemaApp menta = TemaApp(
+    id: 'menta',
+    nombre: 'Menta Pastel',
+    descripcion: 'Claridad mental con menta suave y salvia relajante',
+    colorPrimario: Color(0xFF0F766E),
+    colorSecundario: Color(0xFF14B8A6),
+    colorAcento: Color(0xFF5EEAD4),
+  );
+
   static const TemaApp atardecer = TemaApp(
     id: 'atardecer',
     nombre: 'Atardecer Cálido',
@@ -76,6 +105,29 @@ class TemasDisponibles {
     colorAcento: Color(0xFFFB923C),
     esDesbloqueablePorRacha: true,
     diasRequeridos: 7,
+  );
+
+  static const TemaApp ambar = TemaApp(
+    id: 'ambar',
+    nombre: 'Ámbar Brillante',
+    descripcion: 'Calidez luminosa y dinamismo con matices de miel y caramelo',
+    colorPrimario: Color(0xFFB45309),
+    colorSecundario: Color(0xFFF59E0B),
+    colorAcento: Color(0xFFFDE68A),
+    esDesbloqueablePorRacha: true,
+    diasRequeridos: 10,
+  );
+
+  static const TemaApp fondoPersonalizado = TemaApp(
+    id: 'fondo_personalizado',
+    nombre: 'Fondo Animado',
+    descripcion: 'Sube tu propio GIF o video corto en bucle con difuminado (Exclusivo Android)',
+    colorPrimario: Color(0xFF8B5CF6),
+    colorSecundario: Color(0xFF06B6D4),
+    colorAcento: Color(0xFFEC4899),
+    esDesbloqueablePorRacha: true,
+    diasRequeridos: 10,
+    esExclusivoAndroid: true,
   );
 
   static const TemaApp aurora = TemaApp(
@@ -89,6 +141,17 @@ class TemasDisponibles {
     diasRequeridos: 30,
   );
 
+  static const TemaApp cyberpunk = TemaApp(
+    id: 'cyberpunk',
+    nombre: 'Cyberpunk Neón',
+    descripcion: 'Futurismo rebelde con violeta neón y azul cian luminoso',
+    colorPrimario: Color(0xFF4C1D95),
+    colorSecundario: Color(0xFF06B6D4),
+    colorAcento: Color(0xFFA855F7),
+    esDesbloqueablePorRacha: true,
+    diasRequeridos: 50,
+  );
+
   static const TemaApp dorado = TemaApp(
     id: 'dorado',
     nombre: 'Racha Dorada',
@@ -100,14 +163,37 @@ class TemasDisponibles {
     diasRequeridos: 100,
   );
 
+  static const TemaApp obsidiana = TemaApp(
+    id: 'obsidiana',
+    nombre: 'Obsidiana Estelar',
+    descripcion: 'Minimalismo y elegancia pura en carbón profundo y plata titanio',
+    colorPrimario: Color(0xFF0F172A),
+    colorSecundario: Color(0xFF94A3B8),
+    colorAcento: Color(0xFFE2E8F0),
+    esDesbloqueablePorRacha: true,
+    diasRequeridos: 150,
+  );
+
   static const List<TemaApp> todos = [
     clasico,
     esmeralda,
     lavanda,
+    zafiro,
+    cerezo,
+    menta,
     atardecer,
+    ambar,
+    fondoPersonalizado,
     aurora,
+    cyberpunk,
     dorado,
+    obsidiana,
   ];
+
+  static List<TemaApp> todosParaPlataforma({required bool esAndroid}) {
+    if (esAndroid) return todos;
+    return todos.where((t) => !t.esExclusivoAndroid).toList();
+  }
 
   static TemaApp obtenerPorId(String id) {
     for (final t in todos) {

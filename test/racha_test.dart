@@ -14,6 +14,7 @@ import 'package:mi_pendiente/features/racha/domain/usecases/obtener_racha.dart';
 import 'package:mi_pendiente/features/racha/presentation/providers/racha_provider.dart';
 import 'package:mi_pendiente/features/racha/presentation/screens/mis_logros_screen.dart';
 import 'package:mi_pendiente/features/racha/presentation/widgets/banner_racha.dart';
+import 'package:mi_pendiente/features/racha/presentation/widgets/zendy_personaje_widget.dart';
 
 class FakeRachaRepository implements RachaRepository {
   Racha rachaActual;
@@ -304,7 +305,7 @@ void main() {
       );
 
       await tester.pumpAndSettle();
-      expect(find.text('🔥'), findsOneWidget);
+      expect(find.byType(ZendyPersonajeWidget), findsOneWidget);
       expect(find.text('5'), findsOneWidget);
       expect(find.text('días'), findsOneWidget);
     });
@@ -333,7 +334,7 @@ void main() {
       );
 
       await tester.pumpAndSettle();
-      expect(find.text('Empecemos de nuevo 💪'), findsOneWidget);
+      expect(find.text('¡Activa a Zendy completando una tarea!'), findsOneWidget);
     });
 
     testWidgets('MisLogrosScreen renderiza hitos y récord', (tester) async {
@@ -365,7 +366,7 @@ void main() {
       );
 
       await tester.pumpAndSettle();
-      expect(find.text('Mis Logros y Racha 🔥'), findsOneWidget);
+      expect(find.text('Mis Logros y Racha ⏰'), findsOneWidget);
       expect(find.text('7'), findsOneWidget);
       expect(find.text('Récord: 14 días'), findsOneWidget);
       expect(find.text('Hábito Inicial'), findsOneWidget);

@@ -9,6 +9,7 @@ import '../../domain/entities/racha.dart';
 import '../../domain/repositories/racha_repository.dart';
 import '../../domain/usecases/actualizar_racha.dart';
 import '../../domain/usecases/obtener_racha.dart';
+import 'personaje_provider.dart';
 
 class InMemoryRachaRepository implements RachaRepository {
   Racha _racha = const Racha.inicial();
@@ -61,14 +62,24 @@ final actualizarRachaProvider = Provider<ActualizarRacha>((ref) {
   final repo = ref.watch(rachaRepositoryProvider);
   final reloj = ref.watch(relojProvider);
   final validador = ref.watch(validadorDiaActivoProvider);
-  return ActualizarRacha(repo, reloj, validador);
+  return ActualizarRacha(
+    repo,
+    reloj,
+    validador,
+    () => ref.read(personajeProvider.notifier).procesarRupturaRacha(),
+  );
 });
 
 final obtenerRachaProvider = Provider<ObtenerRacha>((ref) {
   final repo = ref.watch(rachaRepositoryProvider);
   final reloj = ref.watch(relojProvider);
   final validador = ref.watch(validadorDiaActivoProvider);
-  return ObtenerRacha(repo, reloj, validador);
+  return ObtenerRacha(
+    repo,
+    reloj,
+    validador,
+    () => ref.read(personajeProvider.notifier).procesarRupturaRacha(),
+  );
 });
 
 class RachaNotifier extends AsyncNotifier<Racha> {
@@ -77,7 +88,10 @@ class RachaNotifier extends AsyncNotifier<Racha> {
     final caso = ref.watch(obtenerRachaProvider);
     final res = await caso();
     return switch (res) {
-      Exito(:final valor) => valor,
+      Exito(:final valor) => () {
+          ref.read(personajeProvider.notifier).verificarNuevosDesbloqueos(valor.diasActuales);
+          return valor;
+        }(),
       Fallo(:final failure) => throw failure,
     };
   }
@@ -87,6 +101,7 @@ class RachaNotifier extends AsyncNotifier<Racha> {
     final caso = ref.read(obtenerRachaProvider);
     final res = await caso();
     if (res case Exito(:final valor)) {
+      ref.read(personajeProvider.notifier).verificarNuevosDesbloqueos(valor.diasActuales);
       state = AsyncData(valor);
     }
   }
@@ -96,6 +111,7 @@ class RachaNotifier extends AsyncNotifier<Racha> {
     final res = await caso();
     if (res case Exito(:final valor)) {
       state = AsyncData(valor);
+      ref.read(personajeProvider.notifier).verificarNuevosDesbloqueos(valor.diasActuales);
       return valor;
     }
     return null;

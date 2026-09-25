@@ -129,4 +129,10 @@ class FakeNotificationScheduler implements NotificationScheduler {
     required int hora,
     required int minuto,
   }) async {}
+
+  @override
+  Future<void> programarAvisoRiesgoRacha({
+    int hora = 20,
+    int minuto = 0,
+  }) async {}
 }

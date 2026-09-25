@@ -5,13 +5,15 @@ import '../entities/racha.dart';
 import '../repositories/racha_repository.dart';
 
 typedef ValidadorDiaActivo = Future<bool> Function(DateTime fecha);
+typedef GestorRupturaRacha = Future<void> Function();
 
 class ActualizarRacha {
-  const ActualizarRacha(this._repo, this._reloj, [this._validadorDiaActivo]);
+  const ActualizarRacha(this._repo, this._reloj, [this._validadorDiaActivo, this._onRupturaRacha]);
 
   final RachaRepository _repo;
   final Reloj _reloj;
   final ValidadorDiaActivo? _validadorDiaActivo;
+  final GestorRupturaRacha? _onRupturaRacha;
 
   Future<Result<Racha>> call() async {
     final ahora = _reloj.ahora();
@@ -58,7 +60,8 @@ class ActualizarRacha {
           // La racha continúa donde estaba y suma +1 por el día de hoy
           nuevosDias = actual.diasActuales + 1;
         } else {
-          // Se rompió la racha (>1 día con actividad sin completar): empieza de nuevo en 1
+          // Se rompió la racha (>1 día con actividad sin completar): aplicar reglas de ropa
+          await _onRupturaRacha?.call();
           nuevosDias = 1;
         }
       }

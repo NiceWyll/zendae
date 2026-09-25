@@ -143,7 +143,7 @@ class _BotonMicrofonoState extends ConsumerState<BotonMicrofono> {
                 ),
                 child: const Row(
                   children: [
-                    Text('🔥', style: TextStyle(fontSize: 20)),
+                    Text('⏰', style: TextStyle(fontSize: 20)),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(

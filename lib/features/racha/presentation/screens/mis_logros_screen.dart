@@ -4,7 +4,10 @@ import 'package:mi_pendiente/core/constants/app_colors.dart';
 import 'package:mi_pendiente/core/constants/app_config.dart';
 import '../../domain/entities/hito_racha.dart';
 import '../../domain/entities/racha.dart';
+import '../providers/personaje_provider.dart';
 import '../providers/racha_provider.dart';
+import '../widgets/zendy_personaje_widget.dart';
+import 'armario_screen.dart';
 
 class MisLogrosScreen extends ConsumerStatefulWidget {
   const MisLogrosScreen({super.key});
@@ -22,12 +25,13 @@ class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
     final rachaAsync = ref.watch(rachaNotifierProvider);
+    final personaje = ref.watch(personajeProvider);
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       appBar: AppBar(
         title: const Text(
-          'Mis Logros y Racha 🔥',
+          'Mis Logros y Racha ⏰',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
@@ -38,9 +42,20 @@ class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
         backgroundColor: isDark ? AppColors.cardDark : Colors.white,
         foregroundColor: isDark ? Colors.white : AppColors.textPrimary,
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.checkroom_rounded),
+            tooltip: 'Vestidor de Zendy',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ArmarioScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: rachaAsync.when(
-        data: (racha) => _buildContenido(context, racha, isDark, primaryColor),
+        data: (racha) => _buildContenido(context, racha, personaje.prendaEquipadaId, isDark, primaryColor),
         loading: () => Center(
           child: CircularProgressIndicator(color: primaryColor),
         ),
@@ -61,7 +76,7 @@ class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
     );
   }
 
-  Widget _buildContenido(BuildContext context, Racha racha, bool isDark, Color primaryColor) {
+  Widget _buildContenido(BuildContext context, Racha racha, String prendaId, bool isDark, Color primaryColor) {
     final hitosDelRango = HitoRacha.values
         .where((h) => h.rango == _rangoSeleccionado)
         .toList();
@@ -79,9 +94,43 @@ class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       children: [
         // Tarjeta principal de la Racha
-        _buildHeroCard(racha, isDark, rangoAlcanzado),
+        _buildHeroCard(racha, prendaId, isDark, rangoAlcanzado),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
+
+        // Botón directo para ir al Armario / Vestidor de Zendy
+        OutlinedButton.icon(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ArmarioScreen()),
+            );
+          },
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            side: BorderSide(
+              color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+              width: 1.2,
+            ),
+          ),
+          icon: const Icon(Icons.checkroom_rounded, color: AppColors.primary, size: 20),
+          label: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Vestidor de Zendy (Armario de Ropa)',
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textSecondary),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
 
         // Barra de progreso hacia el siguiente hito
         _buildProgresoSiguienteHito(racha, isDark, primaryColor),
@@ -138,7 +187,7 @@ class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
     return RangoRacha.bronce;
   }
 
-  Widget _buildHeroCard(Racha racha, bool isDark, RangoRacha rangoAlcanzado) {
+  Widget _buildHeroCard(Racha racha, String prendaId, bool isDark, RangoRacha rangoAlcanzado) {
     final tieneRacha = racha.diasActuales > 0;
 
     return Container(
@@ -147,7 +196,7 @@ class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: tieneRacha
-              ? [const Color(0xFFFF5722), const Color(0xFFF57C00)]
+              ? [const Color(0xFFF59E0B), const Color(0xFFD97706)]
               : (isDark
                   ? [const Color(0xFF1E1E1E), const Color(0xFF2C2C2C)]
                   : [const Color(0xFF3B82F6), const Color(0xFF1D4ED8)]),
@@ -157,8 +206,8 @@ class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: (tieneRacha ? const Color(0xFFFF5722) : const Color(0xFF3B82F6))
-                .withValues(alpha: 0.35),
+            color: (tieneRacha ? const Color(0xFFF59E0B) : const Color(0xFF3B82F6))
+                .withOpacity(0.35),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -167,23 +216,24 @@ class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
       child: Column(
         children: [
           Container(
-            width: 80,
-            height: 80,
+            width: 88,
+            height: 88,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: Colors.white.withOpacity(0.2),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: Colors.black.withOpacity(0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: Center(
-              child: Text(
-                tieneRacha ? '🔥' : '🌱',
-                style: const TextStyle(fontSize: 44),
+              child: ZendyPersonajeWidget(
+                size: 72,
+                prendaId: prendaId,
+                animado: true,
               ),
             ),
           ),

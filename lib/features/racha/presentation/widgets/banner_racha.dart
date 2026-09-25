@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
 import '../../domain/entities/racha.dart';
+import '../providers/personaje_provider.dart';
 import '../providers/racha_provider.dart';
 import '../screens/mis_logros_screen.dart';
+import 'zendy_personaje_widget.dart';
 
-/// Chip compacto interactivo que muestra la racha activa con fuego y días
+/// Chip compacto interactivo que muestra la racha activa con el personaje Zendy animado
 class BannerRachaChip extends ConsumerWidget {
   const BannerRachaChip({
     super.key,
@@ -17,20 +19,21 @@ class BannerRachaChip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final rachaAsync = ref.watch(rachaNotifierProvider);
+    final personaje = ref.watch(personajeProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return rachaAsync.when(
-      data: (racha) => _buildChip(context, racha, isDark),
+      data: (racha) => _buildChip(context, racha, personaje.prendaEquipadaId, isDark),
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
     );
   }
 
-  Widget _buildChip(BuildContext context, Racha racha, bool isDark) {
+  Widget _buildChip(BuildContext context, Racha racha, String prendaId, bool isDark) {
     final tieneRacha = racha.diasActuales > 0;
 
     final gradientColors = tieneRacha
-        ? [const Color(0xFFFF5722), const Color(0xFFFFA000)]
+        ? [const Color(0xFFF59E0B), const Color(0xFFD97706)]
         : isDark
             ? [const Color(0xFF2C2C2C), const Color(0xFF1E1E1E)]
             : [const Color(0xFFE2E8F0), const Color(0xFFCBD5E1)];
@@ -55,7 +58,7 @@ class BannerRachaChip extends ConsumerWidget {
         child: Ink(
           padding: EdgeInsets.symmetric(
             horizontal: compacto ? 8 : 12,
-            vertical: compacto ? 4 : 6,
+            vertical: compacto ? 3 : 5,
           ),
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -67,7 +70,7 @@ class BannerRachaChip extends ConsumerWidget {
             boxShadow: tieneRacha
                 ? [
                     BoxShadow(
-                      color: const Color(0xFFFF5722).withValues(alpha: 0.35),
+                      color: const Color(0xFFF59E0B).withOpacity(0.35),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -77,13 +80,13 @@ class BannerRachaChip extends ConsumerWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                '🔥',
-                style: TextStyle(
-                  fontSize: compacto ? 14 : 16,
-                ),
+              // Personaje animado de Zendy en miniatura
+              ZendyPersonajeWidget(
+                size: compacto ? 20 : 24,
+                prendaId: prendaId,
+                animado: true,
               ),
-              const SizedBox(width: 5),
+              const SizedBox(width: 6),
               Text(
                 '${racha.diasActuales}',
                 style: TextStyle(
@@ -98,7 +101,7 @@ class BannerRachaChip extends ConsumerWidget {
                 Text(
                   racha.diasActuales == 1 ? 'día' : 'días',
                   style: TextStyle(
-                    color: textColor.withValues(alpha: 0.9),
+                    color: textColor.withOpacity(0.9),
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -124,28 +127,29 @@ class BannerRachaMotivacional extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final rachaAsync = ref.watch(rachaNotifierProvider);
+    final personaje = ref.watch(personajeProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return rachaAsync.when(
-      data: (racha) => _buildBanner(context, racha, isDark),
+      data: (racha) => _buildBanner(context, racha, personaje.prendaEquipadaId, isDark),
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
     );
   }
 
-  Widget _buildBanner(BuildContext context, Racha racha, bool isDark) {
+  Widget _buildBanner(BuildContext context, Racha racha, String prendaId, bool isDark) {
     final dias = racha.diasActuales;
     final tieneRacha = dias > 0;
 
     final titulo = tieneRacha
-        ? (dias >= 7 ? '¡$dias días imparable! 🔥' : '¡$dias ${dias == 1 ? 'día' : 'días'} de racha! 🔥')
-        : 'Empecemos de nuevo 💪';
+        ? (dias >= 7 ? '¡$dias días imparable con Zendy!' : '¡$dias ${dias == 1 ? 'día' : 'días'} de racha activa!')
+        : '¡Activa a Zendy completando una tarea!';
 
     final subtitulo = tieneRacha
         ? (racha.proximoHito != null
             ? 'Faltan ${racha.proximoHito!.dias - dias} días para: ${racha.proximoHito!.titulo}'
             : '¡Racha legendaria completada!')
-        : 'Completa un pendiente hoy para encender tu racha';
+        : 'Completa un pendiente hoy para vestir y entrenar a tu reloj';
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -164,7 +168,7 @@ class BannerRachaMotivacional extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: tieneRacha
-              ? const Color(0xFFFFB74D).withValues(alpha: 0.5)
+              ? const Color(0xFFFFB74D).withOpacity(0.5)
               : (isDark ? AppColors.borderDark : const Color(0xFFCBD5E1)),
           width: 1.2,
         ),
@@ -185,18 +189,19 @@ class BannerRachaMotivacional extends ConsumerWidget {
             child: Row(
               children: [
                 Container(
-                  width: 38,
-                  height: 38,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: tieneRacha
-                        ? const Color(0xFFFF5722).withValues(alpha: 0.15)
-                        : Colors.blueGrey.withValues(alpha: 0.15),
+                        ? const Color(0xFFF59E0B).withOpacity(0.18)
+                        : Colors.blueGrey.withOpacity(0.15),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
-                    child: Text(
-                      tieneRacha ? '🔥' : '🌱',
-                      style: const TextStyle(fontSize: 20),
+                    child: ZendyPersonajeWidget(
+                      size: 36,
+                      prendaId: prendaId,
+                      animado: true,
                     ),
                   ),
                 ),

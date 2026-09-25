@@ -49,4 +49,9 @@ abstract interface class NotificationScheduler {
     required int hora,
     required int minuto,
   });
+
+  Future<void> programarAvisoRiesgoRacha({
+    int hora = 20,
+    int minuto = 0,
+  });
 }

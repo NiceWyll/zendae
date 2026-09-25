@@ -5,11 +5,12 @@ import '../repositories/racha_repository.dart';
 import 'actualizar_racha.dart';
 
 class ObtenerRacha {
-  const ObtenerRacha(this._repo, this._reloj, [this._validadorDiaActivo]);
+  const ObtenerRacha(this._repo, this._reloj, [this._validadorDiaActivo, this._onRupturaRacha]);
 
   final RachaRepository _repo;
   final Reloj _reloj;
   final ValidadorDiaActivo? _validadorDiaActivo;
+  final GestorRupturaRacha? _onRupturaRacha;
 
   Future<Result<Racha>> call() async {
     final res = await _repo.obtenerRacha();
@@ -47,7 +48,9 @@ class ObtenerRacha {
       }
 
       if (!todosNeutros) {
-        // Se rompió la racha: resetear diasActuales a 0 (preservando récord y logros)
+        // Se rompió la racha: aplicar reglas de ropa
+        await _onRupturaRacha?.call();
+        // Resetear diasActuales a 0 (preservando récord y logros)
         final reseteada = racha.copyWith(diasActuales: 0);
         await _repo.guardarRacha(reseteada);
         return Exito(reseteada);

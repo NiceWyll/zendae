@@ -20,6 +20,8 @@ import 'package:mi_pendiente/features/racha/presentation/providers/racha_provide
 import 'package:mi_pendiente/features/asistente/presentation/screens/chat_screen.dart';
 import 'package:mi_pendiente/features/horario/presentation/screens/horario_screen.dart';
 import 'package:mi_pendiente/features/calendario_general/presentation/screens/calendario_general_screen.dart';
+import 'package:mi_pendiente/features/racha/presentation/screens/armario_screen.dart';
+import 'package:mi_pendiente/features/racha/presentation/widgets/zendy_personaje_widget.dart';
 
 class HomeShellScreen extends ConsumerStatefulWidget {
   const HomeShellScreen({super.key});
@@ -52,7 +54,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
   void _mostrarBannerBienvenidaRacha(Racha racha) {
     final dias = racha.diasActuales;
     final mensaje = dias > 0
-        ? '🔥 ¡Llevas $dias ${dias == 1 ? 'día' : 'días'} de racha activa!'
+        ? '⏰ ¡Llevas $dias ${dias == 1 ? 'día' : 'días'} de racha activa!'
         : '💪 ¡Empecemos de nuevo! Completa un pendiente hoy';
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -479,13 +481,20 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                                   builder: (context, ref, _) {
                                     final rachaAsync = ref.watch(rachaNotifierProvider);
                                     final dias = rachaAsync.valueOrNull?.diasActuales ?? 0;
-                                    return Text(
-                                      '$dias 🔥',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w800,
-                                        color: isDark ? const Color(0xFFFB923C) : const Color(0xFFEA580C),
-                                      ),
+                                    return Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          '$dias',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w800,
+                                            color: isDark ? const Color(0xFFFB923C) : const Color(0xFFEA580C),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const ZendyPersonajeWidget(tamano: 22, animar: true),
+                                      ],
                                     );
                                   },
                                 ),
@@ -558,8 +567,21 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                   },
                 ),
                 _buildDrawerItem(
-                  icon: Icons.local_fire_department_rounded,
-                  label: 'Mis Logros 🔥',
+                  icon: Icons.checkroom_rounded,
+                  label: 'Armario de Zendy 👔',
+                  isSelected: false,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ArmarioScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.emoji_events_rounded,
+                  label: 'Mis Logros y Racha 🏆',
                   isSelected: false,
                   onTap: () {
                     Navigator.pop(context);

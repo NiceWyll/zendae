@@ -6,6 +6,7 @@ import 'package:mi_pendiente/core/providers/preferences_providers.dart';
 class AjustesState {
   final ThemeMode themeMode;
   final String temaId;
+  final String? fondoPersonalizadoPath;
   final bool notificaciones;
   final bool sonido;
   final bool vibracion;
@@ -22,6 +23,7 @@ class AjustesState {
   const AjustesState({
     this.themeMode = ThemeMode.light,
     this.temaId = 'clasico',
+    this.fondoPersonalizadoPath,
     this.notificaciones = true,
     this.sonido = true,
     this.vibracion = true,
@@ -39,6 +41,8 @@ class AjustesState {
   AjustesState copyWith({
     ThemeMode? themeMode,
     String? temaId,
+    String? fondoPersonalizadoPath,
+    bool limpiarFondoPersonalizado = false,
     bool? notificaciones,
     bool? sonido,
     bool? vibracion,
@@ -55,6 +59,9 @@ class AjustesState {
     return AjustesState(
       themeMode: themeMode ?? this.themeMode,
       temaId: temaId ?? this.temaId,
+      fondoPersonalizadoPath: limpiarFondoPersonalizado
+          ? null
+          : (fondoPersonalizadoPath ?? this.fondoPersonalizadoPath),
       notificaciones: notificaciones ?? this.notificaciones,
       sonido: sonido ?? this.sonido,
       vibracion: vibracion ?? this.vibracion,
@@ -82,6 +89,7 @@ class AjustesNotifier extends StateNotifier<AjustesState> {
     if (prefs == null) return;
     final isDark = prefs!.getBool('es_oscuro') ?? false;
     final tema = prefs!.getString('tema_id') ?? 'clasico';
+    final fondoPath = prefs!.getString('fondo_personalizado_path');
     final notif = prefs!.getBool('notificaciones') ?? true;
     final sonido = prefs!.getBool('sonido') ?? true;
     final vibra = prefs!.getBool('vibracion') ?? true;
@@ -98,6 +106,7 @@ class AjustesNotifier extends StateNotifier<AjustesState> {
     state = state.copyWith(
       themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
       temaId: tema,
+      fondoPersonalizadoPath: fondoPath,
       notificaciones: notif,
       sonido: sonido,
       vibracion: vibra,
@@ -121,6 +130,24 @@ class AjustesNotifier extends StateNotifier<AjustesState> {
   Future<void> cambiarTema(String nuevoTemaId) async {
     await prefs?.setString('tema_id', nuevoTemaId);
     state = state.copyWith(temaId: nuevoTemaId);
+  }
+
+  Future<void> guardarFondoPersonalizado(String path) async {
+    await prefs?.setString('fondo_personalizado_path', path);
+    await prefs?.setString('tema_id', 'fondo_personalizado');
+    state = state.copyWith(
+      fondoPersonalizadoPath: path,
+      temaId: 'fondo_personalizado',
+    );
+  }
+
+  Future<void> restaurarTemaPorDefecto() async {
+    await prefs?.remove('fondo_personalizado_path');
+    await prefs?.setString('tema_id', 'clasico');
+    state = state.copyWith(
+      limpiarFondoPersonalizado: true,
+      temaId: 'clasico',
+    );
   }
 
   Future<void> alternarNotificaciones(bool valor) async {

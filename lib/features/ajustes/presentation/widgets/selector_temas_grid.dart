@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
@@ -18,6 +19,9 @@ class SelectorTemasGrid extends ConsumerWidget {
     final logros = racha?.logrosDesbloqueados ?? const <String>[];
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final esAndroid = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+    final temas = TemasDisponibles.todosParaPlataforma(esAndroid: esAndroid);
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -27,9 +31,9 @@ class SelectorTemasGrid extends ConsumerWidget {
         mainAxisSpacing: 14,
         childAspectRatio: 0.85,
       ),
-      itemCount: TemasDisponibles.todos.length,
+      itemCount: temas.length,
       itemBuilder: (context, index) {
-        final tema = TemasDisponibles.todos[index];
+        final tema = temas[index];
         final esActivo = ajustes.temaId == tema.id;
         final estaDesbloqueado = tema.estaDesbloqueado(diasRacha, logros);
 
@@ -162,11 +166,11 @@ class SelectorTemasGrid extends ConsumerWidget {
               else
                 Row(
                   children: [
-                    const Text('🔥', style: TextStyle(fontSize: 11)),
+                    const Icon(Icons.stars_rounded, size: 13, color: Color(0xFFEA580C)),
                     const SizedBox(width: 3),
                     Flexible(
                       child: Text(
-                        'Día ${tema.diasRequeridos}',
+                        'Racha: ${tema.diasRequeridos} días',
                         style: const TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w700,
@@ -237,7 +241,7 @@ class SelectorTemasGrid extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Desbloquea este tema al alcanzar ${tema.diasRequeridos} días de racha 🔥.',
+                        'Desbloquea este tema al alcanzar ${tema.diasRequeridos} días de racha activa.',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
 import 'package:mi_pendiente/core/constants/app_config.dart';
 import 'package:mi_pendiente/features/racha/presentation/providers/racha_provider.dart';
+import 'package:mi_pendiente/features/racha/presentation/widgets/zendy_personaje_widget.dart';
+import '../widgets/seccion_fondo_personalizado.dart';
 import '../widgets/selector_temas_grid.dart';
 
 class SelectorTemasScreen extends ConsumerWidget {
@@ -34,7 +36,7 @@ class SelectorTemasScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
-          // Banner de contexto y racha
+          // Banner de contexto y racha con Zendy
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -52,15 +54,14 @@ class SelectorTemasScreen extends ConsumerWidget {
             ),
             child: Row(
               children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFF5722).withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Text('🔥', style: TextStyle(fontSize: 22)),
+                const SizedBox(
+                  width: 50,
+                  height: 50,
+                  child: Center(
+                    child: ZendyPersonajeWidget(
+                      tamano: 48,
+                      animar: true,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -80,7 +81,7 @@ class SelectorTemasScreen extends ConsumerWidget {
                       Text(
                         AppConfig.todoDesbloqueado
                             ? '¡Todos los temas y colores están 100% desbloqueados para ti!'
-                            : 'Completa tareas diarias para desbloquear temas exclusivos a los 7, 30 y 100 días.',
+                            : 'Completa tareas diarias para mantener a Zendy contento y desbloquear temas exclusivos.',
                         style: TextStyle(
                           fontSize: 12.5,
                           color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF3B82F6),
@@ -93,7 +94,10 @@ class SelectorTemasScreen extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
+
+          // Sección de fondo personalizado con difuminado (EXCLUSIVO ANDROID)
+          const SeccionFondoPersonalizado(),
 
           // Título del grid
           Text(

@@ -32,12 +32,12 @@ class FakeRachaRepository implements RachaRepository {
 
 void main() {
   group('Fase 10: TemaApp y TemasDisponibles', () {
-    test('TemasDisponibles.todos contiene 6 temas bien configurados', () {
+    test('TemasDisponibles.todos contiene temas bien configurados', () {
       const todos = TemasDisponibles.todos;
-      expect(todos.length, 6);
+      expect(todos.length, greaterThanOrEqualTo(6));
 
       final ids = todos.map((t) => t.id).toList();
-      expect(ids, containsAll(['clasico', 'esmeralda', 'lavanda', 'atardecer', 'aurora', 'dorado']));
+      expect(ids, containsAll(['clasico', 'esmeralda', 'lavanda', 'atardecer', 'aurora', 'dorado', 'fondo_personalizado']));
     });
 
     test('obtenerPorId retorna el tema correspondiente o clasico por defecto', () {
@@ -235,7 +235,7 @@ void main() {
       AppConfig.todoDesbloqueado = false;
       addTearDown(() => AppConfig.todoDesbloqueado = true);
 
-      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.physicalSize = const Size(800, 2400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
         tester.view.resetPhysicalSize();

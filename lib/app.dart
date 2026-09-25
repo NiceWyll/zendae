@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/tema_app.dart';
+import 'core/widgets/fondo_personalizado_wrapper.dart';
 import 'features/ajustes/presentation/providers/ajustes_provider.dart';
 import 'shell/splash_screen.dart';
 
@@ -31,6 +32,9 @@ class MiPendienteApp extends ConsumerWidget {
         Locale('en', ''),
       ],
       locale: const Locale('es', 'ES'),
+      builder: (context, child) => FondoPersonalizadoWrapper(
+        child: child ?? const SizedBox.shrink(),
+      ),
       home: const SplashScreen(),
     );
   }

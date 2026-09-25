@@ -113,6 +113,7 @@ class NotificationServiceImpl implements NotificationScheduler {
 
       _initialized = true;
       debugPrint('✅ NotificationService inicializado con canales de sonido y vibración');
+      await programarAvisoRiesgoRacha();
     } catch (e) {
       debugPrint('⚠️ Error al inicializar NotificationService: $e');
     }
@@ -712,6 +713,66 @@ class NotificationServiceImpl implements NotificationScheduler {
       debugPrint('🌅 Resumen matutino agendado para $hora:${minuto.toString().padLeft(2, '0')} (ID: $notificacionId)');
     } catch (e) {
       debugPrint('⚠️ Error al programar resumen diario: $e');
+    }
+  }
+
+  static const int idAvisoRiesgoRacha = 7788;
+
+  @override
+  Future<void> programarAvisoRiesgoRacha({
+    int hora = 20,
+    int minuto = 0,
+  }) async {
+    try {
+      final now = tz.TZDateTime.now(tz.local);
+      var scheduledDate = tz.TZDateTime(
+        tz.local,
+        now.year,
+        now.month,
+        now.day,
+        hora,
+        minuto,
+      );
+
+      if (scheduledDate.isBefore(now)) {
+        scheduledDate = scheduledDate.add(const Duration(days: 1));
+      }
+
+      final androidDetails = AndroidNotificationDetails(
+        channelId,
+        channelName,
+        channelDescription: channelDesc,
+        importance: Importance.max,
+        priority: Priority.high,
+        playSound: true,
+        enableVibration: true,
+        vibrationPattern: _vibrationPattern,
+        category: AndroidNotificationCategory.reminder,
+        icon: '@mipmap/ic_launcher',
+      );
+
+      final details = NotificationDetails(
+        android: androidDetails,
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      );
+
+      await _plugin.zonedSchedule(
+        id: idAvisoRiesgoRacha,
+        title: '⏰ ¡Zendy necesita tu ayuda!',
+        body: 'Aún no has completado ningún pendiente hoy. ¡Completa uno antes de medianoche para salvar tu racha y la ropa de Zendy!',
+        scheduledDate: scheduledDate,
+        notificationDetails: details,
+        matchDateTimeComponents: DateTimeComponents.time,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        payload: 'riesgo_racha',
+      );
+      debugPrint('⏰ Aviso preventivo de racha programado para las $hora:${minuto.toString().padLeft(2, '0')}');
+    } catch (e) {
+      debugPrint('⚠️ Error al programar aviso de riesgo de racha: $e');
     }
   }
 

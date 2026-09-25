@@ -1,8 +1,7 @@
 class AppConfig {
   AppConfig._();
 
-  /// Activado para el build de iPhone personal de Williams con todas
-  /// las funciones desbloqueadas (micrófono, temas, etc.).
+  /// Activado para el build de prueba y revisión del usuario.
   static bool todoDesbloqueado = true;
 }
 
