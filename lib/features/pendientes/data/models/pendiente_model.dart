@@ -33,6 +33,7 @@ class PendienteModel {
           ? DateTime.parse(map['fecha_completado'] as String)
           : null,
       notificacionId: map['notificacion_id'] as int?,
+      claseId: map['clase_id'] as String?,
     );
   }
 
@@ -51,6 +52,7 @@ class PendienteModel {
       'esta_completado': p.estaCompletado ? 1 : 0,
       'fecha_completado': p.fechaCompletado?.toIso8601String(),
       'notificacion_id': p.notificacionId,
+      'clase_id': p.claseId,
     };
   }
 }

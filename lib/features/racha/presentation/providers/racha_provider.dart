@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/error/result.dart';
 import 'package:mi_pendiente/core/providers/clock_providers.dart';
 import 'package:mi_pendiente/core/providers/database_providers.dart';
+import '../../../../features/horario/presentation/providers/horario_provider.dart';
+import '../../../../features/pendientes/presentation/providers/pendientes_provider.dart';
 import '../../data/repositories/racha_repository_impl.dart';
 import '../../domain/entities/racha.dart';
 import '../../domain/repositories/racha_repository.dart';
@@ -30,16 +32,43 @@ final rachaRepositoryProvider = Provider<RachaRepository>((ref) {
   }
 });
 
+final validadorDiaActivoProvider = Provider<ValidadorDiaActivo>((ref) {
+  return (DateTime fecha) async {
+    // 1. Verificar si hay clases vigentes en esta fecha (Fase Horario)
+    try {
+      final horarioRepo = ref.read(horarioRepositoryProvider);
+      final clases = await horarioRepo.obtenerTodasLasClases();
+      if (clases.any((c) => c.estaVigenteEn(fecha))) {
+        return true;
+      }
+    } catch (_) {}
+
+    // 2. Verificar si hay pendientes programados para esta fecha
+    try {
+      final pendienteRepo = ref.read(pendienteRepositoryProvider);
+      final res = await pendienteRepo.getPendientesPorFecha(fecha);
+      if (res case Exito(:final valor)) {
+        if (valor.isNotEmpty) return true;
+      }
+    } catch (_) {}
+
+    // No hay ni clases ni pendientes: día neutro (vacaciones, receso, etc.)
+    return false;
+  };
+});
+
 final actualizarRachaProvider = Provider<ActualizarRacha>((ref) {
   final repo = ref.watch(rachaRepositoryProvider);
   final reloj = ref.watch(relojProvider);
-  return ActualizarRacha(repo, reloj);
+  final validador = ref.watch(validadorDiaActivoProvider);
+  return ActualizarRacha(repo, reloj, validador);
 });
 
 final obtenerRachaProvider = Provider<ObtenerRacha>((ref) {
   final repo = ref.watch(rachaRepositoryProvider);
   final reloj = ref.watch(relojProvider);
-  return ObtenerRacha(repo, reloj);
+  final validador = ref.watch(validadorDiaActivoProvider);
+  return ObtenerRacha(repo, reloj, validador);
 });
 
 class RachaNotifier extends AsyncNotifier<Racha> {

@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/error/result.dart';
 import 'package:mi_pendiente/core/providers/clock_providers.dart';
+import 'package:mi_pendiente/core/services/tts_service.dart';
+import 'package:mi_pendiente/features/horario/presentation/providers/horario_provider.dart';
+import 'package:mi_pendiente/features/pendientes/domain/entities/pendiente.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/providers/pendientes_provider.dart';
 import '../../domain/entities/limite_chat.dart';
 import '../../domain/entities/mensaje_chat.dart';
@@ -36,6 +39,7 @@ class ChatState {
 
 class ChatNotifier extends StateNotifier<ChatState> {
   final Ref ref;
+  List<Pendiente>? _candidatosEliminacion;
 
   ChatNotifier(this.ref)
       : super(
@@ -70,10 +74,12 @@ class ChatNotifier extends StateNotifier<ChatState> {
       final bienvenida = MensajeChat(
         id: 'bienvenida',
         texto: '¡Hola! 👋 Soy tu asistente IA de Zendae ✨.\n\n'
-            'Puedo programar recordatorios y organizar tus pendientes en lenguaje natural.\n\n'
+            'Puedo programar, modificar o borrar recordatorios y decirte tu resumen del día.\n\n'
             'Prueba diciendo:\n'
+            '• "¿Qué tengo hoy?"\n'
             '• "Recuérdame llamar al dentista mañana a las 3pm"\n'
-            '• "Comprar leche hoy a las 8pm prioridad alta"',
+            '• "Cambia la tarea del doctor para las 5pm"\n'
+            '• "Borra la de mañana"',
         esUsuario: false,
         fecha: reloj.ahora(),
       );
@@ -107,9 +113,19 @@ class ChatNotifier extends StateNotifier<ChatState> {
       error: null,
     );
 
+    // Obtener contexto actual de tareas y clases
+    final pendientesActuales = ref.read(pendientesProvider).valueOrNull ?? [];
+    final clasesActuales = ref.read(clasesProvider).valueOrNull ?? [];
+
     // 2. Enviar a través del caso de uso
     final caso = ref.read(enviarMensajeChatProvider);
-    final res = await caso(limpio);
+    final res = await caso(
+      limpio,
+      pendientesExistentes: pendientesActuales,
+      clasesExistentes: clasesActuales,
+      candidatosPendientesEliminacion: _candidatosEliminacion,
+      onCandidatosActualizados: (c) => _candidatosEliminacion = c,
+    );
 
     final repo = ref.read(asistenteRepositoryProvider);
     final limiteActualizado = await repo.obtenerLimite();
@@ -126,10 +142,13 @@ class ChatNotifier extends StateNotifier<ChatState> {
           estaEscribiendo: false,
         );
 
-        // Si se creó un pendiente real, invalidar pendientesProvider para refrescar la app
-        if (valor.pendienteCreadoId != null) {
-          ref.invalidate(pendientesProvider);
+        // Si es un resumen o pide lectura en voz alta (Requisito 6)
+        if (valor.debeLeerEnVozAlta) {
+          TtsService.instance.hablar(valor.texto);
         }
+
+        // Refrescar lista de tareas en toda la app
+        ref.invalidate(pendientesProvider);
 
       case Fallo(:final failure):
         final mensajeError = MensajeChat(

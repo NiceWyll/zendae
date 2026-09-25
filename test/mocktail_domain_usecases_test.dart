@@ -332,7 +332,8 @@ void main() {
                 repetir TEXT NOT NULL,
                 esta_completado INTEGER NOT NULL,
                 fecha_completado TEXT,
-                notificacion_id INTEGER
+                notificacion_id INTEGER,
+                clase_id TEXT
               )
             ''');
           },

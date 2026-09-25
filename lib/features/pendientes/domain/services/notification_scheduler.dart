@@ -13,11 +13,15 @@ abstract interface class NotificationScheduler {
 
   Future<void> programarRecordatorioClase(dynamic clase, {String? sonido, bool vibracion = true});
 
+  Future<void> programarRecordatorioExamen(dynamic examen, String nombreClase, {String? sonido, bool vibracion = true});
+
   Future<void> cancelarRecordatorio(int notificacionId);
 
   Future<void> cancelarRecordatorioPorIdString(String pendienteId);
 
   Future<void> cancelarRecordatorioClase(String claseId);
+
+  Future<void> cancelarRecordatorioExamen(dynamic examen);
 
   Future<void> cancelarTodas();
 

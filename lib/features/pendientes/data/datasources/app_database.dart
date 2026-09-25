@@ -4,7 +4,7 @@ import 'package:path/path.dart' as p;
 
 class AppDatabase {
   static final AppDatabase instance = AppDatabase();
-  static const int _version = 4;
+  static const int _version = 5;
   Database? _database;
 
   AppDatabase({Database? db}) : _database = db;
@@ -61,12 +61,14 @@ class AppDatabase {
         repetir TEXT NOT NULL,
         esta_completado INTEGER NOT NULL,
         fecha_completado TEXT,
-        notificacion_id INTEGER
+        notificacion_id INTEGER,
+        clase_id TEXT
       )
     ''');
 
     await db.execute('CREATE INDEX IF NOT EXISTS idx_pendientes_fecha ON pendientes(fecha);');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_pendientes_completado ON pendientes(esta_completado);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_pendientes_clase ON pendientes(clase_id);');
 
     await db.execute('''
       CREATE TABLE IF NOT EXISTS racha (
@@ -96,6 +98,22 @@ class AppDatabase {
       );
     ''');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_clases_dia ON clases(dia_semana);');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS examenes (
+        id TEXT PRIMARY KEY,
+        clase_id TEXT NOT NULL,
+        titulo TEXT NOT NULL,
+        fecha TEXT NOT NULL,
+        hora_hour INTEGER NOT NULL,
+        hora_minute INTEGER NOT NULL,
+        aula TEXT,
+        notificacion_1d_id INTEGER,
+        notificacion_1h_id INTEGER
+      );
+    ''');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_examenes_clase ON examenes(clase_id);');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_examenes_fecha ON examenes(fecha);');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -134,6 +152,26 @@ class AppDatabase {
         );
       ''');
       await db.execute('CREATE INDEX IF NOT EXISTS idx_clases_dia ON clases(dia_semana);');
+    }
+    if (oldVersion < 5) {
+      await db.execute('ALTER TABLE pendientes ADD COLUMN clase_id TEXT;');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_pendientes_clase ON pendientes(clase_id);');
+
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS examenes (
+          id TEXT PRIMARY KEY,
+          clase_id TEXT NOT NULL,
+          titulo TEXT NOT NULL,
+          fecha TEXT NOT NULL,
+          hora_hour INTEGER NOT NULL,
+          hora_minute INTEGER NOT NULL,
+          aula TEXT,
+          notificacion_1d_id INTEGER,
+          notificacion_1h_id INTEGER
+        );
+      ''');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_examenes_clase ON examenes(clase_id);');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_examenes_fecha ON examenes(fecha);');
     }
   }
 

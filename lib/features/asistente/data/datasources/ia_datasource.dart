@@ -1,22 +1,48 @@
+import 'package:mi_pendiente/features/horario/domain/entities/clase.dart';
 import 'package:mi_pendiente/features/pendientes/domain/entities/hora_del_dia.dart';
+import 'package:mi_pendiente/features/pendientes/domain/entities/pendiente.dart';
 import 'package:mi_pendiente/features/pendientes/domain/entities/prioridad.dart';
 import 'package:mi_pendiente/features/pendientes/domain/entities/repeticion.dart';
 import '../../domain/entities/pendiente_parseado.dart';
 
+enum TipoAccionIa {
+  crear,
+  editar,
+  eliminar,
+  resumen,
+  conversacional,
+}
+
 class ResultadoInterpretacion {
+  final TipoAccionIa tipoAccion;
   final PendienteParseado? pendiente;
+  final Pendiente? pendienteModificado;
+  final String? pendienteAEliminarId;
   final String respuestaTexto;
   final bool esConversacional;
+  final bool debeLeerEnVozAlta;
+  final List<Pendiente>? candidatosEliminacion;
 
   const ResultadoInterpretacion({
+    this.tipoAccion = TipoAccionIa.crear,
     this.pendiente,
+    this.pendienteModificado,
+    this.pendienteAEliminarId,
     required this.respuestaTexto,
     this.esConversacional = false,
+    this.debeLeerEnVozAlta = false,
+    this.candidatosEliminacion,
   });
 }
 
 abstract class IaDatasource {
-  Future<ResultadoInterpretacion> interpretarTexto(String prompt, DateTime ahora);
+  Future<ResultadoInterpretacion> interpretarTexto(
+    String prompt,
+    DateTime ahora, {
+    List<Pendiente> pendientesExistentes = const [],
+    List<Clase> clasesExistentes = const [],
+    List<Pendiente>? candidatosPendientesEliminacion,
+  });
 }
 
 /// Procesador inteligente de lenguaje natural en español para Mi Pendiente
@@ -24,42 +50,70 @@ class NlpIaDatasource implements IaDatasource {
   const NlpIaDatasource();
 
   @override
-  Future<ResultadoInterpretacion> interpretarTexto(String prompt, DateTime ahora) async {
+  Future<ResultadoInterpretacion> interpretarTexto(
+    String prompt,
+    DateTime ahora, {
+    List<Pendiente> pendientesExistentes = const [],
+    List<Clase> clasesExistentes = const [],
+    List<Pendiente>? candidatosPendientesEliminacion,
+  }) async {
     final cleanPrompt = prompt.trim();
     if (cleanPrompt.isEmpty) {
       return const ResultadoInterpretacion(
-        respuestaTexto: '¿En qué puedo ayudarte? Puedes pedirme: "Recuérdame llamar al dentista mañana a las 3pm".',
+        respuestaTexto: '¿En qué puedo ayudarte? Puedes pedirme: "Recuérdame llamar al dentista mañana a las 3pm", "¿qué tengo hoy?", o "cambia la tarea del doctor para las 3pm".',
         esConversacional: true,
       );
     }
 
     final lower = _normalizar(cleanPrompt);
 
-    // 1. Detección de intenciones conversacionales o saludos
+    // 0. Si hay candidatos pendientes de eliminación y el usuario está eligiendo
+    if (candidatosPendientesEliminacion != null && candidatosPendientesEliminacion.isNotEmpty) {
+      final elegido = _resolverSeleccionCandidato(lower, candidatosPendientesEliminacion);
+      if (elegido != null) {
+        return ResultadoInterpretacion(
+          tipoAccion: TipoAccionIa.eliminar,
+          pendienteAEliminarId: elegido.id,
+          respuestaTexto: '¡Listo! Eliminé el pendiente **"${elegido.titulo}"**.',
+          esConversacional: false,
+        );
+      }
+    }
+
+    // 1. Resumen de tareas y clases del día / fecha (Punto 6)
+    if (_esPreguntaResumen(lower)) {
+      return _generarResumenFecha(lower, ahora, pendientesExistentes, clasesExistentes);
+    }
+
+    // 2. Comandos de borrado de pendientes existentes (Punto 5)
+    if (_esComandoBorrar(lower)) {
+      return _procesarComandoBorrar(lower, ahora, pendientesExistentes);
+    }
+
+    // 3. Comandos de modificación de pendientes existentes (Punto 5)
+    if (_esComandoModificar(lower)) {
+      return _procesarComandoModificar(cleanPrompt, lower, ahora, pendientesExistentes);
+    }
+
+    // 4. Detección de intenciones conversacionales o saludos
     if (_esSaludoOConsulta(lower)) {
       return ResultadoInterpretacion(
+        tipoAccion: TipoAccionIa.conversacional,
         respuestaTexto: _obtenerRespuestaConversacional(lower),
         esConversacional: true,
       );
     }
 
-    // 2. Extracción de prioridad
+    // 5. Creación de nuevo pendiente (Flujo existente)
     final prioridad = _extraerPrioridad(lower);
-
-    // 3. Extracción de repetición
     final repeticion = _extraerRepeticion(lower);
-
-    // 4. Extracción de fecha relativa o absoluta
     final fecha = _extraerFecha(lower, ahora);
-
-    // 5. Extracción de hora
     final hora = _extraerHora(lower, ahora);
-
-    // 6. Extracción y limpieza exhaustiva del título de la tarea
     final titulo = _extraerTitulo(cleanPrompt);
 
     if (titulo.length < 2) {
       return const ResultadoInterpretacion(
+        tipoAccion: TipoAccionIa.conversacional,
         respuestaTexto: 'No logré identificar el nombre de la tarea. Prueba diciendo: "Anotar comprar leche hoy a las 5pm".',
         esConversacional: true,
       );
@@ -85,10 +139,273 @@ class NlpIaDatasource implements IaDatasource {
     );
 
     return ResultadoInterpretacion(
+      tipoAccion: TipoAccionIa.crear,
       pendiente: pendiente,
       respuestaTexto: respuesta,
       esConversacional: false,
     );
+  }
+
+  Pendiente? _resolverSeleccionCandidato(String lower, List<Pendiente> candidatos) {
+    if (lower.contains('1') || lower.contains('primer') || lower.contains('primero') || lower.contains('primera') || lower.contains('uno')) {
+      return candidatos.first;
+    }
+    if (lower.contains('2') || lower.contains('segund') || lower.contains('segundo') || lower.contains('segunda') || lower.contains('dos')) {
+      if (candidatos.length >= 2) return candidatos[1];
+    }
+    if (lower.contains('3') || lower.contains('tercer') || lower.contains('tercero') || lower.contains('tercera') || lower.contains('tres')) {
+      if (candidatos.length >= 3) return candidatos[2];
+    }
+    for (final c in candidatos) {
+      if (_coincideTitulo(c.titulo, lower)) return c;
+    }
+    return null;
+  }
+
+  bool _esPreguntaResumen(String text) {
+    if (_esComandoModificar(text) || _esComandoBorrar(text)) return false;
+
+    return text.contains('que tengo') ||
+        text.contains('qué tengo') ||
+        text.contains('tengo hoy') ||
+        text.contains('tengo manana') ||
+        text.contains('tengo mañana') ||
+        text.contains('que hay') ||
+        text.contains('qué hay') ||
+        text.contains('que debo') ||
+        text.contains('que me toca') ||
+        text.contains('mis tareas') ||
+        text.contains('mis pendientes') ||
+        text.contains('mis clases') ||
+        text.contains('que clases tengo') ||
+        text.contains('qué clases tengo') ||
+        text.contains('resumen');
+  }
+
+  ResultadoInterpretacion _generarResumenFecha(
+    String lower,
+    DateTime ahora,
+    List<Pendiente> pendientesExistentes,
+    List<Clase> clasesExistentes,
+  ) {
+    final fechaTarget = _extraerFecha(lower, ahora);
+    final soloClases = lower.contains('clase') && !lower.contains('tarea') && !lower.contains('pendiente');
+
+    final clasesDelDia = clasesExistentes.where((c) => c.estaVigenteEn(fechaTarget)).toList();
+    final pendientesDelDia = pendientesExistentes.where((p) {
+      return p.fecha.year == fechaTarget.year &&
+          p.fecha.month == fechaTarget.month &&
+          p.fecha.day == fechaTarget.day;
+    }).toList();
+
+    final esHoy = fechaTarget.year == ahora.year &&
+        fechaTarget.month == ahora.month &&
+        fechaTarget.day == ahora.day;
+    final esManana = DateTime(fechaTarget.year, fechaTarget.month, fechaTarget.day)
+            .difference(DateTime(ahora.year, ahora.month, ahora.day))
+            .inDays == 1;
+
+    final prefijoFecha = esHoy
+        ? 'Para hoy'
+        : (esManana ? 'Para mañana' : 'Para ${_describirFecha(fechaTarget, ahora)}');
+
+    final partes = <String>[];
+
+    // Clases
+    if (clasesDelDia.isNotEmpty) {
+      final descClases = clasesDelDia
+          .map((c) => '${c.nombre} (${c.horarioFormateado})')
+          .join(', ');
+      partes.add('tienes ${clasesDelDia.length} ${clasesDelDia.length == 1 ? "clase" : "clases"}: $descClases');
+    } else if (soloClases) {
+      partes.add('no tienes clases programadas');
+    }
+
+    // Pendientes
+    final sinCompletar = pendientesDelDia.where((p) => !p.estaCompletado).toList();
+    if (!soloClases) {
+      if (sinCompletar.isNotEmpty) {
+        final descPendientes = sinCompletar
+            .map((p) => '"${p.titulo}" a las ${p.hora.hora.toString().padLeft(2, '0')}:${p.hora.minuto.toString().padLeft(2, '0')} hs')
+            .join(', ');
+        partes.add('tienes ${sinCompletar.length} ${sinCompletar.length == 1 ? "pendiente" : "pendientes"}: $descPendientes');
+      } else if (clasesDelDia.isEmpty) {
+        partes.add('no tienes clases ni pendientes pendientes. ¡Día totalmente libre para ti!');
+      } else {
+        partes.add('no tienes pendientes de tareas');
+      }
+    }
+
+    final respuesta = '$prefijoFecha ${partes.join(". Además, ")}.';
+
+    return ResultadoInterpretacion(
+      tipoAccion: TipoAccionIa.resumen,
+      respuestaTexto: respuesta,
+      esConversacional: false,
+      debeLeerEnVozAlta: true, // Requisito 6: lectura en voz alta
+    );
+  }
+
+  bool _esComandoBorrar(String text) {
+    return RegExp(r'\b(borra|borrar|elimina|eliminar|quita|quitar|cancela|cancelar)\b').hasMatch(text);
+  }
+
+  ResultadoInterpretacion _procesarComandoBorrar(
+    String lower,
+    DateTime ahora,
+    List<Pendiente> pendientesExistentes,
+  ) {
+    if (pendientesExistentes.isEmpty) {
+      return const ResultadoInterpretacion(
+        tipoAccion: TipoAccionIa.conversacional,
+        respuestaTexto: 'No tienes ningún pendiente registrado en tu lista para borrar.',
+        esConversacional: true,
+      );
+    }
+
+    final tieneRefTemporal = RegExp(r'\b(hoy|manana|mañana|pasado manana|pasado mañana|lunes|martes|miercoles|miércoles|jueves|viernes|sabado|sábado|domingo)\b').hasMatch(lower);
+    if (tieneRefTemporal && (lower.contains('la de') || lower.contains('el de') || lower.contains('los de') || lower.contains('las de') || lower.endsWith('manana') || lower.endsWith('mañana') || lower.endsWith('hoy'))) {
+      final fechaTarget = _extraerFecha(lower, ahora);
+      final candidatos = pendientesExistentes.where((p) {
+        return p.fecha.year == fechaTarget.year &&
+            p.fecha.month == fechaTarget.month &&
+            p.fecha.day == fechaTarget.day;
+      }).toList();
+
+      if (candidatos.isEmpty) {
+        return ResultadoInterpretacion(
+          tipoAccion: TipoAccionIa.conversacional,
+          respuestaTexto: 'No encontré ningún pendiente para ${_describirFecha(fechaTarget, ahora)} para borrar.',
+          esConversacional: true,
+        );
+      } else if (candidatos.length == 1) {
+        final p = candidatos.first;
+        return ResultadoInterpretacion(
+          tipoAccion: TipoAccionIa.eliminar,
+          pendienteAEliminarId: p.id,
+          respuestaTexto: '¡Listo! Eliminé el pendiente **"${p.titulo}"** de ${_describirFecha(fechaTarget, ahora)}.',
+          esConversacional: false,
+        );
+      } else {
+        final listaStr = candidatos.asMap().entries.map((e) => '${e.key + 1}) "${e.value.titulo}"').join('\n');
+        return ResultadoInterpretacion(
+          tipoAccion: TipoAccionIa.conversacional,
+          candidatosEliminacion: candidatos,
+          respuestaTexto: 'Tienes ${candidatos.length} pendientes para ${_describirFecha(fechaTarget, ahora)}:\n$listaStr\n\n¿Cuál de ellos deseas borrar?',
+          esConversacional: true,
+        );
+      }
+    }
+
+    var busqueda = lower
+        .replaceAll(RegExp(r'\b(borra|borrar|elimina|eliminar|quita|quitar|cancela|cancelar)\b'), '')
+        .replaceAll(RegExp(r'\b(la\s+tarea\s+del?|el\s+pendiente\s+del?|el|la|los|las|de|del|mi|mis)\b'), '')
+        .trim();
+
+    final matches = pendientesExistentes.where((p) => _coincideTitulo(p.titulo, busqueda)).toList();
+
+    if (matches.isEmpty) {
+      return ResultadoInterpretacion(
+        tipoAccion: TipoAccionIa.conversacional,
+        respuestaTexto: 'No encontré ningún pendiente que coincida con "$busqueda" para borrar.',
+        esConversacional: true,
+      );
+    } else if (matches.length == 1) {
+      final p = matches.first;
+      return ResultadoInterpretacion(
+        tipoAccion: TipoAccionIa.eliminar,
+        pendienteAEliminarId: p.id,
+        respuestaTexto: '¡Listo! Eliminé el pendiente **"${p.titulo}"**.',
+        esConversacional: false,
+      );
+    } else {
+      final listaStr = matches.asMap().entries.map((e) => '${e.key + 1}) "${e.value.titulo}"').join('\n');
+      return ResultadoInterpretacion(
+        tipoAccion: TipoAccionIa.conversacional,
+        candidatosEliminacion: matches,
+        respuestaTexto: 'Tienes ${matches.length} pendientes que coinciden:\n$listaStr\n\n¿Cuál de ellos deseas borrar?',
+        esConversacional: true,
+      );
+    }
+  }
+
+  bool _esComandoModificar(String text) {
+    if (text.contains('que puedes') || text.contains('como funciona')) return false;
+    return RegExp(r'\b(cambia|cambiar|mueve|mover|pasa|pasar|pospon|pospón|posponer|pospone|edita|editar|modifica|modificar|reprograma|reprogramar|aplaza|aplazar|actualiza|actualizar)\b').hasMatch(text);
+  }
+
+  ResultadoInterpretacion _procesarComandoModificar(
+    String rawPrompt,
+    String lower,
+    DateTime ahora,
+    List<Pendiente> pendientesExistentes,
+  ) {
+    if (pendientesExistentes.isEmpty) {
+      return const ResultadoInterpretacion(
+        tipoAccion: TipoAccionIa.conversacional,
+        respuestaTexto: 'No tienes ningún pendiente registrado en tu lista para modificar.',
+        esConversacional: true,
+      );
+    }
+
+    final nuevaHora = _extraerHora(lower, ahora);
+    final tieneCambioFecha = RegExp(r'\b(hoy|manana|mañana|pasado manana|pasado mañana|lunes|martes|miercoles|miércoles|jueves|viernes|sabado|sábado|domingo)\b').hasMatch(lower);
+    final nuevaFecha = tieneCambioFecha ? _extraerFecha(lower, ahora) : null;
+
+    var busqueda = lower
+        .replaceAll(RegExp(r'\b(cambia|cambiar|mueve|mover|pasa|pasar|pospon|pospón|posponer|pospone|edita|editar|modifica|modificar|reprograma|reprogramar|aplaza|aplazar|actualiza|actualizar)\b'), '')
+        .replaceAll(RegExp(r'\b(la\s+tarea\s+del?|el\s+pendiente\s+del?|el|la|los|las|de|del|mi|mis)\b'), '')
+        .replaceAll(RegExp(r'\b(para\s+las|a\s+las|para|a)\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?\b'), '')
+        .replaceAll(RegExp(r'\b(hoy|manana|mañana|pasado manana|pasado mañana)\b'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+
+    Pendiente? coincidencia;
+    for (final p in pendientesExistentes) {
+      if (_coincideTitulo(p.titulo, busqueda)) {
+        coincidencia = p;
+        break;
+      }
+    }
+
+    if (coincidencia == null) {
+      return ResultadoInterpretacion(
+        tipoAccion: TipoAccionIa.conversacional,
+        respuestaTexto: 'No encontré un pendiente existente que coincida con "$busqueda" para modificar.',
+        esConversacional: true,
+      );
+    }
+
+    final fechaFinal = nuevaFecha ?? coincidencia.fecha;
+    final pendienteActualizado = coincidencia.copyWith(
+      hora: nuevaHora,
+      fecha: fechaFinal,
+    );
+
+    final horaFmt = '${nuevaHora.hora.toString().padLeft(2, '0')}:${nuevaHora.minuto.toString().padLeft(2, '0')}';
+    final fechaFmt = _describirFecha(fechaFinal, ahora);
+
+    return ResultadoInterpretacion(
+      tipoAccion: TipoAccionIa.editar,
+      pendienteModificado: pendienteActualizado,
+      respuestaTexto: '¡Listo! Modifiqué la tarea **"${coincidencia.titulo}"** para $fechaFmt a las $horaFmt hs.',
+      esConversacional: false,
+    );
+  }
+
+  bool _coincideTitulo(String titulo, String busqueda) {
+    final normTitulo = _normalizar(titulo);
+    final normBusq = _normalizar(busqueda);
+    if (normBusq.isEmpty) return false;
+    if (normTitulo.contains(normBusq) || normBusq.contains(normTitulo)) return true;
+    final palabrasBusq = normBusq
+        .split(RegExp(r'\s+'))
+        .where((w) => w.length > 2 && !['el', 'la', 'los', 'las', 'de', 'del', 'para', 'por', 'con', 'tarea', 'pendiente'].contains(w))
+        .toList();
+    for (final p in palabrasBusq) {
+      if (normTitulo.contains(p)) return true;
+    }
+    return false;
   }
 
   bool _esSaludoOConsulta(String text) {

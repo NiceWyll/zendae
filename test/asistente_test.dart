@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:mi_pendiente/core/constants/app_config.dart';
 import 'package:mi_pendiente/core/error/result.dart';
 import 'package:mi_pendiente/core/services/reloj.dart';
+import 'package:mi_pendiente/features/horario/domain/entities/clase.dart';
 import 'package:mi_pendiente/features/pendientes/domain/entities/hora_del_dia.dart';
 import 'package:mi_pendiente/features/pendientes/domain/entities/pendiente.dart';
 import 'package:mi_pendiente/features/pendientes/domain/entities/prioridad.dart';
@@ -224,6 +225,138 @@ void main() {
       expect(res.pendiente, isNull);
       expect(res.respuestaTexto, contains('Soy tu Asistente IA'));
     });
+
+    test('Requisito 5: cambia la tarea del doctor para las 3pm actualiza la hora del pendiente existente', () async {
+      final pendienteExistente = Pendiente(
+        id: 'p-doc',
+        titulo: 'Cita con el doctor',
+        fecha: DateTime(2026, 9, 18),
+        hora: const HoraDelDia(hora: 10, minuto: 0),
+        prioridad: Prioridad.alta,
+        tieneRecordatorio: true,
+        minutosAntes: 10,
+        repetir: Repeticion.noRepetir,
+        estaCompletado: false,
+      );
+
+      final res = await nlp.interpretarTexto(
+        'cambia la tarea del doctor para las 3pm',
+        relojFijo.ahora(),
+        pendientesExistentes: [pendienteExistente],
+      );
+
+      expect(res.tipoAccion, TipoAccionIa.editar);
+      expect(res.pendienteModificado, isNotNull);
+      expect(res.pendienteModificado!.id, 'p-doc');
+      expect(res.pendienteModificado!.hora.hora, 15);
+      expect(res.pendienteModificado!.hora.minuto, 0);
+      expect(res.pendiente, isNull); // No crea uno nuevo
+    });
+
+    test('Requisito 5: borra la de mañana con un solo pendiente lo borra directamente', () async {
+      final pendienteManana = Pendiente(
+        id: 'p-manana-1',
+        titulo: 'Comprar frutas',
+        fecha: DateTime(2026, 9, 19),
+        hora: const HoraDelDia(hora: 11, minuto: 0),
+        prioridad: Prioridad.media,
+        tieneRecordatorio: true,
+        minutosAntes: 10,
+        repetir: Repeticion.noRepetir,
+        estaCompletado: false,
+      );
+
+      final res = await nlp.interpretarTexto(
+        'borra la de mañana',
+        relojFijo.ahora(), // hoy es 18, mañana es 19
+        pendientesExistentes: [pendienteManana],
+      );
+
+      expect(res.tipoAccion, TipoAccionIa.eliminar);
+      expect(res.pendienteAEliminarId, 'p-manana-1');
+      expect(res.respuestaTexto, contains('Eliminé el pendiente'));
+    });
+
+    test('Requisito 5: borra la de mañana con más de un pendiente pregunta cuál borrar', () async {
+      final pendienteManana1 = Pendiente(
+        id: 'p-manana-1',
+        titulo: 'Comprar frutas',
+        fecha: DateTime(2026, 9, 19),
+        hora: const HoraDelDia(hora: 11, minuto: 0),
+        prioridad: Prioridad.media,
+        tieneRecordatorio: true,
+        minutosAntes: 10,
+        repetir: Repeticion.noRepetir,
+        estaCompletado: false,
+      );
+      final pendienteManana2 = Pendiente(
+        id: 'p-manana-2',
+        titulo: 'Estudiar cálculo',
+        fecha: DateTime(2026, 9, 19),
+        hora: const HoraDelDia(hora: 16, minuto: 0),
+        prioridad: Prioridad.alta,
+        tieneRecordatorio: true,
+        minutosAntes: 10,
+        repetir: Repeticion.noRepetir,
+        estaCompletado: false,
+      );
+
+      final res = await nlp.interpretarTexto(
+        'borra la de mañana',
+        relojFijo.ahora(),
+        pendientesExistentes: [pendienteManana1, pendienteManana2],
+      );
+
+      expect(res.candidatosEliminacion?.length, 2);
+      expect(res.respuestaTexto, contains('¿Cuál de ellos deseas borrar?'));
+
+      // Simular la respuesta del usuario eligiendo la primera
+      final resEleccion = await nlp.interpretarTexto(
+        'la primera',
+        relojFijo.ahora(),
+        candidatosPendientesEliminacion: res.candidatosEliminacion,
+      );
+
+      expect(resEleccion.tipoAccion, TipoAccionIa.eliminar);
+      expect(resEleccion.pendienteAEliminarId, 'p-manana-1');
+    });
+
+    test('Requisito 6: ¿qué tengo hoy? devuelve resumen con clases y pendientes y activa voz', () async {
+      final claseHoy = Clase(
+        id: 'clase-1',
+        nombre: 'Cálculo Diferencial',
+        diaSemana: 5, // Viernes (18 de sept de 2026 es viernes)
+        horaInicio: 8,
+        minutoInicio: 0,
+        horaFin: 10,
+        minutoFin: 0,
+        fechaInicio: DateTime(2026, 9, 1),
+        fechaFin: DateTime(2026, 12, 15),
+      );
+      final tareaHoy = Pendiente(
+        id: 't-1',
+        titulo: 'Ejercicios de derivadas',
+        fecha: DateTime(2026, 9, 18),
+        hora: const HoraDelDia(hora: 14, minuto: 0),
+        prioridad: Prioridad.alta,
+        tieneRecordatorio: true,
+        minutosAntes: 10,
+        repetir: Repeticion.noRepetir,
+        estaCompletado: false,
+      );
+
+      final res = await nlp.interpretarTexto(
+        '¿qué tengo hoy?',
+        relojFijo.ahora(),
+        pendientesExistentes: [tareaHoy],
+        clasesExistentes: [claseHoy],
+      );
+
+      expect(res.tipoAccion, TipoAccionIa.resumen);
+      expect(res.debeLeerEnVozAlta, isTrue);
+      expect(res.respuestaTexto, contains('Cálculo Diferencial'));
+      expect(res.respuestaTexto, contains('Ejercicios de derivadas'));
+    });
   });
 
   group('Fase 9: Casos de Uso del Asistente', () {
@@ -255,7 +388,7 @@ void main() {
       final caso = VerificarLimiteChat(repoAsistente);
       final res = await caso();
       expect(res, isA<Exito<LimiteChat>>());
-      expect((res as Exito<LimiteChat>).valor.mensajesMaximosPorDia, 20);
+      expect((res as Exito<LimiteChat>).valor.mensajesMaximosPorDia, 35);
     });
 
     test('EnviarMensajeChat crea pendiente vía CrearPendiente y descuenta cuota', () async {
@@ -284,8 +417,8 @@ void main() {
     });
 
     test('EnviarMensajeChat rechaza amablemente si el límite diario está agotado', () async {
-      // Agotar los 20 mensajes
-      for (int i = 0; i < 20; i++) {
+      // Agotar los 35 mensajes
+      for (int i = 0; i < 35; i++) {
         await repoAsistente.registrarMensajeEnviado();
       }
 

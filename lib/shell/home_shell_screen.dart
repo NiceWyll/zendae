@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
 import 'package:mi_pendiente/core/utils/date_time_utils.dart';
+import 'package:mi_pendiente/core/widgets/buscador_global_delegate.dart';
 import 'package:mi_pendiente/core/widgets/segmented_view_tabs.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/providers/pendientes_provider.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/mappers/prioridad_ui.dart';
@@ -222,10 +223,28 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
 
           // Lado derecho: Racha y Botón '✨ IA' (sin campanita, con espacio de sobra)
           Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
               const BannerRachaChip(compacto: true),
-              const SizedBox(width: 10),
+              const SizedBox(width: 4),
+
+              // Buscador de texto (Requisito 8: ícono de lupa)
+              IconButton(
+                icon: Icon(
+                  Icons.search_rounded,
+                  size: 22,
+                  color: isDark ? Colors.white70 : AppColors.textPrimary,
+                ),
+                tooltip: 'Buscar en tareas y clases',
+                padding: const EdgeInsets.all(6),
+                constraints: const BoxConstraints(),
+                onPressed: () {
+                  showSearch(
+                    context: context,
+                    delegate: BuscadorGlobalDelegate(ref: ref),
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
 
               // Botón estilizado '✨ IA'
               InkWell(

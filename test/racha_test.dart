@@ -154,6 +154,28 @@ void main() {
       expect(racha30.diasActuales, 30);
       expect(racha30.logrosDesbloqueados, contains('dias30')); // Recompensa Tema Aurora
     });
+
+    test('días neutros sin clases ni pendientes no rompen la racha al volver', () async {
+      // Usuario completó el viernes (18 de sept), sábado y domingo fueron días neutros
+      // El lunes (21 de sept) completa una tarea: la racha debe continuar (5 -> 6)
+      final repo = FakeRachaRepository(
+        Racha(
+          diasActuales: 5,
+          mejorRacha: 5,
+          ultimaFechaCompletado: DateTime(2026, 9, 18, 14, 0),
+          logrosDesbloqueados: const ['dias3'],
+        ),
+      );
+      final reloj = RelojFijo(DateTime(2026, 9, 21, 9, 0));
+      // Validador que indica que los días intermedios (19 y 20) no tuvieron clases ni pendientes
+      final caso = ActualizarRacha(repo, reloj, (fecha) async => false);
+
+      final res = await caso();
+      final racha = (res as Exito<Racha>).valor;
+
+      expect(racha.diasActuales, 6);
+      expect(racha.mejorRacha, 6);
+    });
   });
 
   group('Fase 8: ObtenerRacha y detección de inactividad', () {

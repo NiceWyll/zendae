@@ -15,6 +15,7 @@ class Pendiente {
   final bool estaCompletado;
   final DateTime? fechaCompletado;
   final int? notificacionId;
+  final String? claseId; // ID de la materia o clase vinculada opcional
 
   const Pendiente({
     required this.id,
@@ -29,6 +30,7 @@ class Pendiente {
     this.estaCompletado = false,
     this.fechaCompletado,
     this.notificacionId,
+    this.claseId,
   });
 
   Pendiente copyWith({
@@ -44,6 +46,8 @@ class Pendiente {
     bool? estaCompletado,
     DateTime? fechaCompletado,
     int? notificacionId,
+    String? claseId,
+    bool limpiarClaseId = false,
     bool limpiarFechaCompletado = false,
   }) {
     return Pendiente(
@@ -59,6 +63,7 @@ class Pendiente {
       estaCompletado: estaCompletado ?? this.estaCompletado,
       fechaCompletado: limpiarFechaCompletado ? null : (fechaCompletado ?? this.fechaCompletado),
       notificacionId: notificacionId ?? this.notificacionId,
+      claseId: limpiarClaseId ? null : (claseId ?? this.claseId),
     );
   }
 

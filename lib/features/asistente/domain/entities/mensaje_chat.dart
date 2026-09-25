@@ -6,6 +6,7 @@ class MensajeChat {
   final String? pendienteCreadoId;
   final String? tituloPendienteCreado;
   final bool esError;
+  final bool debeLeerEnVozAlta;
 
   const MensajeChat({
     required this.id,
@@ -15,6 +16,7 @@ class MensajeChat {
     this.pendienteCreadoId,
     this.tituloPendienteCreado,
     this.esError = false,
+    this.debeLeerEnVozAlta = false,
   });
 
   MensajeChat copyWith({
@@ -25,6 +27,7 @@ class MensajeChat {
     String? pendienteCreadoId,
     String? tituloPendienteCreado,
     bool? esError,
+    bool? debeLeerEnVozAlta,
   }) {
     return MensajeChat(
       id: id ?? this.id,
@@ -34,6 +37,7 @@ class MensajeChat {
       pendienteCreadoId: pendienteCreadoId ?? this.pendienteCreadoId,
       tituloPendienteCreado: tituloPendienteCreado ?? this.tituloPendienteCreado,
       esError: esError ?? this.esError,
+      debeLeerEnVozAlta: debeLeerEnVozAlta ?? this.debeLeerEnVozAlta,
     );
   }
 }

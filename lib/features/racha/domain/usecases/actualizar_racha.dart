@@ -4,11 +4,14 @@ import '../entities/hito_racha.dart';
 import '../entities/racha.dart';
 import '../repositories/racha_repository.dart';
 
+typedef ValidadorDiaActivo = Future<bool> Function(DateTime fecha);
+
 class ActualizarRacha {
-  const ActualizarRacha(this._repo, this._reloj);
+  const ActualizarRacha(this._repo, this._reloj, [this._validadorDiaActivo]);
 
   final RachaRepository _repo;
   final Reloj _reloj;
+  final ValidadorDiaActivo? _validadorDiaActivo;
 
   Future<Result<Racha>> call() async {
     final ahora = _reloj.ahora();
@@ -35,8 +38,29 @@ class ActualizarRacha {
         // Consecutivo (ayer completó al menos uno): suma +1 a la racha
         nuevosDias = actual.diasActuales + 1;
       } else {
-        // Se rompió la racha (>1 día sin completar): empieza de nuevo en 1
-        nuevosDias = 1;
+        // Si hay días intermedios, verificar si fueron días sin clases ni pendientes (días neutros)
+        bool todosNeutros = true;
+        if (_validadorDiaActivo != null) {
+          for (int i = 1; i < diferenciaDias; i++) {
+            final diaIntermedio = ultimaUtc.add(Duration(days: i));
+            final huboActividad = await _validadorDiaActivo(diaIntermedio);
+            if (huboActividad) {
+              todosNeutros = false;
+              break;
+            }
+          }
+        } else {
+          todosNeutros = false;
+        }
+
+        if (todosNeutros) {
+          // Ningún día intermedio tenía clases ni pendientes: día(s) neutro(s)
+          // La racha continúa donde estaba y suma +1 por el día de hoy
+          nuevosDias = actual.diasActuales + 1;
+        } else {
+          // Se rompió la racha (>1 día con actividad sin completar): empieza de nuevo en 1
+          nuevosDias = 1;
+        }
       }
     }
 

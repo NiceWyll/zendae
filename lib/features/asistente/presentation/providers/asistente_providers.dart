@@ -75,6 +75,8 @@ final enviarMensajeChatProvider = Provider<EnviarMensajeChat>((ref) {
     repo: ref.watch(asistenteRepositoryProvider),
     interpretar: ref.watch(interpretarMensajeProvider),
     crearPendiente: ref.watch(crearPendienteProvider),
+    actualizarPendiente: ref.watch(actualizarPendienteProvider),
+    eliminarPendiente: ref.watch(eliminarPendienteProvider),
     reloj: ref.watch(relojProvider),
     generarUuid: ref.watch(uuidProvider),
   );

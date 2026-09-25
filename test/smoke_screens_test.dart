@@ -77,10 +77,13 @@ void main() {
       expect(find.byType(HomeShellScreen), findsOneWidget);
     });
 
-    testWidgets('3. HoyScreen renderiza sin excepciones', (tester) async {
+    testWidgets('3. HoyScreen renderiza sin excepciones y muestra resumen combinado', (tester) async {
       await tester.pumpWidget(_crearAppDePrueba(const Scaffold(body: HoyScreen()), pendientes: [pendienteEjemplo]));
       await tester.pumpAndSettle();
       expect(find.byType(HoyScreen), findsOneWidget);
+      expect(find.text('LO MÁS URGENTE DE HOY'), findsOneWidget);
+      expect(find.text('PRÓXIMO PENDIENTE'), findsOneWidget);
+      expect(find.text('Pendiente de prueba'), findsWidgets);
     });
 
     testWidgets('4. SemanaScreen renderiza sin excepciones', (tester) async {

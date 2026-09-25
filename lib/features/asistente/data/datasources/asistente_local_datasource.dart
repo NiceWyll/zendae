@@ -9,7 +9,7 @@ class AsistenteLocalDatasource {
   static const String _keyUsados = 'asistente_mensajes_usados';
   static const String _keyFecha = 'asistente_fecha_limite';
   static const String _keyHistorial = 'asistente_historial_mensajes';
-  static const int _maxPorDia = 20;
+  static const int _maxPorDia = 35;
 
   const AsistenteLocalDatasource({required this.prefs});
 
@@ -66,6 +66,7 @@ class AsistenteLocalDatasource {
           pendienteCreadoId: map['pendienteCreadoId'] as String?,
           tituloPendienteCreado: map['tituloPendienteCreado'] as String?,
           esError: map['esError'] as bool? ?? false,
+          debeLeerEnVozAlta: map['debeLeerEnVozAlta'] as bool? ?? false,
         ));
       } catch (_) {}
     }
@@ -90,6 +91,7 @@ class AsistenteLocalDatasource {
         'pendienteCreadoId': m.pendienteCreadoId,
         'tituloPendienteCreado': m.tituloPendienteCreado,
         'esError': m.esError,
+        'debeLeerEnVozAlta': m.debeLeerEnVozAlta,
       });
     }).toList();
 

@@ -8,6 +8,8 @@ import 'package:mi_pendiente/core/constants/app_sounds.dart';
 import 'package:mi_pendiente/core/services/android_ringtone_service.dart';
 import 'package:mi_pendiente/features/pendientes/domain/entities/pendiente.dart';
 import 'package:mi_pendiente/features/horario/domain/entities/clase.dart';
+import 'package:mi_pendiente/features/horario/domain/entities/examen.dart';
+import 'package:mi_pendiente/features/pendientes/data/datasources/app_database.dart';
 import 'package:mi_pendiente/features/pendientes/domain/services/notification_scheduler.dart';
 
 class NotificationServiceImpl implements NotificationScheduler {
@@ -457,8 +459,129 @@ class NotificationServiceImpl implements NotificationScheduler {
         tipo: 'clase',
       );
       debugPrint('📅 Clase ${clase.nombre} agendada para $momentoAviso con tono $soundId');
+
+      // Punto 3: Resumen 5 minutos antes de la clase con pendientes pendientes de esa materia
+      final momento5m = momentoClase.subtract(const Duration(minutes: 5));
+      if (momento5m.isAfter(now)) {
+        try {
+          final db = await AppDatabase.instance.database;
+          final List<Map<String, dynamic>> maps = await db.query(
+            'pendientes',
+            columns: ['titulo'],
+            where: 'clase_id = ? AND esta_completado = 0',
+            whereArgs: [clase.id],
+          );
+          final titulos = maps.map((m) => m['titulo'] as String).toList();
+          final String aviso5m;
+          if (titulos.isNotEmpty) {
+            if (titulos.length == 1) {
+              aviso5m = 'En 5 min: ${clase.nombre}. Tienes pendiente: \'${titulos.first}\'';
+            } else {
+              aviso5m = 'En 5 min: ${clase.nombre}. Tienes ${titulos.length} pendientes: \'${titulos.join("', '")}\'';
+            }
+          } else {
+            aviso5m = 'En 5 min: ${clase.nombre}${clase.aula != null ? " en ${clase.aula}" : ""}. ¡Todo listo para tu clase!';
+          }
+
+          final int notif5mId = (clase.id.hashCode & 0x3fffffff) + 500000;
+          await programarRecordatorio(
+            notificacionId: notif5mId,
+            titulo: '🎓 En 5 min: ${clase.nombre}',
+            cuerpo: aviso5m,
+            cuando: momento5m,
+            payload: 'clase_5m_${clase.id}',
+            sonido: soundId,
+            vibracion: vibra,
+            tipo: 'clase',
+          );
+          debugPrint('🔔 Aviso 5 min antes agendado para $momento5m');
+        } catch (e) {
+          debugPrint('⚠️ Error al agendar aviso 5 min de clase: $e');
+        }
+      }
     } catch (e) {
       debugPrint('⚠️ Error al programar recordatorio de clase: $e');
+    }
+  }
+
+  /// Punto 2: Notificaciones para Modo Examen (1 día antes Y 1 hora antes)
+  @override
+  Future<void> programarRecordatorioExamen(
+    dynamic examenObj,
+    String nombreClase, {
+    String? sonido,
+    bool vibracion = true,
+  }) async {
+    try {
+      final Examen examen = examenObj is Examen
+          ? examenObj
+          : Examen.fromMap(examenObj as Map<String, dynamic>);
+
+      final now = DateTime.now();
+      final fechaHoraExamen = examen.fechaHoraCompleta;
+
+      if (fechaHoraExamen.isBefore(now)) return;
+
+      String soundId = sonido ?? 'alerta';
+      bool vibra = vibracion;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        if (sonido == null) {
+          soundId = prefs.getString('sonido_clases') ?? 'alerta';
+        }
+        vibra = prefs.getBool('vibracion') ?? true;
+      } catch (_) {}
+
+      // 1. Notificación 1 DÍA ANTES
+      final aviso1d = fechaHoraExamen.subtract(const Duration(days: 1));
+      if (aviso1d.isAfter(now)) {
+        final int notif1dId = examen.notificacion1dId ?? ((examen.id.hashCode & 0x3fffffff) + 100000);
+        await programarRecordatorio(
+          notificacionId: notif1dId,
+          titulo: '📝 Mañana tienes Examen: ${examen.titulo}',
+          cuerpo: 'Materia: $nombreClase a las ${examen.horaFormateada}${examen.aula != null ? " en ${examen.aula}" : ""}. ¡Repasa tus temas!',
+          cuando: aviso1d,
+          payload: 'examen_1d_${examen.id}',
+          sonido: soundId,
+          vibracion: vibra,
+          tipo: 'clase',
+        );
+        debugPrint('📅 Examen 1 día antes agendado para $aviso1d');
+      }
+
+      // 2. Notificación 1 HORA ANTES
+      final aviso1h = fechaHoraExamen.subtract(const Duration(hours: 1));
+      if (aviso1h.isAfter(now)) {
+        final int notif1hId = examen.notificacion1hId ?? ((examen.id.hashCode & 0x3fffffff) + 200000);
+        await programarRecordatorio(
+          notificacionId: notif1hId,
+          titulo: '🚨 En 1 hora: Examen de ${examen.titulo}',
+          cuerpo: 'Materia: $nombreClase a las ${examen.horaFormateada}${examen.aula != null ? " en ${examen.aula}" : ""}. ¡Mucho éxito!',
+          cuando: aviso1h,
+          payload: 'examen_1h_${examen.id}',
+          sonido: soundId,
+          vibracion: vibra,
+          tipo: 'clase',
+        );
+        debugPrint('🚨 Examen 1 hora antes agendado para $aviso1h');
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error al programar recordatorio de examen: $e');
+    }
+  }
+
+  @override
+  Future<void> cancelarRecordatorioExamen(dynamic examenObj) async {
+    try {
+      final Examen examen = examenObj is Examen
+          ? examenObj
+          : Examen.fromMap(examenObj as Map<String, dynamic>);
+      final int notif1dId = examen.notificacion1dId ?? ((examen.id.hashCode & 0x3fffffff) + 100000);
+      final int notif1hId = examen.notificacion1hId ?? ((examen.id.hashCode & 0x3fffffff) + 200000);
+      await cancelarRecordatorio(notif1dId);
+      await cancelarRecordatorio(notif1hId);
+    } catch (e) {
+      debugPrint('⚠️ Error cancelando recordatorio de examen: $e');
     }
   }
 

@@ -5,7 +5,7 @@ class LimiteChat {
 
   const LimiteChat({
     required this.mensajesUsadosHoy,
-    this.mensajesMaximosPorDia = 20,
+    this.mensajesMaximosPorDia = 35,
     required this.fecha,
   });
 

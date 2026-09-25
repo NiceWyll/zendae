@@ -11,11 +11,13 @@ import 'package:mi_pendiente/features/pendientes/domain/entities/repeticion.dart
 import 'package:mi_pendiente/features/pendientes/presentation/providers/pendientes_provider.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/mappers/hora_ui.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/mappers/prioridad_ui.dart';
+import 'package:mi_pendiente/features/horario/presentation/providers/horario_provider.dart';
 
 class NuevoPendienteScreen extends ConsumerStatefulWidget {
   final Pendiente? pendienteAEditar;
+  final String? claseIdInicial;
 
-  const NuevoPendienteScreen({super.key, this.pendienteAEditar});
+  const NuevoPendienteScreen({super.key, this.pendienteAEditar, this.claseIdInicial});
 
   @override
   ConsumerState<NuevoPendienteScreen> createState() => _NuevoPendienteScreenState();
@@ -31,6 +33,7 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
   late bool _tieneRecordatorio;
   late int _minutosAntes;
   late String _repetir;
+  String? _claseId;
   bool _isSaving = false;
 
   @override
@@ -45,6 +48,7 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
     _tieneRecordatorio = p?.tieneRecordatorio ?? true;
     _minutosAntes = p?.minutosAntes ?? 10;
     _repetir = p?.repetir.comoTexto ?? 'No repetir';
+    _claseId = p?.claseId ?? widget.claseIdInicial;
   }
 
   @override
@@ -83,6 +87,7 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
         repetir: Repeticion.desdeTexto(_repetir),
         estaCompletado: widget.pendienteAEditar?.estaCompletado ?? false,
         fechaCompletado: widget.pendienteAEditar?.fechaCompletado,
+        claseId: _claseId,
       );
 
       if (nuevo.tieneRecordatorio) {
@@ -158,6 +163,7 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
     final isEditing = widget.pendienteAEditar != null;
+    final clases = ref.watch(clasesProvider).valueOrNull ?? [];
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
@@ -420,7 +426,61 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+
+            // Campo: Vincular a materia/clase (Punto 1)
+            if (clases.isNotEmpty) ...[
+              _buildCardRow(
+                isDark: isDark,
+                icon: Icons.school_outlined,
+                label: 'Materia / Clase',
+                trailing: DropdownButtonHideUnderline(
+                  child: DropdownButton<String?>(
+                    value: _claseId != null && clases.any((c) => c.id == _claseId) ? _claseId : null,
+                    icon: Icon(Icons.keyboard_arrow_down, color: primaryColor),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('Ninguna (General)'),
+                      ),
+                      ...clases.map((c) => DropdownMenuItem<String?>(
+                        value: c.id,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: c.color,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 140),
+                              child: Text(
+                                c.nombre,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                    ],
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: primaryColor,
+                    ),
+                    onChanged: (val) {
+                      setState(() => _claseId = val);
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
 
             // Mini calendario visual interactivo
             _buildMiniCalendar(isDark),

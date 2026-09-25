@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
+import 'package:mi_pendiente/core/services/tts_service.dart';
 import '../../domain/entities/mensaje_chat.dart';
 
 class BurbujaMensaje extends StatelessWidget {
@@ -140,18 +141,49 @@ class BurbujaMensaje extends StatelessWidget {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 4),
-                  Align(
-                    alignment: Alignment.bottomRight,
-                    child: Text(
-                      horaFormateada,
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        color: esUsuario
-                            ? Colors.white70
-                            : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF94A3B8)),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      if (!esUsuario)
+                        InkWell(
+                          onTap: () => TtsService.instance.hablar(mensaje.texto),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.volume_up_rounded,
+                                  size: 15,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Escuchar',
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        const SizedBox.shrink(),
+                      Text(
+                        horaFormateada,
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          color: esUsuario
+                              ? Colors.white70
+                              : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF94A3B8)),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),

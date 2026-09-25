@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
 import 'package:mi_pendiente/core/services/notification_service.dart';
 import 'package:mi_pendiente/features/horario/domain/entities/clase.dart';
+import 'package:mi_pendiente/features/pendientes/presentation/providers/pendientes_provider.dart';
 import '../providers/horario_provider.dart';
+import 'detalle_clase_screen.dart';
 import 'formulario_clase_screen.dart';
 
 class HorarioScreen extends ConsumerStatefulWidget {
@@ -384,6 +386,9 @@ class _HorarioScreenState extends ConsumerState<HorarioScreen> {
   Widget _buildClaseCard(BuildContext context, Clase clase, bool isDark) {
     final finalizaPronto = clase.finalizaPronto;
     final haExpirado = clase.haExpirado;
+    final todosLosPendientes = ref.watch(pendientesProvider).valueOrNull ?? [];
+    final pendientesDeClase = todosLosPendientes.where((p) => p.claseId == clase.id).toList();
+    final examenesDeClase = ref.watch(examenesPorClaseProvider(clase.id));
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -397,187 +402,229 @@ class _HorarioScreenState extends ConsumerState<HorarioScreen> {
           width: finalizaPronto ? 1.5 : 1,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Banner de aviso si el curso finaliza pronto (3 días o menos)
-          if (finalizaPronto)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              decoration: const BoxDecoration(
-                color: Color(0xFFFEF3C7),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309), size: 18),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '⚠️ Este curso finaliza en ${clase.diasRestantes} días. Recuerda actualizar o quitar este horario.',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF92400E),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => DetalleClaseScreen(clase: clase),
             ),
-
-          if (haExpirado)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: const BoxDecoration(
-                color: Color(0xFFFEE2E2),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.info_outline_rounded, color: Color(0xFF991B1B), size: 16),
-                  SizedBox(width: 6),
-                  Text(
-                    'Período finalizado. No se enviarán más recordatorios.',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF991B1B),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Barra lateral de color asignado
-                Container(
-                  width: 5,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: clase.color,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
+          );
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Banner de aviso si el curso finaliza pronto (3 días o menos)
+            if (finalizaPronto)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
                 ),
-                const SizedBox(width: 12),
-
-                // Contenido de la clase
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        clase.nombre,
-                        style: TextStyle(
-                          fontSize: 15,
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309), size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '⚠️ Este curso finaliza en ${clase.diasRestantes} días. Recuerda actualizar o quitar este horario.',
+                        style: const TextStyle(
+                          fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : AppColors.textPrimary,
+                          color: Color(0xFF92400E),
                         ),
                       ),
-                      const SizedBox(height: 4),
-
-                      // Horario y Aula
-                      Row(
-                        children: [
-                          Icon(Icons.access_time_rounded, size: 14, color: clase.color),
-                          const SizedBox(width: 4),
-                          Text(
-                            clase.horarioFormateado,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
-                            ),
-                          ),
-                          if (clase.aula != null) ...[
-                            const SizedBox(width: 10),
-                            const Text('·', style: TextStyle(color: Color(0xFF94A3B8))),
-                            const SizedBox(width: 10),
-                            const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF64748B)),
-                            const SizedBox(width: 3),
-                            Text(
-                              clase.aula!,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-
-                      // Vigencia y Recordatorio
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '📅 Hasta ${_formatearFecha(clase.fechaFin)}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                              ),
-                            ),
-                          ),
-                          if (clase.minutosAntes > 0)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: clase.color.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                '🔔 ${clase.minutosAntes} min antes',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: clase.color,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Acciones (Editar y Eliminar)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit_outlined, size: 19),
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => FormularioClaseScreen(claseParaEditar: clase),
-                          ),
-                        );
-                      },
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded, size: 19),
-                      color: AppColors.priorityAlta,
-                      onPressed: () => _confirmarEliminarClase(clase),
                     ),
                   ],
                 ),
-              ],
+              ),
+
+            if (haExpirado)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(13)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.info_outline_rounded, color: Color(0xFF991B1B), size: 16),
+                    SizedBox(width: 6),
+                    Text(
+                      'Período finalizado. No se enviarán más recordatorios.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF991B1B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Barra lateral de color asignado
+                  Container(
+                    width: 5,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: clase.color,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Contenido de la clase
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          clase.nombre,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+
+                        // Horario y Aula
+                        Row(
+                          children: [
+                            Icon(Icons.access_time_rounded, size: 14, color: clase.color),
+                            const SizedBox(width: 4),
+                            Text(
+                              clase.horarioFormateado,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                              ),
+                            ),
+                            if (clase.aula != null) ...[
+                              const SizedBox(width: 10),
+                              const Text('·', style: TextStyle(color: Color(0xFF94A3B8))),
+                              const SizedBox(width: 10),
+                              const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF64748B)),
+                              const SizedBox(width: 3),
+                              Text(
+                                clase.aula!,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+
+                        // Vigencia, Recordatorio, Pendientes y Exámenes
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                '📅 Hasta ${_formatearFecha(clase.fechaFin)}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                            if (clase.minutosAntes > 0)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: clase.color.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  '🔔 ${clase.minutosAntes}m',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: clase.color,
+                                  ),
+                                ),
+                              ),
+                            if (pendientesDeClase.isNotEmpty)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF0F172A) : const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  '📝 ${pendientesDeClase.length} ${pendientesDeClase.length == 1 ? "tarea" : "tareas"}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark ? const Color(0xFF93C5FD) : const Color(0xFF2563EB),
+                                  ),
+                                ),
+                              ),
+                            if (examenesDeClase.isNotEmpty)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: isDark ? const Color(0xFF450A0A) : const Color(0xFFFEF2F2),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  '🎓 ${examenesDeClase.length} ${examenesDeClase.length == 1 ? "examen" : "exámenes"}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFFDC2626),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Acciones (Editar y Eliminar)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined, size: 19),
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => FormularioClaseScreen(claseParaEditar: clase),
+                            ),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline_rounded, size: 19),
+                        color: AppColors.priorityAlta,
+                        onPressed: () => _confirmarEliminarClase(clase),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
