@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:mi_pendiente/core/constants/app_sounds.dart';
+import 'package:mi_pendiente/core/services/android_ringtone_service.dart';
 import 'package:mi_pendiente/features/pendientes/domain/entities/pendiente.dart';
 import 'package:mi_pendiente/features/horario/domain/entities/clase.dart';
 import 'package:mi_pendiente/features/pendientes/domain/services/notification_scheduler.dart';
@@ -158,8 +159,36 @@ class NotificationServiceImpl implements NotificationScheduler {
   }) async {
     try {
       final sId = sonido ?? (tipo == 'clase' ? 'zen' : 'campana');
-      final chId = tipo == 'clase' ? 'canal_clases_$sId' : 'canal_pendientes_$sId';
-      final chName = tipo == 'clase' ? 'Horario de Clases' : 'Recordatorios de Pendientes';
+      final bool esUri = sId.startsWith('content://');
+      final chId = esUri
+          ? (tipo == 'clase' ? 'canal_clases_uri' : 'canal_pendientes_uri')
+          : (tipo == 'clase' ? 'canal_clases_$sId' : 'canal_pendientes_$sId');
+      final chName = esUri
+          ? (tipo == 'clase' ? 'Horario de Clases (Tono del celular)' : 'Recordatorios (Tono del celular)')
+          : (tipo == 'clase' ? 'Horario de Clases' : 'Recordatorios de Pendientes');
+
+      final AndroidNotificationSound? soundResource = esUri
+          ? UriAndroidNotificationSound(sId)
+          : (sId == 'default' ? null : RawResourceAndroidNotificationSound(sId));
+
+      if (esUri && Platform.isAndroid) {
+        final androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+        if (androidPlugin != null) {
+          await androidPlugin.createNotificationChannel(
+            AndroidNotificationChannel(
+              chId,
+              chName,
+              description: 'Notificación con tono del celular Android',
+              importance: Importance.max,
+              playSound: true,
+              sound: soundResource,
+              enableVibration: vibracion,
+              vibrationPattern: vibracion ? _vibrationPattern : null,
+              showBadge: true,
+            ),
+          );
+        }
+      }
 
       final androidDetails = AndroidNotificationDetails(
         chId,
@@ -168,7 +197,7 @@ class NotificationServiceImpl implements NotificationScheduler {
         importance: Importance.max,
         priority: Priority.high,
         playSound: true,
-        sound: sId == 'default' ? null : RawResourceAndroidNotificationSound(sId),
+        sound: soundResource,
         enableVibration: vibracion,
         vibrationPattern: vibracion ? _vibrationPattern : null,
         ticker: 'Zendae',
@@ -213,6 +242,9 @@ class NotificationServiceImpl implements NotificationScheduler {
     required String tipo,
     bool vibracion = true,
   }) async {
+    if (Platform.isAndroid && soundId.startsWith('content://')) {
+      await AndroidRingtoneService.playRingtone(soundId);
+    }
     final nombreSonido = SonidosDisponibles.obtenerPorId(soundId).nombre;
     final esClase = tipo == 'clase';
     await mostrarNotificacionInmediata(
@@ -239,8 +271,32 @@ class NotificationServiceImpl implements NotificationScheduler {
   }) async {
     final tzDate = tz.TZDateTime.from(cuando, tz.local);
     final sId = sonido ?? (tipo == 'clase' ? 'zen' : 'campana');
-    final chId = tipo == 'clase' ? 'canal_clases_$sId' : 'canal_pendientes_$sId';
-    final chName = tipo == 'clase' ? 'Horario de Clases' : 'Recordatorios de Pendientes';
+    final bool esUri = sId.startsWith('content://');
+    final chId = esUri
+        ? (tipo == 'clase' ? 'canal_clases_uri' : 'canal_pendientes_uri')
+        : (tipo == 'clase' ? 'canal_clases_$sId' : 'canal_pendientes_$sId');
+    final chName = esUri
+        ? (tipo == 'clase' ? 'Horario de Clases (Tono del celular)' : 'Recordatorios (Tono del celular)')
+        : (tipo == 'clase' ? 'Horario de Clases' : 'Recordatorios de Pendientes');
+
+    if (esUri && Platform.isAndroid) {
+      final androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        await androidPlugin.createNotificationChannel(
+          AndroidNotificationChannel(
+            chId,
+            chName,
+            description: 'Canal para tono del dispositivo Android',
+            importance: Importance.max,
+            playSound: true,
+            sound: UriAndroidNotificationSound(sId),
+            enableVibration: vibracion,
+            vibrationPattern: vibracion ? _vibrationPattern : null,
+            showBadge: true,
+          ),
+        );
+      }
+    }
 
     await _agendarZoned(
       id: notificacionId,
@@ -427,7 +483,9 @@ class NotificationServiceImpl implements NotificationScheduler {
       importance: Importance.max,
       priority: Priority.high,
       playSound: true,
-      sound: sId == 'default' ? null : RawResourceAndroidNotificationSound(sId),
+      sound: sId.startsWith('content://')
+          ? UriAndroidNotificationSound(sId)
+          : (sId == 'default' ? null : RawResourceAndroidNotificationSound(sId)),
       enableVibration: vibracion,
       vibrationPattern: vibracion ? _vibrationPattern : null,
       category: AndroidNotificationCategory.reminder,

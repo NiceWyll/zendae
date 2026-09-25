@@ -222,7 +222,9 @@ class AjustesScreen extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  SonidosDisponibles.obtenerPorId(ajustes.sonidoPendientes).nombre,
+                  ajustes.sonidoPendientesNombre.isNotEmpty
+                      ? ajustes.sonidoPendientesNombre
+                      : SonidosDisponibles.obtenerPorId(ajustes.sonidoPendientes).nombre,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -239,8 +241,8 @@ class AjustesScreen extends ConsumerWidget {
                 sonidoActualId: ajustes.sonidoPendientes,
                 tipo: 'pendiente',
                 vibracionActiva: ajustes.vibracion,
-                onSonidoSeleccionado: (nuevoId) {
-                  ref.read(ajustesProvider.notifier).cambiarSonidoPendientes(nuevoId);
+                onSonidoSeleccionado: (nuevoId, [nombre]) {
+                  ref.read(ajustesProvider.notifier).cambiarSonidoPendientes(nuevoId, nombre);
                 },
               );
             },
@@ -257,7 +259,9 @@ class AjustesScreen extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  SonidosDisponibles.obtenerPorId(ajustes.sonidoClases).nombre,
+                  ajustes.sonidoClasesNombre.isNotEmpty
+                      ? ajustes.sonidoClasesNombre
+                      : SonidosDisponibles.obtenerPorId(ajustes.sonidoClases).nombre,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -274,8 +278,8 @@ class AjustesScreen extends ConsumerWidget {
                 sonidoActualId: ajustes.sonidoClases,
                 tipo: 'clase',
                 vibracionActiva: ajustes.vibracion,
-                onSonidoSeleccionado: (nuevoId) {
-                  ref.read(ajustesProvider.notifier).cambiarSonidoClases(nuevoId);
+                onSonidoSeleccionado: (nuevoId, [nombre]) {
+                  ref.read(ajustesProvider.notifier).cambiarSonidoClases(nuevoId, nombre);
                 },
               );
             },

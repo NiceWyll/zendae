@@ -56,7 +56,15 @@ class SonidosDisponibles {
     ),
   ];
 
-  static SonidoNotificacion obtenerPorId(String id) {
+  static SonidoNotificacion obtenerPorId(String id, [String? nombrePersonalizado]) {
+    if (id.startsWith('content://')) {
+      return SonidoNotificacion(
+        id: id,
+        nombre: nombrePersonalizado ?? 'Tono del teléfono',
+        descripcion: 'Tono nativo seleccionado de tu dispositivo Android',
+        icono: Icons.phonelink_ring_rounded,
+      );
+    }
     return lista.firstWhere(
       (s) => s.id == id,
       orElse: () => lista.first,
