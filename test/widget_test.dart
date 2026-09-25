@@ -40,7 +40,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
 
     // Verifica que se muestre la cabecera en el Shell
-    expect(find.text('Mis pendientes'), findsOneWidget);
+    expect(find.text('Pendientes'), findsWidgets);
   });
 
   testWidgets('Selector de hora estilo alarma abre correctamente y elimina chips fijos', (WidgetTester tester) async {

@@ -172,7 +172,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
   }
 
   Widget _buildAppBar(bool isDark) {
-    String title = 'Mis pendientes';
+    String title = 'Pendientes';
     if (_bottomNavIndex == 1) title = 'Calendario';
     if (_bottomNavIndex == 2) title = 'Completados';
     if (_bottomNavIndex == 3) title = 'Ajustes';
@@ -180,64 +180,71 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
     final primaryColor = Theme.of(context).primaryColor;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Lado izquierdo: Botón de las 3 rayitas + Título agrupados
+          // Lado izquierdo: Botón de las 3 rayitas + Título con espacio flexible
+          Expanded(
+            child: Row(
+              children: [
+                Builder(
+                  builder: (ctx) => InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => Scaffold.of(ctx).openDrawer(),
+                    child: Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF1E293B)
+                            : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isDark
+                              ? AppColors.borderDark
+                              : const Color(0xFFE2E8F0),
+                          width: 1,
+                        ),
+                      ),
+                      child: Icon(Icons.menu_rounded, color: primaryColor, size: 21),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 19.5,
+                      fontWeight: FontWeight.w800,
+                      color: primaryColor,
+                      letterSpacing: -0.3,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+
+          // Lado derecho: Racha, Buscador y Botón '✨ IA'
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Builder(
-                builder: (ctx) => InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => Scaffold.of(ctx).openDrawer(),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF1E293B)
-                          : const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.borderDark
-                            : const Color(0xFFE2E8F0),
-                        width: 1,
-                      ),
-                    ),
-                    child: Icon(Icons.menu_rounded, color: primaryColor, size: 22),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: primaryColor,
-                  letterSpacing: -0.3,
-                ),
-              ),
-            ],
-          ),
-
-          // Lado derecho: Racha y Botón '✨ IA' (sin campanita, con espacio de sobra)
-          Row(
-            children: [
               const BannerRachaChip(compacto: true),
-              const SizedBox(width: 4),
+              const SizedBox(width: 2),
 
-              // Buscador de texto (Requisito 8: ícono de lupa)
+              // Buscador de texto (ícono de lupa)
               IconButton(
                 icon: Icon(
                   Icons.search_rounded,
-                  size: 22,
+                  size: 21,
                   color: isDark ? Colors.white70 : AppColors.textPrimary,
                 ),
                 tooltip: 'Buscar en tareas y clases',
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(5),
                 constraints: const BoxConstraints(),
                 onPressed: () {
                   showSearch(
@@ -246,7 +253,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                   );
                 },
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 4),
 
               // Botón estilizado '✨ IA'
               InkWell(

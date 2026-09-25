@@ -2,13 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mi_pendiente/core/theme/tema_app.dart';
 import 'package:mi_pendiente/features/racha/domain/entities/prenda_personaje.dart';
-import 'package:mi_pendiente/features/racha/domain/entities/personaje_state.dart';
 import 'package:mi_pendiente/features/racha/presentation/providers/personaje_provider.dart';
 
 void main() {
   group('Punto 1: Temas y Fondo Personalizado (Android)', () {
     test('TemasDisponibles incluye temas nuevos ampliados', () {
-      final todos = TemasDisponibles.todos;
+      const todos = TemasDisponibles.todos;
       final ids = todos.map((t) => t.id).toList();
 
       expect(ids, contains('zafiro'));
@@ -34,8 +33,8 @@ void main() {
     test('Límite de tamaño: validación de 10 MB', () {
       const limiteBytes = 10 * 1024 * 1024; // 10 MB exactos
 
-      final archivoValido = 9 * 1024 * 1024; // 9 MB
-      final archivoExcedido = 11 * 1024 * 1024; // 11 MB
+      const archivoValido = 9 * 1024 * 1024; // 9 MB
+      const archivoExcedido = 11 * 1024 * 1024; // 11 MB
 
       expect(archivoValido <= limiteBytes, isTrue);
       expect(archivoExcedido > limiteBytes, isTrue);

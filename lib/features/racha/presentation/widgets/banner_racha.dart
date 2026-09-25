@@ -57,7 +57,7 @@ class BannerRachaChip extends ConsumerWidget {
         },
         child: Ink(
           padding: EdgeInsets.symmetric(
-            horizontal: compacto ? 8 : 12,
+            horizontal: compacto ? 6 : 12,
             vertical: compacto ? 3 : 5,
           ),
           decoration: BoxDecoration(
@@ -82,11 +82,11 @@ class BannerRachaChip extends ConsumerWidget {
             children: [
               // Personaje animado de Zendy en miniatura
               ZendyPersonajeWidget(
-                size: compacto ? 20 : 24,
+                size: compacto ? 19 : 24,
                 prendaId: prendaId,
                 animado: true,
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 4),
               Text(
                 '${racha.diasActuales}',
                 style: TextStyle(
