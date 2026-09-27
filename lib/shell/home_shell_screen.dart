@@ -20,7 +20,7 @@ import 'package:mi_pendiente/features/racha/presentation/providers/racha_provide
 import 'package:mi_pendiente/features/asistente/presentation/screens/chat_screen.dart';
 import 'package:mi_pendiente/features/horario/presentation/screens/horario_screen.dart';
 import 'package:mi_pendiente/features/calendario_general/presentation/screens/calendario_general_screen.dart';
-import 'package:mi_pendiente/features/racha/presentation/screens/armario_screen.dart';
+import 'package:mi_pendiente/features/ajustes/presentation/providers/ajustes_provider.dart';
 import 'package:mi_pendiente/features/racha/presentation/widgets/zendy_personaje_widget.dart';
 
 class HomeShellScreen extends ConsumerStatefulWidget {
@@ -76,10 +76,14 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final hoyList = ref.watch(pendientesDeHoyProvider).valueOrNull ?? [];
     final mostrarFab = _bottomNavIndex == 1 || (_bottomNavIndex == 0 && hoyList.isNotEmpty);
+    final esFondoPersonalizado = ref.watch(ajustesProvider).temaId == 'fondo_personalizado';
+    final scaffoldBg = esFondoPersonalizado
+        ? Colors.transparent
+        : (isDark ? AppColors.backgroundDark : AppColors.backgroundLight);
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      backgroundColor: scaffoldBg,
       // Drawer lateral interactivo (Menú de las 3 rayitas)
       drawer: _buildAppDrawer(isDark),
       body: SafeArea(
@@ -311,12 +315,14 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
 
     return Drawer(
       backgroundColor: isDark ? AppColors.backgroundDark : Colors.white,
-      child: Column(
+      surfaceTintColor: Colors.transparent,
+      child: ListView(
+        padding: EdgeInsets.zero,
         children: [
           // Espacio limpio superior que respeta la barra de estado del sistema
-          SizedBox(height: paddingTop + 10),
+          SizedBox(height: paddingTop + 12),
 
-          // Tarjeta cabecera estilizada con borde redondeado y límite superior claro
+          // Tarjeta cabecera estilizada con borde redondeado
           Container(
             width: double.infinity,
             margin: const EdgeInsets.symmetric(horizontal: 14),
@@ -334,9 +340,9 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF162032).withValues(alpha: 0.3),
-                  blurRadius: 18,
-                  offset: const Offset(0, 6),
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -344,15 +350,15 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 56,
-                  height: 56,
+                  width: 54,
+                  height: 54,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
                         color: const Color(0xFF06B6D4).withValues(alpha: 0.25),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
+                        blurRadius: 14,
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
@@ -373,7 +379,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 const Text(
                   'Tu día con absoluta claridad',
                   style: TextStyle(
@@ -386,9 +392,11 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
             ),
           ),
 
-          // Tarjetas de métricas rápidas con Consumer localizado
+          const SizedBox(height: 14),
+
+          // Tarjetas de métricas rápidas (sin fondos grises distorsionados)
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             child: Consumer(
               builder: (context, ref, _) {
                 final pendientes = ref.watch(pendientesProvider).valueOrNull ?? const <Pendiente>[];
@@ -401,8 +409,12 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                         decoration: BoxDecoration(
-                          color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-                          borderRadius: BorderRadius.circular(12),
+                          color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                            width: 1,
+                          ),
                         ),
                         child: Column(
                           children: [
@@ -420,7 +432,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                               style: TextStyle(
                                 fontSize: 11,
                                 color: isDark ? Colors.white70 : const Color(0xFF64748B),
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
@@ -432,10 +444,12 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF10B981).withValues(alpha: 0.2)
-                              : const Color(0xFFECFDF5),
-                          borderRadius: BorderRadius.circular(12),
+                          color: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.3) : const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isDark ? const Color(0xFF059669).withValues(alpha: 0.4) : const Color(0xFFA7F3D0),
+                            width: 1,
+                          ),
                         ),
                         child: Column(
                           children: [
@@ -444,7 +458,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
-                                color: isDark ? const Color(0xFF34D399) : AppColors.priorityBaja,
+                                color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -453,7 +467,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                               style: TextStyle(
                                 fontSize: 11,
                                 color: isDark ? Colors.white70 : const Color(0xFF64748B),
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
@@ -473,14 +487,16 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                               ),
                             );
                           },
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
                           child: Ink(
                             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                             decoration: BoxDecoration(
-                              color: isDark
-                                  ? const Color(0xFFF97316).withValues(alpha: 0.2)
-                                  : const Color(0xFFFFF7ED),
-                              borderRadius: BorderRadius.circular(12),
+                              color: isDark ? const Color(0xFF78350F).withValues(alpha: 0.3) : const Color(0xFFFFF7ED),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: isDark ? const Color(0xFFD97706).withValues(alpha: 0.4) : const Color(0xFFFED7AA),
+                                width: 1,
+                              ),
                             ),
                             child: Column(
                               children: [
@@ -500,7 +516,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                                           ),
                                         ),
                                         const SizedBox(width: 4),
-                                        const ZendyPersonajeWidget(tamano: 22, animar: true),
+                                        const ZendyPersonajeWidget(tamano: 20, animar: true),
                                       ],
                                     );
                                   },
@@ -511,7 +527,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: isDark ? Colors.white70 : const Color(0xFF64748B),
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ],
@@ -526,12 +542,19 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
             ),
           ),
 
-          Divider(height: 1, color: isDark ? AppColors.borderDark : const Color(0xFFF1F5F9)),
+          const SizedBox(height: 14),
 
-          // Opciones de navegación del Drawer
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Divider(height: 1, color: isDark ? AppColors.borderDark : const Color(0xFFF1F5F9)),
+          ),
+
+          const SizedBox(height: 8),
+
+          // Opciones de navegación del Drawer (Sin Armario de Zendy, diseño unificado y fluido)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Column(
               children: [
                 _buildDrawerItem(
                   icon: Icons.assignment_outlined,
@@ -571,19 +594,6 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                   onTap: () {
                     Navigator.pop(context);
                     setState(() => _bottomNavIndex = 2);
-                  },
-                ),
-                _buildDrawerItem(
-                  icon: Icons.checkroom_rounded,
-                  label: 'Armario de Zendy 👔',
-                  isSelected: false,
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const ArmarioScreen(),
-                      ),
-                    );
                   },
                 ),
                 _buildDrawerItem(
@@ -673,22 +683,25 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                 // Botón directo para crear pendiente
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      final nav = Navigator.of(context);
-                      nav.pop();
-                      nav.push(
-                        MaterialPageRoute(
-                          builder: (_) => const NuevoPendienteScreen(),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.add, color: Colors.white),
-                    label: const Text('Crear pendiente', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        final nav = Navigator.of(context);
+                        nav.pop();
+                        nav.push(
+                          MaterialPageRoute(
+                            builder: (_) => const NuevoPendienteScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      label: const Text('Crear pendiente', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                     ),
                   ),
                 ),
@@ -698,12 +711,14 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
 
           // Pie del Drawer
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              'Zendae · v1.0.0',
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8),
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Center(
+              child: Text(
+                'Zendae · v1.0.0',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8),
+                ),
               ),
             ),
           ),

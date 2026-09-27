@@ -13,13 +13,14 @@ class AppTheme {
   static ThemeData crearThemeData(TemaApp tema, bool esOscuro) {
     final primary = tema.colorPrimario;
     final secondary = tema.colorSecundario;
+    final esFondoPersonalizado = tema.id == 'fondo_personalizado';
 
     if (esOscuro) {
       return ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
         primaryColor: secondary,
-        scaffoldBackgroundColor: AppColors.backgroundDark,
+        scaffoldBackgroundColor: esFondoPersonalizado ? Colors.transparent : AppColors.backgroundDark,
         colorScheme: ColorScheme.dark(
           primary: secondary,
           secondary: tema.colorAcento ?? secondary,
@@ -39,7 +40,9 @@ class AppTheme {
           ),
         ),
         cardTheme: CardThemeData(
-          color: AppColors.cardDark,
+          color: esFondoPersonalizado
+              ? const Color(0xFF1E293B).withValues(alpha: 0.85)
+              : AppColors.cardDark,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -54,7 +57,9 @@ class AppTheme {
           shape: const CircleBorder(),
         ),
         bottomNavigationBarTheme: BottomNavigationBarThemeData(
-          backgroundColor: AppColors.surfaceDark,
+          backgroundColor: esFondoPersonalizado
+              ? const Color(0xFF0F172A).withValues(alpha: 0.85)
+              : AppColors.surfaceDark,
           selectedItemColor: secondary,
           unselectedItemColor: AppColors.textMuted,
           type: BottomNavigationBarType.fixed,
@@ -86,7 +91,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       primaryColor: primary,
-      scaffoldBackgroundColor: AppColors.backgroundLight,
+      scaffoldBackgroundColor: esFondoPersonalizado ? Colors.transparent : AppColors.backgroundLight,
       colorScheme: ColorScheme.light(
         primary: primary,
         secondary: secondary,
@@ -106,7 +111,9 @@ class AppTheme {
         ),
       ),
       cardTheme: CardThemeData(
-        color: AppColors.cardLight,
+        color: esFondoPersonalizado
+            ? Colors.white.withValues(alpha: 0.88)
+            : AppColors.cardLight,
         elevation: 1.5,
         shadowColor: Colors.black.withValues(alpha: 0.04),
         shape: RoundedRectangleBorder(

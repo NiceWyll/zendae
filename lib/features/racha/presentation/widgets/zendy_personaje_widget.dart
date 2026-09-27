@@ -97,7 +97,9 @@ class _ZendyPersonajeWidgetState extends State<ZendyPersonajeWidget>
     Widget content = AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        final dy = widget.animado ? _flotacionAnim.value : 0.0;
+        // En tamaños compactos (ej. chips de AppBar), la flotación se escala para mantenerse dentro del contenedor
+        final double scaleFactor = (widget.size <= 24) ? 0.25 : 1.0;
+        final dy = widget.animado ? (_flotacionAnim.value * scaleFactor) : 0.0;
         final blinkScale = widget.animado ? _parpadeoAnim.value : 1.0;
 
         return Transform.translate(

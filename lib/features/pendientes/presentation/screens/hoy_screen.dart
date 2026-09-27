@@ -22,6 +22,7 @@ class HoyScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncHoy = ref.watch(pendientesDeHoyProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
     final now = DateTime.now();
 
     return asyncHoy.when(
@@ -41,31 +42,43 @@ class HoyScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Fecha actual
+                  // Fecha actual con ícono visible y armonizado con el tema
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     child: Row(
                       children: [
-                        const Icon(
-                          Icons.calendar_today_outlined,
-                          size: 20,
-                          color: AppColors.primary,
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: primaryColor.withOpacity(isDark ? 0.20 : 0.10),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.calendar_month_rounded,
+                            size: 18,
+                            color: primaryColor,
+                          ),
                         ),
                         const SizedBox(width: 10),
                         Text(
                           DateTimeUtils.formatFullDate(now),
                           style: TextStyle(
                             fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  // Resumen combinado: Próxima clase Y Próximo pendiente (Punto 7)
-                  _buildResumenCombinado(context, isDark, now, clasesHoy, hoyList),
+                  // Resumen combinado: Próxima clase Y Próximo pendiente (Plegable / Desplegable)
+                  _TarjetaResumenUrgente(
+                    isDark: isDark,
+                    now: now,
+                    clasesHoy: clasesHoy,
+                    hoyList: hoyList,
+                  ),
 
                   const SizedBox(height: 18),
 
@@ -152,16 +165,37 @@ class HoyScreen extends ConsumerWidget {
       },
     );
   }
+}
 
-  /// Construye el widget de resumen combinado de lo más urgente:
-  /// Próxima clase Y próximo pendiente juntos en una sola vista.
-  Widget _buildResumenCombinado(
-    BuildContext context,
-    bool isDark,
-    DateTime now,
-    List<Clase> clasesHoy,
-    List<Pendiente> hoyList,
-  ) {
+/// Widget interactivo de resumen urgente de hoy:
+/// Próxima clase Y próximo pendiente combinados en una tarjeta desplegable y elegante.
+class _TarjetaResumenUrgente extends StatefulWidget {
+  final bool isDark;
+  final DateTime now;
+  final List<Clase> clasesHoy;
+  final List<Pendiente> hoyList;
+
+  const _TarjetaResumenUrgente({
+    required this.isDark,
+    required this.now,
+    required this.clasesHoy,
+    required this.hoyList,
+  });
+
+  @override
+  State<_TarjetaResumenUrgente> createState() => _TarjetaResumenUrgenteState();
+}
+
+class _TarjetaResumenUrgenteState extends State<_TarjetaResumenUrgente> {
+  bool _expandido = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    final now = widget.now;
+    final clasesHoy = widget.clasesHoy;
+    final hoyList = widget.hoyList;
+
     final ahoraMinutos = now.hour * 60 + now.minute;
 
     // 1. Determinar próxima clase o clase en curso
@@ -207,261 +241,320 @@ class HoyScreen extends ConsumerWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+              color: Colors.black.withOpacity(isDark ? 0.25 : 0.05),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),
           ],
         ),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Título de la tarjeta combinada
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(5),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Icon(
-                    Icons.bolt_rounded,
-                    size: 16,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'LO MÁS URGENTE DE HOY',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.6,
-                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // SECCIÓN 1: PRÓXIMA CLASE
+            // Título de la tarjeta combinada (pulsable para expandir/plegar)
             InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: proximaClase != null
-                  ? () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => DetalleClaseScreen(clase: proximaClase!),
-                        ),
-                      );
-                    }
-                  : null,
+              borderRadius: BorderRadius.circular(10),
+              onTap: () {
+                setState(() {
+                  _expandido = !_expandido;
+                });
+              },
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
                 child: Row(
                   children: [
+                    // Ícono del rayo: ámbar brillante y llamativo con halo
                     Container(
-                      width: 42,
-                      height: 42,
+                      padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
-                        color: proximaClase != null
-                            ? Color(proximaClase.colorValue).withOpacity(0.15)
-                            : (isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFF1F5F9)),
-                        borderRadius: BorderRadius.circular(10),
+                        color: const Color(0xFFF59E0B).withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(7),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFF59E0B).withOpacity(0.25),
+                            blurRadius: 6,
+                          ),
+                        ],
                       ),
-                      child: Icon(
-                        Icons.school_rounded,
-                        size: 22,
-                        color: proximaClase != null
-                            ? Color(proximaClase.colorValue)
-                            : (isDark ? Colors.white54 : Colors.black45),
+                      child: const Icon(
+                        Icons.bolt_rounded,
+                        size: 17,
+                        color: Color(0xFFF59E0B),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Text(
+                        'LO MÁS URGENTE DE HOY',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                          color: isDark ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
+                        ),
+                      ),
+                    ),
+                    // Botón desplegable / plegable
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Row(
-                            children: [
-                              Text(
-                                esClaseEnCurso
-                                    ? 'EN CURSO'
-                                    : (proximaClase != null
-                                        ? 'PRÓXIMA CLASE'
-                                        : (hayClasesTerminadas
-                                            ? 'CLASES CONCLUIDAS'
-                                            : 'SIN CLASES HOY')),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  color: esClaseEnCurso
-                                      ? const Color(0xFF10B981)
-                                      : (proximaClase != null
-                                          ? AppColors.primary
-                                          : AppColors.textSecondary),
-                                ),
+                          Text(
+                            _expandido ? 'Ocultar' : 'Ver',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Icon(
+                            _expandido ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                            size: 17,
+                            color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Contenido desplegable
+            AnimatedCrossFade(
+              firstChild: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 12),
+
+                  // SECCIÓN 1: PRÓXIMA CLASE
+                  InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: proximaClase != null
+                        ? () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => DetalleClaseScreen(clase: proximaClase!),
                               ),
-                              if (esClaseEnCurso) ...[
-                                const SizedBox(width: 5),
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF10B981),
-                                    shape: BoxShape.circle,
+                            );
+                          }
+                        : null,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: proximaClase != null
+                                  ? Color(proximaClase.colorValue).withOpacity(0.15)
+                                  : (isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFF1F5F9)),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              Icons.school_rounded,
+                              size: 22,
+                              color: proximaClase != null
+                                  ? Color(proximaClase.colorValue)
+                                  : (isDark ? Colors.white54 : Colors.black45),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      esClaseEnCurso
+                                          ? 'EN CURSO'
+                                          : (proximaClase != null
+                                              ? 'PRÓXIMA CLASE'
+                                              : (hayClasesTerminadas
+                                                  ? 'CLASES CONCLUIDAS'
+                                                  : 'SIN CLASES HOY')),
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        color: esClaseEnCurso
+                                            ? const Color(0xFF10B981)
+                                            : (proximaClase != null
+                                                ? (isDark ? const Color(0xFF60A5FA) : AppColors.primary)
+                                                : AppColors.textSecondary),
+                                      ),
+                                    ),
+                                    if (esClaseEnCurso) ...[
+                                      const SizedBox(width: 5),
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFF10B981),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  proximaClase != null
+                                      ? proximaClase.nombre
+                                      : (hayClasesTerminadas
+                                          ? 'Terminaste tus clases de hoy'
+                                          : 'Sin clases programadas'),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  proximaClase != null
+                                      ? '${proximaClase.horarioFormateado}${proximaClase.aula != null && proximaClase.aula!.isNotEmpty ? ' • ${proximaClase.aula}' : ''}'
+                                      : (hayClasesTerminadas
+                                          ? '${clasesHoy.length} ${clasesHoy.length == 1 ? 'clase completada' : 'clases completadas'}'
+                                          : 'Día libre de clases'),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            proximaClase != null
-                                ? proximaClase.nombre
-                                : (hayClasesTerminadas
-                                    ? 'Terminaste tus clases de hoy'
-                                    : 'Sin clases programadas'),
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                          Text(
-                            proximaClase != null
-                                ? '${proximaClase.horarioFormateado}${proximaClase.aula != null && proximaClase.aula!.isNotEmpty ? ' • ${proximaClase.aula}' : ''}'
-                                : (hayClasesTerminadas
-                                    ? '${clasesHoy.length} ${clasesHoy.length == 1 ? 'clase completada' : 'clases completadas'}'
-                                    : 'Día libre de clases'),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                          if (proximaClase != null)
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppColors.textSecondary,
+                              size: 20,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
                         ],
                       ),
                     ),
-                    if (proximaClase != null)
-                      const Icon(
-                        Icons.chevron_right_rounded,
-                        color: AppColors.textSecondary,
-                        size: 20,
-                      ),
-                  ],
-                ),
-              ),
-            ),
+                  ),
 
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Divider(
-                height: 1,
-                thickness: 0.6,
-                color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
-              ),
-            ),
-
-            // SECCIÓN 2: PRÓXIMO PENDIENTE
-            InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: proximoPendiente != null
-                  ? () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => DetallePendienteScreen(pendienteId: proximoPendiente.id),
-                        ),
-                      );
-                    }
-                  : null,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: proximoPendiente != null
-                            ? proximoPendiente.prioridad.bgColor
-                            : (isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFF1F5F9)),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        proximoPendiente != null
-                            ? Icons.assignment_outlined
-                            : Icons.check_circle_outline_rounded,
-                        size: 22,
-                        color: proximoPendiente != null
-                            ? proximoPendiente.prioridad.color
-                            : (isDark ? Colors.white54 : Colors.black45),
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Divider(
+                      height: 1,
+                      thickness: 0.6,
+                      color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+
+                  // SECCIÓN 2: PRÓXIMO PENDIENTE
+                  InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: proximoPendiente != null
+                        ? () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => DetallePendienteScreen(pendienteId: proximoPendiente.id),
+                              ),
+                            );
+                          }
+                        : null,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                      child: Row(
                         children: [
-                          Text(
-                            proximoPendiente != null
-                                ? 'PRÓXIMO PENDIENTE'
-                                : (hoyList.isNotEmpty
-                                    ? '¡TODO AL DÍA!'
-                                    : 'SIN PENDIENTES'),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: proximoPendiente != null
+                                  ? proximoPendiente.prioridad.bgColor
+                                  : (isDark ? Colors.white.withOpacity(0.06) : const Color(0xFFF1F5F9)),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              proximoPendiente != null
+                                  ? Icons.assignment_outlined
+                                  : Icons.check_circle_outline_rounded,
+                              size: 22,
                               color: proximoPendiente != null
                                   ? proximoPendiente.prioridad.color
-                                  : const Color(0xFF10B981),
+                                  : (isDark ? Colors.white54 : Colors.black45),
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            proximoPendiente != null
-                                ? proximoPendiente.titulo
-                                : (hoyList.isNotEmpty
-                                    ? 'Completaste todas tus tareas 🎉'
-                                    : 'No tienes pendientes para hoy'),
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  proximoPendiente != null
+                                      ? 'PRÓXIMO PENDIENTE'
+                                      : (hoyList.isNotEmpty
+                                          ? '¡TODO AL DÍA!'
+                                          : 'SIN PENDIENTES'),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: proximoPendiente != null
+                                        ? proximoPendiente.prioridad.color
+                                        : const Color(0xFF10B981),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  proximoPendiente != null
+                                      ? proximoPendiente.titulo
+                                      : (hoyList.isNotEmpty
+                                          ? 'Completaste todas tus tareas 🎉'
+                                          : 'No tienes pendientes para hoy'),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  proximoPendiente != null
+                                      ? '${proximoPendiente.hora.comoTexto} • Prioridad ${proximoPendiente.prioridad.label}'
+                                      : (hoyList.isNotEmpty
+                                          ? '${hoyList.length} ${hoyList.length == 1 ? 'tarea realizada' : 'tareas realizadas'}'
+                                          : 'Disfruta tu día o crea una tarea'),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                          Text(
-                            proximoPendiente != null
-                                ? '${proximoPendiente.hora.comoTexto} • Prioridad ${proximoPendiente.prioridad.label}'
-                                : (hoyList.isNotEmpty
-                                    ? '${hoyList.length} ${hoyList.length == 1 ? 'tarea realizada' : 'tareas realizadas'}'
-                                    : 'Disfruta tu día o crea una tarea'),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                          if (proximoPendiente != null)
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppColors.textSecondary,
+                              size: 20,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
                         ],
                       ),
                     ),
-                    if (proximoPendiente != null)
-                      const Icon(
-                        Icons.chevron_right_rounded,
-                        color: AppColors.textSecondary,
-                        size: 20,
-                      ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+              secondChild: const SizedBox.shrink(),
+              crossFadeState: _expandido ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+              duration: const Duration(milliseconds: 250),
             ),
           ],
         ),

@@ -6,7 +6,6 @@ import 'package:mi_pendiente/core/theme/tema_app.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/providers/usecase_providers.dart';
 import 'package:mi_pendiente/core/constants/app_sounds.dart';
 import '../providers/ajustes_provider.dart';
-import '../widgets/seccion_fondo_personalizado.dart';
 import '../widgets/selector_sonido_dialog.dart';
 import 'selector_temas_screen.dart';
 
@@ -82,9 +81,6 @@ class AjustesScreen extends ConsumerWidget {
           },
         ),
         const SizedBox(height: 12),
-
-        // Sección de personalización de tema / fondo animado (EXCLUSIVO ANDROID)
-        const SeccionFondoPersonalizado(),
 
         // Fila 2: Notificaciones
         _buildSettingCard(

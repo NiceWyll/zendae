@@ -4,6 +4,7 @@ import 'package:mi_pendiente/core/constants/app_colors.dart';
 import 'package:mi_pendiente/core/constants/app_config.dart';
 import 'package:mi_pendiente/features/racha/presentation/providers/racha_provider.dart';
 import 'package:mi_pendiente/features/racha/presentation/widgets/zendy_personaje_widget.dart';
+import '../providers/ajustes_provider.dart';
 import '../widgets/seccion_fondo_personalizado.dart';
 import '../widgets/selector_temas_grid.dart';
 
@@ -16,9 +17,12 @@ class SelectorTemasScreen extends ConsumerWidget {
     final rachaAsync = ref.watch(rachaNotifierProvider);
     final racha = rachaAsync.valueOrNull;
     final dias = racha?.diasActuales ?? 0;
+    final esFondoPersonalizado = ref.watch(ajustesProvider).temaId == 'fondo_personalizado';
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      backgroundColor: esFondoPersonalizado
+          ? Colors.transparent
+          : (isDark ? AppColors.backgroundDark : AppColors.backgroundLight),
       appBar: AppBar(
         title: const Text(
           'Temas y Colores 🎨',

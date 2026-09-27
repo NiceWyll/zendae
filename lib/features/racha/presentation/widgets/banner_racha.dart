@@ -57,8 +57,8 @@ class BannerRachaChip extends ConsumerWidget {
         },
         child: Ink(
           padding: EdgeInsets.symmetric(
-            horizontal: compacto ? 6 : 12,
-            vertical: compacto ? 3 : 5,
+            horizontal: compacto ? 8 : 12,
+            vertical: compacto ? 4 : 6,
           ),
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -67,6 +67,12 @@ class BannerRachaChip extends ConsumerWidget {
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: tieneRacha
+                  ? const Color(0xFFF59E0B).withOpacity(0.5)
+                  : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+              width: 1,
+            ),
             boxShadow: tieneRacha
                 ? [
                     BoxShadow(
@@ -79,12 +85,19 @@ class BannerRachaChip extends ConsumerWidget {
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Personaje animado de Zendy en miniatura
-              ZendyPersonajeWidget(
-                size: compacto ? 19 : 24,
-                prendaId: prendaId,
-                animado: true,
+              // Personaje animado de Zendy en miniatura perfectamente centrado
+              SizedBox(
+                width: compacto ? 20 : 24,
+                height: compacto ? 20 : 24,
+                child: Center(
+                  child: ZendyPersonajeWidget(
+                    size: compacto ? 18 : 24,
+                    prendaId: prendaId,
+                    animado: true,
+                  ),
+                ),
               ),
               const SizedBox(width: 4),
               Text(
