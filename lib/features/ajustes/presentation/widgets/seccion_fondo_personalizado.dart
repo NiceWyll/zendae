@@ -167,6 +167,7 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
                   width: double.infinity,
                   child: Image.file(
                     File(ajustes.fondoPersonalizadoPath!),
+                    key: ValueKey(ajustes.fondoPersonalizadoPath),
                     fit: BoxFit.cover,
                     gaplessPlayback: true,
                   ),

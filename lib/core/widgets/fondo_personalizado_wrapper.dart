@@ -39,6 +39,7 @@ class FondoPersonalizadoWrapper extends ConsumerWidget {
         // 1. Imagen / GIF animado nítido (SIN difuminar / sin blur)
         Image.file(
           file,
+          key: ValueKey(path),
           fit: BoxFit.cover,
           gaplessPlayback: true,
           errorBuilder: (ctx, err, stack) => const SizedBox.expand(),

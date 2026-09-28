@@ -48,8 +48,26 @@ class _DialogoPreviewFondoState extends ConsumerState<DialogoPreviewFondo> {
         await bgDir.create(recursive: true);
       }
 
+      // 1. Eliminar archivo anterior y desalojar de ImageCache
+      final oldPath = ref.read(ajustesProvider).fondoPersonalizadoPath;
+      if (oldPath != null && oldPath.isNotEmpty) {
+        try {
+          FileImage(File(oldPath)).evict();
+          final oldFile = File(oldPath);
+          if (oldFile.existsSync()) {
+            oldFile.deleteSync();
+          }
+        } catch (_) {}
+      }
+
+      // 2. Limpiar cache de imágenes en memoria para refresco visual inmediato
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
+
+      // 3. Generar path único con timestamp para garantizar refresco instantáneo sin reiniciar la app
       final ext = p.extension(widget.archivoTemporal.path);
-      final destPath = p.join(bgDir.path, 'fondo_animado$ext');
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final destPath = p.join(bgDir.path, 'fondo_animado_$timestamp$ext');
 
       // Copiar archivo a almacenamiento permanente
       await widget.archivoTemporal.copy(destPath);
@@ -61,9 +79,10 @@ class _DialogoPreviewFondoState extends ConsumerState<DialogoPreviewFondo> {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✨ ¡Fondo animado aplicado con éxito!'),
+            content: Text('✨ ¡Fondo aplicado con éxito!'),
             backgroundColor: Color(0xFF10B981),
             behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
           ),
         );
       }

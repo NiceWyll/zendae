@@ -187,13 +187,9 @@ class _SelectorSonidoDialogState extends State<SelectorSonidoDialog> {
                   title: const Text(
                     'Explorar tonos de tu celular',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 14.5,
                       fontWeight: FontWeight.w700,
                     ),
-                  ),
-                  subtitle: const Text(
-                    'Abre el selector nativo de Android (Samsung, Xiaomi, Motorola...)',
-                    style: TextStyle(fontSize: 11),
                   ),
                   trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                   onTap: _abrirSelectorNativoAndroid,
