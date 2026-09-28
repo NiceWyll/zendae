@@ -18,6 +18,7 @@ class FondoPantallaScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final ajustes = ref.watch(ajustesProvider);
     final temaActual = TemasDisponibles.obtenerPorId(ajustes.temaId);
+    final colorAcento = isDark ? temaActual.colorSecundario : temaActual.colorPrimario;
     final tieneFondo = ajustes.fondoPersonalizadoPath != null &&
         ajustes.fondoPersonalizadoPath!.trim().isNotEmpty &&
         File(ajustes.fondoPersonalizadoPath!).existsSync();
@@ -65,12 +66,12 @@ class FondoPantallaScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: temaActual.colorPrimario.withValues(alpha: 0.15),
+                    color: colorAcento.withValues(alpha: isDark ? 0.22 : 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.auto_awesome_rounded,
-                    color: temaActual.colorPrimario,
+                    color: colorAcento,
                     size: 24,
                   ),
                 ),
@@ -92,7 +93,7 @@ class FondoPantallaScreen extends ConsumerWidget {
                         'Puedes colocar cualquier foto o GIF animado. Tus botones, íconos y detalles conservarán los colores de tu tema actual (${temaActual.nombre}).',
                         style: TextStyle(
                           fontSize: 12.5,
-                          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                          color: isDark ? const Color(0xFFCBD5E1) : AppColors.textSecondary,
                           height: 1.35,
                         ),
                       ),
@@ -125,16 +126,16 @@ class FondoPantallaScreen extends ConsumerWidget {
                 Row(
                   children: [
                     Container(
-                      width: 16,
-                      height: 16,
+                      width: 18,
+                      height: 18,
                       decoration: BoxDecoration(
-                        color: temaActual.colorPrimario,
+                        color: colorAcento,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 2),
                         boxShadow: [
                           BoxShadow(
-                            color: temaActual.colorPrimario.withValues(alpha: 0.4),
-                            blurRadius: 4,
+                            color: colorAcento.withValues(alpha: 0.45),
+                            blurRadius: 6,
                           ),
                         ],
                       ),
@@ -145,7 +146,7 @@ class FondoPantallaScreen extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                        color: isDark ? const Color(0xFFCBD5E1) : AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -164,7 +165,7 @@ class FondoPantallaScreen extends ConsumerWidget {
                   '¿Quieres combinar este fondo con otro color de botones e íconos?',
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                    color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -176,15 +177,22 @@ class FondoPantallaScreen extends ConsumerWidget {
                         MaterialPageRoute(builder: (_) => const SelectorTemasScreen()),
                       );
                     },
-                    icon: const Icon(Icons.palette_rounded, size: 18),
-                    label: const Text(
+                    icon: Icon(Icons.palette_rounded, size: 18, color: colorAcento),
+                    label: Text(
                       'Explorar paletas de colores y temas',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: colorAcento,
+                      ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: temaActual.colorPrimario,
-                      side: BorderSide(color: temaActual.colorPrimario.withValues(alpha: 0.6)),
-                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      foregroundColor: colorAcento,
+                      side: BorderSide(
+                        color: colorAcento.withValues(alpha: isDark ? 0.75 : 0.5),
+                        width: 1.5,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),

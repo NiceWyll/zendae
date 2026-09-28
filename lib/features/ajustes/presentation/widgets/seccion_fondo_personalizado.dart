@@ -228,16 +228,16 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
               children: [
                 Icon(
                   Icons.info_outline_rounded,
-                  size: 14,
-                  color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                  size: 15,
+                  color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
                 ),
-                const SizedBox(width: 5),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     'Límite máx: 10 MB. Puedes subir desde la app Archivos o tu Galería de Fotos.',
                     style: TextStyle(
-                      fontSize: 11,
-                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                      fontSize: 11.5,
+                      color: isDark ? const Color(0xFFCBD5E1) : AppColors.textSecondary,
                     ),
                   ),
                 ),

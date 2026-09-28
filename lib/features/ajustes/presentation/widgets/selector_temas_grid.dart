@@ -61,6 +61,8 @@ class SelectorTemasGrid extends ConsumerWidget {
     required int diasRacha,
     required bool isDark,
   }) {
+    final colorTemaAcento = isDark ? tema.colorSecundario : tema.colorPrimario;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -77,7 +79,7 @@ class SelectorTemasGrid extends ConsumerWidget {
                       width: 14,
                       height: 14,
                       decoration: BoxDecoration(
-                        color: tema.colorPrimario,
+                        color: colorTemaAcento,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -100,14 +102,14 @@ class SelectorTemasGrid extends ConsumerWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: esActivo
-                  ? tema.colorPrimario
+                  ? colorTemaAcento
                   : (isDark ? AppColors.borderDark : const Color(0xFFE2E8F0)),
               width: esActivo ? 2.5 : 1.0,
             ),
             boxShadow: [
               BoxShadow(
                 color: esActivo
-                    ? tema.colorPrimario.withValues(alpha: 0.25)
+                    ? colorTemaAcento.withValues(alpha: 0.3)
                     : Colors.black.withValues(alpha: 0.03),
                 blurRadius: esActivo ? 12 : 6,
                 offset: const Offset(0, 3),
@@ -149,7 +151,7 @@ class SelectorTemasGrid extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: tema.colorPrimario,
+                        color: colorTemaAcento,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.check, color: Colors.white, size: 14),
@@ -182,7 +184,7 @@ class SelectorTemasGrid extends ConsumerWidget {
                     fontSize: 11.5,
                     fontWeight: esActivo ? FontWeight.w700 : FontWeight.w500,
                     color: esActivo
-                        ? tema.colorPrimario
+                        ? colorTemaAcento
                         : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                   ),
                 )
