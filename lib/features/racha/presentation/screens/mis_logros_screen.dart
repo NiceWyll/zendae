@@ -44,7 +44,10 @@ class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.checkroom_rounded),
+            icon: Icon(
+              Icons.checkroom_rounded,
+              color: isDark ? const Color(0xFF818CF8) : AppColors.primary,
+            ),
             tooltip: 'Vestidor de Zendy',
             onPressed: () {
               Navigator.of(context).push(
@@ -98,35 +101,79 @@ class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
 
         const SizedBox(height: 12),
 
-        // Botón directo para ir al Armario / Vestidor de Zendy
-        OutlinedButton.icon(
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ArmarioScreen()),
-            );
-          },
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            side: BorderSide(
-              color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+        // Botón directo para ir al Armario / Vestidor de Zendy (Diseño de alto contraste)
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
               width: 1.2,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF8B5CF6).withOpacity(isDark ? 0.25 : 0.06),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-          icon: const Icon(Icons.checkroom_rounded, color: AppColors.primary, size: 20),
-          label: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Vestidor de Zendy (Armario de Ropa)',
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : AppColors.textPrimary,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ArmarioScreen()),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF8B5CF6), Color(0xFF3B82F6)],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.checkroom_rounded, color: Colors.white, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Vestidor de Zendy (Armario de Ropa)',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Trajes de gala, accesorios y ropa por días de racha',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 14,
+                      color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+                    ),
+                  ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textSecondary),
-            ],
+            ),
           ),
         ),
 
@@ -357,7 +404,7 @@ class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: primaryColor,
+                  color: isDark ? const Color(0xFF38BDF8) : primaryColor,
                 ),
               ),
             ],

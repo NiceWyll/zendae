@@ -46,11 +46,14 @@ void main() {
       const catalogo = CatalogoPrendas.todas;
       expect(catalogo.length, greaterThanOrEqualTo(8));
 
-      // Verificar hitos de racha
+      // Verificar hitos de racha (incluyendo día 1 y trajes de gala)
+      expect(catalogo.any((p) => p.diasRequeridos == 1), isTrue);
       expect(catalogo.any((p) => p.diasRequeridos == 3), isTrue);
       expect(catalogo.any((p) => p.diasRequeridos == 5), isTrue);
+      expect(catalogo.any((p) => p.diasRequeridos == 7), isTrue);
       expect(catalogo.any((p) => p.diasRequeridos == 8), isTrue);
       expect(catalogo.any((p) => p.diasRequeridos == 15), isTrue);
+      expect(catalogo.any((p) => p.id == 'traje_gala_negro' && p.categoria == CategoriaPrenda.ropa), isTrue);
     });
 
     test('Desbloqueo progresivo según días de racha acumulados', () {
@@ -58,10 +61,20 @@ void main() {
       final prendas0 = CatalogoPrendas.desbloqueadasParaDias(0);
       expect(prendas0, isEmpty);
 
+      // 1 día: se desbloquea la corbata inicial
+      final prendas1 = CatalogoPrendas.desbloqueadasParaDias(1);
+      final ids1 = prendas1.map((p) => p.id).toList();
+      expect(ids1, contains('corbata_iniciador'));
+
       // 3 días: se desbloquea la gorra
       final prendas3 = CatalogoPrendas.desbloqueadasParaDias(3);
       final ids3 = prendas3.map((p) => p.id).toList();
       expect(ids3, contains('gorra_deportiva'));
+
+      // 7 días: se desbloquea el traje de gala negro
+      final prendas7 = CatalogoPrendas.desbloqueadasParaDias(7);
+      final ids7 = prendas7.map((p) => p.id).toList();
+      expect(ids7, contains('traje_gala_negro'));
 
       // 8 días: se desbloquean gorra, gafas y bufanda
       final prendas8 = CatalogoPrendas.desbloqueadasParaDias(8);

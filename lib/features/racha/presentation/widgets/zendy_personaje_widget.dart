@@ -437,20 +437,35 @@ class _ZendyPainter extends CustomPainter {
 
   void _dibujarPrendaEquipada(Canvas canvas, Offset center, double radio, double w, double h) {
     switch (prendaId) {
+      case 'corbata_iniciador':
+        _dibujarCorbataIniciador(canvas, center, radio);
+        break;
+      case 'bandana_enfoque':
+        _dibujarBandana(canvas, center, radio);
+        break;
       case 'gorra_deportiva':
         _dibujarGorra(canvas, center, radio);
         break;
       case 'gafas_sol':
         _dibujarGafasSol(canvas, center, radio);
         break;
+      case 'traje_gala_negro':
+        _dibujarTrajeGalaNegro(canvas, center, radio);
+        break;
       case 'bufanda_cozy':
         _dibujarBufanda(canvas, center, radio);
+        break;
+      case 'chaleco_caballero':
+        _dibujarChalecoCaballero(canvas, center, radio);
         break;
       case 'auriculares_gamer':
         _dibujarAuriculares(canvas, center, radio);
         break;
       case 'corbata_gala':
         _dibujarCorbata(canvas, center, radio);
+        break;
+      case 'esmoquin_imperial':
+        _dibujarEsmoquinImperial(canvas, center, radio);
         break;
       case 'corona_dorada':
         _dibujarCorona(canvas, center, radio);
@@ -811,6 +826,317 @@ class _ZendyPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = radio * 0.08,
     );
+  }
+
+  // 9. Traje de Gala Negro (con chaqueta negra, camisa blanca y corbata elegante)
+  void _dibujarTrajeGalaNegro(Canvas canvas, Offset center, double radio) {
+    final vBottom = center.dy + radio * 0.76;
+    final topY = center.dy + radio * 0.38;
+
+    // A. Camisa blanca interior
+    final shirtPath = Path()
+      ..moveTo(center.dx - radio * 0.40, topY)
+      ..lineTo(center.dx + radio * 0.40, topY)
+      ..lineTo(center.dx, vBottom)
+      ..close();
+    canvas.drawPath(shirtPath, Paint()..color = const Color(0xFFF8FAFC));
+
+    // B. Chaqueta de gala negra (cubre la mitad inferior de Zendy)
+    final jacketPath = Path()
+      ..moveTo(center.dx - radio * 0.82, topY)
+      ..quadraticBezierTo(
+        center.dx - radio * 0.92,
+        center.dy + radio * 0.82,
+        center.dx,
+        center.dy + radio * 0.98,
+      )
+      ..quadraticBezierTo(
+        center.dx + radio * 0.92,
+        center.dy + radio * 0.82,
+        center.dx + radio * 0.82,
+        topY,
+      )
+      ..lineTo(center.dx + radio * 0.36, topY)
+      ..lineTo(center.dx, vBottom) // Escote en V
+      ..lineTo(center.dx - radio * 0.36, topY)
+      ..close();
+
+    final jacketShader = const LinearGradient(
+      colors: [Color(0xFF1E293B), Color(0xFF0F172A), Color(0xFF020617)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ).createShader(Rect.fromCircle(center: center, radius: radio));
+
+    canvas.drawPath(jacketPath, Paint()..shader = jacketShader);
+    canvas.drawPath(
+      jacketPath,
+      Paint()
+        ..color = const Color(0xFF334155)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = radio * 0.04,
+    );
+
+    // C. Solapas de gala (satén brillante a los lados del escote)
+    final lapelL = Path()
+      ..moveTo(center.dx - radio * 0.36, topY)
+      ..lineTo(center.dx - radio * 0.46, topY + radio * 0.16)
+      ..lineTo(center.dx, vBottom)
+      ..lineTo(center.dx - radio * 0.18, topY + radio * 0.35)
+      ..close();
+    canvas.drawPath(lapelL, Paint()..color = const Color(0xFF020617));
+
+    final lapelR = Path()
+      ..moveTo(center.dx + radio * 0.36, topY)
+      ..lineTo(center.dx + radio * 0.46, topY + radio * 0.16)
+      ..lineTo(center.dx, vBottom)
+      ..lineTo(center.dx + radio * 0.18, topY + radio * 0.35)
+      ..close();
+    canvas.drawPath(lapelR, Paint()..color = const Color(0xFF020617));
+
+    // D. Corbata roja elegante con nudo y caída terminada en punta
+    final tieKnotPath = Path()
+      ..moveTo(center.dx - radio * 0.09, topY + radio * 0.05)
+      ..lineTo(center.dx + radio * 0.09, topY + radio * 0.05)
+      ..lineTo(center.dx + radio * 0.07, topY + radio * 0.18)
+      ..lineTo(center.dx - radio * 0.07, topY + radio * 0.18)
+      ..close();
+    canvas.drawPath(tieKnotPath, Paint()..color = const Color(0xFFB91C1C));
+
+    final tieBodyPath = Path()
+      ..moveTo(center.dx - radio * 0.07, topY + radio * 0.18)
+      ..lineTo(center.dx + radio * 0.07, topY + radio * 0.18)
+      ..lineTo(center.dx + radio * 0.12, center.dy + radio * 0.78)
+      ..lineTo(center.dx, center.dy + radio * 0.85) // Punta de la corbata
+      ..lineTo(center.dx - radio * 0.12, center.dy + radio * 0.78)
+      ..close();
+
+    final tieShader = const LinearGradient(
+      colors: [Color(0xFFEF4444), Color(0xFFDC2626), Color(0xFF991B1B)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ).createShader(Rect.fromCircle(center: center, radius: radio));
+
+    canvas.drawPath(tieBodyPath, Paint()..shader = tieShader);
+
+    // E. Botones dorados de la chaqueta
+    final buttonPaint = Paint()..color = const Color(0xFFF59E0B);
+    canvas.drawCircle(Offset(center.dx, center.dy + radio * 0.88), radio * 0.04, buttonPaint);
+    canvas.drawCircle(Offset(center.dx, center.dy + radio * 0.94), radio * 0.04, buttonPaint);
+
+    // F. Pañuelo rojo de bolsillo
+    final hankyPath = Path()
+      ..moveTo(center.dx - radio * 0.52, topY + radio * 0.22)
+      ..lineTo(center.dx - radio * 0.44, topY + radio * 0.13)
+      ..lineTo(center.dx - radio * 0.38, topY + radio * 0.22)
+      ..close();
+    canvas.drawPath(hankyPath, Paint()..color = const Color(0xFFEF4444));
+  }
+
+  // 10. Corbata Roja Elegante (Día 1 de racha)
+  void _dibujarCorbataIniciador(Canvas canvas, Offset center, double radio) {
+    final tieY = center.dy + radio * 0.65;
+
+    // Nudo superior
+    final knotPath = Path()
+      ..moveTo(center.dx - radio * 0.12, tieY)
+      ..lineTo(center.dx + radio * 0.12, tieY)
+      ..lineTo(center.dx + radio * 0.09, tieY + radio * 0.15)
+      ..lineTo(center.dx - radio * 0.09, tieY + radio * 0.15)
+      ..close();
+    canvas.drawPath(knotPath, Paint()..color = const Color(0xFFB91C1C));
+
+    // Cuerpo de la corbata
+    final bodyPath = Path()
+      ..moveTo(center.dx - radio * 0.09, tieY + radio * 0.15)
+      ..lineTo(center.dx + radio * 0.09, tieY + radio * 0.15)
+      ..lineTo(center.dx + radio * 0.15, tieY + radio * 0.55)
+      ..lineTo(center.dx, tieY + radio * 0.65) // Punta
+      ..lineTo(center.dx - radio * 0.15, tieY + radio * 0.55)
+      ..close();
+
+    final tieShader = const LinearGradient(
+      colors: [Color(0xFFEF4444), Color(0xFFDC2626), Color(0xFF991B1B)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ).createShader(Rect.fromCircle(center: center, radius: radio));
+
+    canvas.drawPath(bodyPath, Paint()..shader = tieShader);
+
+    // Pasador dorado en la corbata
+    canvas.drawLine(
+      Offset(center.dx - radio * 0.11, tieY + radio * 0.35),
+      Offset(center.dx + radio * 0.11, tieY + radio * 0.35),
+      Paint()
+        ..color = const Color(0xFFFBBF24)
+        ..strokeWidth = radio * 0.035
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  // 11. Bandana de Enfoque (Día 2)
+  void _dibujarBandana(Canvas canvas, Offset center, double radio) {
+    final bandY = center.dy - radio * 0.62;
+
+    // Cinta frontal roja
+    final bandPath = Path()
+      ..moveTo(center.dx - radio * 0.85, bandY)
+      ..quadraticBezierTo(center.dx, bandY - radio * 0.18, center.dx + radio * 0.85, bandY)
+      ..lineTo(center.dx + radio * 0.82, bandY + radio * 0.22)
+      ..quadraticBezierTo(center.dx, bandY + radio * 0.04, center.dx - radio * 0.82, bandY + radio * 0.22)
+      ..close();
+
+    canvas.drawPath(
+      bandPath,
+      Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xFFE11D48), Color(0xFFBE123C)],
+        ).createShader(Rect.fromCircle(center: center, radius: radio)),
+    );
+
+    // Cintas colgantes al viento en el lateral izquierdo
+    final ribbon1 = Path()
+      ..moveTo(center.dx - radio * 0.82, bandY + radio * 0.1)
+      ..quadraticBezierTo(
+        center.dx - radio * 1.25,
+        bandY + radio * 0.2,
+        center.dx - radio * 1.35,
+        bandY + radio * 0.6,
+      )
+      ..lineTo(center.dx - radio * 1.25, bandY + radio * 0.65)
+      ..quadraticBezierTo(
+        center.dx - radio * 1.15,
+        bandY + radio * 0.3,
+        center.dx - radio * 0.80,
+        bandY + radio * 0.22,
+      )
+      ..close();
+    canvas.drawPath(ribbon1, Paint()..color = const Color(0xFFBE123C));
+
+    // Círculo blanco central de enfoque
+    canvas.drawCircle(
+      Offset(center.dx, bandY - radio * 0.06),
+      radio * 0.08,
+      Paint()..color = Colors.white,
+    );
+    canvas.drawCircle(
+      Offset(center.dx, bandY - radio * 0.06),
+      radio * 0.045,
+      Paint()..color = const Color(0xFFE11D48),
+    );
+  }
+
+  // 12. Chaleco y Corbata Real (Día 10)
+  void _dibujarChalecoCaballero(Canvas canvas, Offset center, double radio) {
+    final topY = center.dy + radio * 0.42;
+
+    // Camisa celeste
+    final shirtPath = Path()
+      ..moveTo(center.dx - radio * 0.35, topY)
+      ..lineTo(center.dx + radio * 0.35, topY)
+      ..lineTo(center.dx, center.dy + radio * 0.76)
+      ..close();
+    canvas.drawPath(shirtPath, Paint()..color = const Color(0xFFE0F2FE));
+
+    // Chaleco azul marino
+    final vestPath = Path()
+      ..moveTo(center.dx - radio * 0.78, topY)
+      ..quadraticBezierTo(
+        center.dx - radio * 0.85,
+        center.dy + radio * 0.82,
+        center.dx,
+        center.dy + radio * 0.96,
+      )
+      ..quadraticBezierTo(
+        center.dx + radio * 0.85,
+        center.dy + radio * 0.82,
+        center.dx + radio * 0.78,
+        topY,
+      )
+      ..lineTo(center.dx + radio * 0.32, topY)
+      ..lineTo(center.dx, center.dy + radio * 0.76)
+      ..lineTo(center.dx - radio * 0.32, topY)
+      ..close();
+
+    canvas.drawPath(
+      vestPath,
+      Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xFF1E3A8A), Color(0xFF172554)],
+        ).createShader(Rect.fromCircle(center: center, radius: radio)),
+    );
+
+    // Corbata dorada
+    final tiePath = Path()
+      ..moveTo(center.dx - radio * 0.07, topY + radio * 0.06)
+      ..lineTo(center.dx + radio * 0.07, topY + radio * 0.06)
+      ..lineTo(center.dx + radio * 0.11, center.dy + radio * 0.75)
+      ..lineTo(center.dx, center.dy + radio * 0.82)
+      ..lineTo(center.dx - radio * 0.11, center.dy + radio * 0.75)
+      ..close();
+    canvas.drawPath(tiePath, Paint()..color = const Color(0xFFF59E0B));
+
+    // Botones dorados
+    canvas.drawCircle(Offset(center.dx, center.dy + radio * 0.85), radio * 0.035, Paint()..color = const Color(0xFFFDE047));
+    canvas.drawCircle(Offset(center.dx, center.dy + radio * 0.91), radio * 0.035, Paint()..color = const Color(0xFFFDE047));
+  }
+
+  // 13. Esmoquin Imperial (Día 25)
+  void _dibujarEsmoquinImperial(Canvas canvas, Offset center, double radio) {
+    final topY = center.dy + radio * 0.38;
+
+    // Camisa negra
+    final shirtPath = Path()
+      ..moveTo(center.dx - radio * 0.36, topY)
+      ..lineTo(center.dx + radio * 0.36, topY)
+      ..lineTo(center.dx, center.dy + radio * 0.74)
+      ..close();
+    canvas.drawPath(shirtPath, Paint()..color = const Color(0xFF0F172A));
+
+    // Chaqueta blanca de esmoquin
+    final tuxPath = Path()
+      ..moveTo(center.dx - radio * 0.82, topY)
+      ..quadraticBezierTo(
+        center.dx - radio * 0.90,
+        center.dy + radio * 0.82,
+        center.dx,
+        center.dy + radio * 0.98,
+      )
+      ..quadraticBezierTo(
+        center.dx + radio * 0.90,
+        center.dy + radio * 0.82,
+        center.dx + radio * 0.82,
+        topY,
+      )
+      ..lineTo(center.dx + radio * 0.34, topY)
+      ..lineTo(center.dx, center.dy + radio * 0.75)
+      ..lineTo(center.dx - radio * 0.34, topY)
+      ..close();
+
+    canvas.drawPath(
+      tuxPath,
+      Paint()
+        ..shader = const LinearGradient(
+          colors: [Color(0xFFFFFFFF), Color(0xFFE2E8F0)],
+        ).createShader(Rect.fromCircle(center: center, radius: radio)),
+    );
+
+    // Solapas de satén negro
+    final lapelL = Path()
+      ..moveTo(center.dx - radio * 0.34, topY)
+      ..lineTo(center.dx - radio * 0.44, topY + radio * 0.16)
+      ..lineTo(center.dx, center.dy + radio * 0.75)
+      ..close();
+    canvas.drawPath(lapelL, Paint()..color = const Color(0xFF0F172A));
+
+    final lapelR = Path()
+      ..moveTo(center.dx + radio * 0.34, topY)
+      ..lineTo(center.dx + radio * 0.44, topY + radio * 0.16)
+      ..lineTo(center.dx, center.dy + radio * 0.75)
+      ..close();
+    canvas.drawPath(lapelR, Paint()..color = const Color(0xFF0F172A));
+
+    // Pajarita dorada
+    canvas.drawCircle(Offset(center.dx, topY + radio * 0.15), radio * 0.08, Paint()..color = const Color(0xFFF59E0B));
   }
 
   @override

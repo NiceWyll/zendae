@@ -5,6 +5,7 @@ enum CategoriaPrenda {
   cabeza,
   ojos,
   cuello,
+  ropa,
   espalda,
   especial,
 }
@@ -40,6 +41,31 @@ class PrendaPersonaje {
 class CatalogoPrendas {
   CatalogoPrendas._();
 
+  // DÍA 1: Primer hito de racha (accesorio inicial)
+  static const PrendaPersonaje corbataIniciador = PrendaPersonaje(
+    id: 'corbata_iniciador',
+    nombre: 'Corbata Roja Elegante',
+    descripcion: 'Corbata roja clásica para lucir formal desde tu primer día consecutivo.',
+    diasRequeridos: 1,
+    categoria: CategoriaPrenda.cuello,
+    iconoEmoji: '👔',
+    colorPrimario: Color(0xFFDC2626),
+    colorSecundario: Color(0xFFEF4444),
+  );
+
+  // DÍA 2: Bandana de concentración
+  static const PrendaPersonaje bandanaEnfoque = PrendaPersonaje(
+    id: 'bandana_enfoque',
+    nombre: 'Bandana de Enfoque',
+    descripcion: 'Cinta frontal de concentración mental para no rendirte en tus pendientes.',
+    diasRequeridos: 2,
+    categoria: CategoriaPrenda.cabeza,
+    iconoEmoji: '🎗️',
+    colorPrimario: Color(0xFFE11D48),
+    colorSecundario: Color(0xFFFB7185),
+  );
+
+  // DÍA 3: Gorra deportiva
   static const PrendaPersonaje gorraDeportiva = PrendaPersonaje(
     id: 'gorra_deportiva',
     nombre: 'Gorra Deportiva',
@@ -51,6 +77,7 @@ class CatalogoPrendas {
     colorSecundario: Color(0xFF1D4ED8),
   );
 
+  // DÍA 5: Gafas de sol
   static const PrendaPersonaje gafasSol = PrendaPersonaje(
     id: 'gafas_sol',
     nombre: 'Gafas de Sol Cool',
@@ -62,6 +89,19 @@ class CatalogoPrendas {
     colorSecundario: Color(0xFF38BDF8),
   );
 
+  // DÍA 7: Traje de Gala Negro (Ropa completa: chaqueta negra, camisa y corbata)
+  static const PrendaPersonaje trajeGalaNegro = PrendaPersonaje(
+    id: 'traje_gala_negro',
+    nombre: 'Traje de Gala Negro',
+    descripcion: 'Traje elegante de etiqueta negra con solapas, camisa blanca y corbata clásica.',
+    diasRequeridos: 7,
+    categoria: CategoriaPrenda.ropa,
+    iconoEmoji: '🤵',
+    colorPrimario: Color(0xFF0F172A),
+    colorSecundario: Color(0xFFDC2626),
+  );
+
+  // DÍA 8: Bufanda abrigada
   static const PrendaPersonaje bufandaCozy = PrendaPersonaje(
     id: 'bufanda_cozy',
     nombre: 'Bufanda Abrigada',
@@ -73,6 +113,19 @@ class CatalogoPrendas {
     colorSecundario: Color(0xFFEF4444),
   );
 
+  // DÍA 10: Chaleco y Corbata Real
+  static const PrendaPersonaje chalecoCaballero = PrendaPersonaje(
+    id: 'chaleco_caballero',
+    nombre: 'Chaleco y Corbata Real',
+    descripcion: 'Chaleco azul marino entallado con corbata dorada de distinción.',
+    diasRequeridos: 10,
+    categoria: CategoriaPrenda.ropa,
+    iconoEmoji: '🦺',
+    colorPrimario: Color(0xFF1E3A8A),
+    colorSecundario: Color(0xFFF59E0B),
+  );
+
+  // DÍA 12: Auriculares Neón
   static const PrendaPersonaje auricularesGamer = PrendaPersonaje(
     id: 'auriculares_gamer',
     nombre: 'Auriculares Neón',
@@ -84,6 +137,7 @@ class CatalogoPrendas {
     colorSecundario: Color(0xFF06B6D4),
   );
 
+  // DÍA 15: Pajarita de Gala
   static const PrendaPersonaje corbataGala = PrendaPersonaje(
     id: 'corbata_gala',
     nombre: 'Pajarita de Gala',
@@ -95,6 +149,7 @@ class CatalogoPrendas {
     colorSecundario: Color(0xFFF59E0B),
   );
 
+  // DÍA 20: Capa de superhéroe
   static const PrendaPersonaje capaHeroe = PrendaPersonaje(
     id: 'capa_heroe',
     nombre: 'Capa de Superhéroe',
@@ -106,6 +161,19 @@ class CatalogoPrendas {
     colorSecundario: Color(0xFFF97316),
   );
 
+  // DÍA 25: Esmoquin Imperial
+  static const PrendaPersonaje esmoquinImperial = PrendaPersonaje(
+    id: 'esmoquin_imperial',
+    nombre: 'Esmoquin Imperial',
+    descripcion: 'Chaqueta de noche blanca y negra de alta costura con corbatín.',
+    diasRequeridos: 25,
+    categoria: CategoriaPrenda.ropa,
+    iconoEmoji: '🕴️',
+    colorPrimario: Color(0xFFF8FAFC),
+    colorSecundario: Color(0xFF0F172A),
+  );
+
+  // DÍA 30: Corona Real Dorada
   static const PrendaPersonaje coronaDorada = PrendaPersonaje(
     id: 'corona_dorada',
     nombre: 'Corona Real Dorada',
@@ -117,6 +185,7 @@ class CatalogoPrendas {
     colorSecundario: Color(0xFFFDE047),
   );
 
+  // DÍA 50: Casco Espacial
   static const PrendaPersonaje cascoAstronauta = PrendaPersonaje(
     id: 'casco_astronauta',
     nombre: 'Casco Espacial',
@@ -128,6 +197,7 @@ class CatalogoPrendas {
     colorSecundario: Color(0xFF06B6D4),
   );
 
+  // DÍA 100: Halo Legendario
   static const PrendaPersonaje haloCelestial = PrendaPersonaje(
     id: 'halo_celestial',
     nombre: 'Halo Legendario',
@@ -140,12 +210,17 @@ class CatalogoPrendas {
   );
 
   static const List<PrendaPersonaje> todas = [
+    corbataIniciador,
+    bandanaEnfoque,
     gorraDeportiva,
     gafasSol,
+    trajeGalaNegro,
     bufandaCozy,
+    chalecoCaballero,
     auricularesGamer,
     corbataGala,
     capaHeroe,
+    esmoquinImperial,
     coronaDorada,
     cascoAstronauta,
     haloCelestial,
