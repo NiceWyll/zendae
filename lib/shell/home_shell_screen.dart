@@ -10,7 +10,9 @@ import 'package:mi_pendiente/features/pendientes/presentation/screens/hoy_screen
 import 'package:mi_pendiente/features/pendientes/presentation/screens/semana_screen.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/screens/mes_screen.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/screens/nuevo_pendiente_screen.dart';
-import 'package:mi_pendiente/features/completados/presentation/screens/completados_screen.dart';
+import 'package:mi_pendiente/features/horario/presentation/screens/formulario_clase_screen.dart';
+import 'package:mi_pendiente/features/horario/presentation/providers/horario_provider.dart';
+import 'package:mi_pendiente/features/horario/domain/entities/clase.dart';
 import 'package:mi_pendiente/features/ajustes/presentation/screens/ajustes_screen.dart';
 import 'package:mi_pendiente/features/pendientes/domain/entities/pendiente.dart';
 import 'package:mi_pendiente/features/racha/domain/entities/racha.dart';
@@ -32,7 +34,7 @@ class HomeShellScreen extends ConsumerStatefulWidget {
 
 class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  int _bottomNavIndex = 0; // 0: Pendientes, 1: Calendario, 2: Completados, 3: Ajustes
+  int _bottomNavIndex = 0; // 0: Pendientes, 1: Calendario, 2: Horario, 3: Ajustes
   int _topTabIndex = 0;    // 0: Hoy, 1: Semana, 2: Mes
   bool _mostroBannerInicial = false;
 
@@ -75,7 +77,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final hoyList = ref.watch(pendientesDeHoyProvider).valueOrNull ?? [];
-    final mostrarFab = _bottomNavIndex == 1 || (_bottomNavIndex == 0 && hoyList.isNotEmpty);
+    final mostrarFab = _bottomNavIndex == 1 || (_bottomNavIndex == 0 && hoyList.isNotEmpty) || _bottomNavIndex == 2;
     final ajustesState = ref.watch(ajustesProvider);
     final esFondoPersonalizado = (ajustesState.fondoPersonalizadoPath != null &&
             ajustesState.fondoPersonalizadoPath!.trim().isNotEmpty) ||
@@ -115,17 +117,25 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
         ),
       ),
 
-      // Botón flotante (+) para crear nuevo pendiente (oculto en pantalla vacía para no duplicar botón)
+      // Botón flotante (+) para crear nuevo pendiente o nueva clase en Horario
       floatingActionButton: mostrarFab
           ? Container(
               margin: const EdgeInsets.only(bottom: 8),
               child: FloatingActionButton(
                 onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const NuevoPendienteScreen(),
-                    ),
-                  );
+                  if (_bottomNavIndex == 2) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const FormularioClaseScreen(),
+                      ),
+                    );
+                  } else {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const NuevoPendienteScreen(),
+                      ),
+                    );
+                  }
                 },
                 backgroundColor: Theme.of(context).primaryColor,
                 elevation: 4,
@@ -134,7 +144,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
             )
           : null,
 
-      // Barra de navegación inferior limpia (Pendientes, Calendario, Completados, Ajustes)
+      // Barra de navegación inferior limpia (Pendientes, Calendario, Horario, Ajustes)
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           border: Border(
@@ -163,9 +173,9 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
               label: 'Calendario',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.check_circle_outline),
-              activeIcon: Icon(Icons.check_circle),
-              label: 'Completados',
+              icon: Icon(Icons.calendar_view_week_outlined),
+              activeIcon: Icon(Icons.calendar_view_week_rounded),
+              label: 'Horario',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.settings_outlined),
@@ -181,7 +191,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
   Widget _buildAppBar(bool isDark) {
     String title = 'Pendientes';
     if (_bottomNavIndex == 1) title = 'Calendario';
-    if (_bottomNavIndex == 2) title = 'Completados';
+    if (_bottomNavIndex == 2) title = 'Horario';
     if (_bottomNavIndex == 3) title = 'Ajustes';
 
     final primaryColor = Theme.of(context).primaryColor;
@@ -404,7 +414,6 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
               builder: (context, ref, _) {
                 final pendientes = ref.watch(pendientesProvider).valueOrNull ?? const <Pendiente>[];
                 final pendientesActivos = pendientes.where((p) => !p.estaCompletado).length;
-                final completados = pendientes.where((p) => p.estaCompletado).length;
 
                 return Row(
                   children: [
@@ -444,36 +453,52 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                        decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF064E3B).withValues(alpha: 0.3) : const Color(0xFFECFDF5),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.pop(context);
+                            setState(() => _bottomNavIndex = 2);
+                          },
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: isDark ? const Color(0xFF059669).withValues(alpha: 0.4) : const Color(0xFFA7F3D0),
-                            width: 1,
+                          child: Ink(
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                            decoration: BoxDecoration(
+                              color: isDark ? const Color(0xFF312E81).withValues(alpha: 0.3) : const Color(0xFFEEF2FF),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: isDark ? const Color(0xFF6366F1).withValues(alpha: 0.4) : const Color(0xFFC7D2FE),
+                                width: 1,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Consumer(
+                                  builder: (context, ref, _) {
+                                    final clases = ref.watch(clasesProvider).valueOrNull ?? const <Clase>[];
+                                    final clasesHoy = clases.where((c) => c.diaSemana == DateTime.now().weekday).length;
+                                    return Text(
+                                      '$clasesHoy',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                        color: isDark ? const Color(0xFF818CF8) : const Color(0xFF4F46E5),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Clases Hoy',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              '$completados',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Completos',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDark ? Colors.white70 : const Color(0xFF64748B),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
                         ),
                       ),
                     ),
@@ -579,20 +604,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                 ),
                 _buildDrawerItem(
                   icon: Icons.calendar_view_week_rounded,
-                  label: 'Horario',
-                  isSelected: false,
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const HorarioScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildDrawerItem(
-                  icon: Icons.check_circle_outline_rounded,
-                  label: 'Tareas Completadas',
+                  label: 'Mi Horario',
                   isSelected: _bottomNavIndex == 2,
                   onTap: () {
                     Navigator.pop(context);
@@ -898,8 +910,8 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
         }
       case 1: // Calendario general de la app (todo en conjunto: pendientes + horario con filtros)
         view = const CalendarioGeneralScreen(key: ValueKey('calendario_general'));
-      case 2: // Completados
-        view = const CompletadosScreen(key: ValueKey('completados'));
+      case 2: // Horario
+        view = const HorarioScreen(key: ValueKey('horario'), embedded: true);
       case 3: // Ajustes
         view = const AjustesScreen(key: ValueKey('ajustes'));
       default:

@@ -4,12 +4,14 @@ import 'package:mi_pendiente/core/constants/app_colors.dart';
 import 'package:mi_pendiente/core/services/notification_service.dart';
 import 'package:mi_pendiente/features/horario/domain/entities/clase.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/providers/pendientes_provider.dart';
+import 'package:mi_pendiente/features/ajustes/presentation/providers/ajustes_provider.dart';
 import '../providers/horario_provider.dart';
 import 'detalle_clase_screen.dart';
 import 'formulario_clase_screen.dart';
 
 class HorarioScreen extends ConsumerStatefulWidget {
-  const HorarioScreen({super.key});
+  final bool embedded;
+  const HorarioScreen({super.key, this.embedded = false});
 
   @override
   ConsumerState<HorarioScreen> createState() => _HorarioScreenState();
@@ -87,24 +89,10 @@ class _HorarioScreenState extends ConsumerState<HorarioScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
     final hoyWeekday = DateTime.now().weekday;
+    final pathFondo = ref.watch(ajustesProvider).fondoPersonalizadoPath;
+    final esFondo = pathFondo != null && pathFondo.isNotEmpty;
 
-    return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-      appBar: AppBar(
-        title: Text(
-          'Mi Horario',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            color: isDark ? Colors.white : primaryColor,
-          ),
-        ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: isDark ? Colors.white : primaryColor),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: asyncClases.when(
+    final content = asyncClases.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Text('Inconveniente al cargar el horario: $e'),
@@ -375,11 +363,35 @@ class _HorarioScreenState extends ConsumerState<HorarioScreen> {
                   ),
                 );
               }),
-              const SizedBox(height: 30),
+              const SizedBox(height: 80),
             ],
           );
         },
+      );
+
+    if (widget.embedded) {
+      return content;
+    }
+
+    return Scaffold(
+      backgroundColor: isDark
+          ? (esFondo ? Colors.transparent : AppColors.backgroundDark)
+          : (esFondo ? Colors.transparent : AppColors.backgroundLight),
+      appBar: AppBar(
+        title: Text(
+          'Mi Horario',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: isDark ? Colors.white : primaryColor,
+          ),
+        ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_rounded, color: isDark ? Colors.white : primaryColor),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
+      body: content,
     );
   }
 
