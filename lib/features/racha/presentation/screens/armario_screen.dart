@@ -296,14 +296,18 @@ class _ArmarioScreenState extends ConsumerState<ArmarioScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Colección de Ropa y Accesorios',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : AppColors.textPrimary,
+              Expanded(
+                child: Text(
+                  'Colección de Ropa y Accesorios',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : AppColors.textPrimary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               // Chip de racha brillante que nunca se pierde en modo oscuro
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -321,7 +325,7 @@ class _ArmarioScreenState extends ConsumerState<ArmarioScreen> {
                     const Icon(Icons.local_fire_department_rounded, color: Color(0xFFF97316), size: 16),
                     const SizedBox(width: 4),
                     Text(
-                      '$diasRacha ${diasRacha == 1 ? 'día' : 'días'} de racha',
+                      '$diasRacha ${diasRacha == 1 ? 'día' : 'días'}',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
