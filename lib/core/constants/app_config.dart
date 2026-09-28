@@ -1,8 +1,23 @@
+import 'dart:io';
+
 class AppConfig {
   AppConfig._();
 
-  /// Activado para el build de prueba y revisión del usuario.
-  static bool todoDesbloqueado = true;
+  static bool? _overrideTodoDesbloqueado;
+
+  /// Permite sobrescribir el valor (por ejemplo en tests unitarios)
+  static set todoDesbloqueado(bool value) => _overrideTodoDesbloqueado = value;
+
+  /// En iOS (iPhone) está desbloqueado para pruebas; en Android (APK)
+  /// está bloqueado para que el usuario avance y desbloquee día a día por racha.
+  static bool get todoDesbloqueado {
+    if (_overrideTodoDesbloqueado != null) return _overrideTodoDesbloqueado!;
+    try {
+      return Platform.isIOS;
+    } catch (_) {
+      return false;
+    }
+  }
 }
 
 
