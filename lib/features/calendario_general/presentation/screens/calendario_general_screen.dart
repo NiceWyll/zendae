@@ -9,6 +9,7 @@ import 'package:mi_pendiente/features/horario/presentation/screens/formulario_cl
 import 'package:mi_pendiente/features/pendientes/domain/entities/pendiente.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/providers/pendientes_provider.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/screens/detalle_pendiente_screen.dart';
+import 'package:mi_pendiente/features/ajustes/presentation/providers/ajustes_provider.dart';
 
 enum FiltroCalendarioGeneral { pendientes, horario, todo }
 
@@ -64,74 +65,98 @@ class _CalendarioGeneralScreenState extends ConsumerState<CalendarioGeneralScree
       return aMin.compareTo(bMin);
     });
 
+    final esFondoPersonalizado = ref.watch(ajustesProvider).temaId == 'fondo_personalizado';
+
     return Column(
       children: [
-        // Selector de mes (< Mes Año >)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: Icon(Icons.chevron_left, color: primaryColor, size: 28),
-                onPressed: () {
-                  setState(() {
-                    _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
-                  });
-                },
+        // Tarjeta moderna del calendario (protege números y textos sobre fotos claras u oscuras)
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          padding: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: isDark
+                ? (esFondoPersonalizado ? const Color(0xFF1E293B).withOpacity(0.72) : const Color(0xFF1E293B).withOpacity(0.40))
+                : (esFondoPersonalizado ? Colors.white.withOpacity(0.85) : Colors.white.withOpacity(0.55)),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark ? const Color(0xFF334155).withOpacity(0.6) : const Color(0xFFE2E8F0),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
               ),
-              Text(
-                '${_getMonthName(_currentMonth.month)} ${_currentMonth.year}',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: isDark ? Colors.white : primaryColor,
+            ],
+          ),
+          child: Column(
+            children: [
+              // Selector de mes (< Mes Año >)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.chevron_left, color: primaryColor, size: 28),
+                      onPressed: () {
+                        setState(() {
+                          _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
+                        });
+                      },
+                    ),
+                    Text(
+                      '${_getMonthName(_currentMonth.month)} ${_currentMonth.year}',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : primaryColor,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.chevron_right, color: primaryColor, size: 28),
+                      onPressed: () {
+                        setState(() {
+                          _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
+                        });
+                      },
+                    ),
+                  ],
                 ),
               ),
-              IconButton(
-                icon: Icon(Icons.chevron_right, color: primaryColor, size: 28),
-                onPressed: () {
-                  setState(() {
-                    _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
-                  });
-                },
+
+              // Días de la semana (LUN, MAR, ...)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: _weekdays.map((w) => SizedBox(
+                    width: 36,
+                    child: Text(
+                      w,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                    ),
+                  )).toList(),
+                ),
+              ),
+              const SizedBox(height: 4),
+
+              // Matriz de días del mes con indicadores duales
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: _buildMonthGrid(isDark, todosPendientes, todasClases),
               ),
             ],
           ),
         ),
 
-        // Días de la semana (LUN, MAR, ...)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: _weekdays.map((w) => SizedBox(
-              width: 36,
-              child: Text(
-                w,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                ),
-              ),
-            )).toList(),
-          ),
-        ),
         const SizedBox(height: 6),
-
-        // Matriz de días del mes con indicadores duales
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _buildMonthGrid(isDark, todosPendientes, todasClases),
-        ),
-
-        Divider(
-          height: 20,
-          thickness: 1,
-          color: isDark ? AppColors.borderDark : const Color(0xFFF1F5F9),
-        ),
 
         // Encabezado del día seleccionado y los 3 Botones de Filtro
         Padding(
@@ -147,7 +172,16 @@ class _CalendarioGeneralScreenState extends ConsumerState<CalendarioGeneralScree
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
-                      color: isDark ? Colors.white : primaryColor,
+                      color: isDark ? Colors.white : (esFondoPersonalizado ? const Color(0xFF0F172A) : primaryColor),
+                      shadows: esFondoPersonalizado
+                          ? [
+                              Shadow(
+                                color: Colors.black.withOpacity(isDark ? 0.7 : 0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ]
+                          : null,
                     ),
                   ),
                   Text(
@@ -155,7 +189,16 @@ class _CalendarioGeneralScreenState extends ConsumerState<CalendarioGeneralScree
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                      shadows: esFondoPersonalizado
+                          ? [
+                              Shadow(
+                                color: Colors.black.withOpacity(isDark ? 0.6 : 0.15),
+                                blurRadius: 3,
+                                offset: const Offset(0, 1),
+                              ),
+                            ]
+                          : null,
                     ),
                   ),
                 ],
@@ -408,11 +451,24 @@ class _CalendarioGeneralScreenState extends ConsumerState<CalendarioGeneralScree
   Widget _buildListaSoloPendientes(bool isDark, List<Pendiente> pendientes) {
     if (pendientes.isEmpty) {
       return Center(
-        child: Text(
-          'No hay pendientes registrados para este día',
-          style: TextStyle(
-            fontSize: 14,
-            color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B).withOpacity(0.72) : Colors.white.withOpacity(0.85),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? const Color(0xFF334155).withOpacity(0.6) : const Color(0xFFE2E8F0),
+            ),
+          ),
+          child: Text(
+            'No hay pendientes registrados para este día',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+            ),
           ),
         ),
       );
@@ -431,11 +487,24 @@ class _CalendarioGeneralScreenState extends ConsumerState<CalendarioGeneralScree
   Widget _buildListaSoloClases(bool isDark, List<Clase> clases) {
     if (clases.isEmpty) {
       return Center(
-        child: Text(
-          'No tienes clases en tu horario para este día',
-          style: TextStyle(
-            fontSize: 14,
-            color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B).withOpacity(0.72) : Colors.white.withOpacity(0.85),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? const Color(0xFF334155).withOpacity(0.6) : const Color(0xFFE2E8F0),
+            ),
+          ),
+          child: Text(
+            'No tienes clases en tu horario para este día',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+            ),
           ),
         ),
       );
@@ -468,11 +537,24 @@ class _CalendarioGeneralScreenState extends ConsumerState<CalendarioGeneralScree
 
     if (items.isEmpty) {
       return Center(
-        child: Text(
-          'Sin actividades ni pendientes programados para hoy',
-          style: TextStyle(
-            fontSize: 14,
-            color: isDark ? const Color(0xFF94A3B8) : AppColors.textSecondary,
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B).withOpacity(0.72) : Colors.white.withOpacity(0.85),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? const Color(0xFF334155).withOpacity(0.6) : const Color(0xFFE2E8F0),
+            ),
+          ),
+          child: Text(
+            'Sin actividades ni pendientes programados para hoy',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF475569),
+            ),
           ),
         ),
       );

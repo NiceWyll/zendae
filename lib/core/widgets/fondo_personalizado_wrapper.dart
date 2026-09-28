@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,7 +36,7 @@ class FondoPersonalizadoWrapper extends ConsumerWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // 1. Imagen / GIF / Video corto animado en bucle optimizado de fondo
+        // 1. Imagen / GIF animado nítido (SIN difuminar / sin blur)
         Image.file(
           file,
           fit: BoxFit.cover,
@@ -45,19 +44,30 @@ class FondoPersonalizadoWrapper extends ConsumerWidget {
           errorBuilder: (ctx, err, stack) => const SizedBox.expand(),
         ),
 
-        // 2. Capa de difuminado (Blur) y tinte adaptable para legibilidad en modo claro y oscuro
-        ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-            child: Container(
-              color: isDark
-                  ? const Color(0xFF0F172A).withOpacity(0.72)
-                  : Colors.white.withOpacity(0.78),
+        // 2. Capa de contraste y tinte adaptativo:
+        // Mantiene la foto 100% nítida y visible, pero con un tinte calibrado
+        // para que textos blancos o negros nunca se pierdan sobre fotos claras u oscuras.
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: isDark
+                  ? [
+                      const Color(0xFF070B14).withOpacity(0.58),
+                      const Color(0xFF0B0F19).withOpacity(0.42),
+                      const Color(0xFF070B14).withOpacity(0.62),
+                    ]
+                  : [
+                      Colors.white.withOpacity(0.70),
+                      Colors.white.withOpacity(0.55),
+                      Colors.white.withOpacity(0.72),
+                    ],
             ),
           ),
         ),
 
-        // 3. Contenido de la aplicación encima del fondo difuminado
+        // 3. Contenido de la aplicación encima del fondo nítido
         child,
       ],
     );
