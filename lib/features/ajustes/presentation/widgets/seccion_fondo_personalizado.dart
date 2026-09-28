@@ -34,8 +34,8 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
     final estaDesbloqueado = AppConfig.todoDesbloqueado ||
         temaFondo.estaDesbloqueado(diasRacha, logros);
 
-    final tieneFondoActivo = ajustes.temaId == 'fondo_personalizado' &&
-        ajustes.fondoPersonalizadoPath != null &&
+    final tieneFondoActivo = ajustes.fondoPersonalizadoPath != null &&
+        ajustes.fondoPersonalizadoPath!.trim().isNotEmpty &&
         File(ajustes.fondoPersonalizadoPath!).existsSync();
 
     return Container(
@@ -199,11 +199,11 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
                   const SizedBox(width: 10),
                   OutlinedButton(
                     onPressed: () async {
-                      await ref.read(ajustesProvider.notifier).restaurarTemaPorDefecto();
+                      await ref.read(ajustesProvider.notifier).eliminarFondoPersonalizado();
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Tema por defecto restaurado con éxito.'),
+                            content: Text('Fondo personalizado eliminado. Se restauró el fondo predeterminado.'),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
@@ -215,7 +215,7 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Restaurar', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
+                    child: const Text('Eliminar fondo', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
                   ),
                 ],
               ],

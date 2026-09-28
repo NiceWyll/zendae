@@ -88,7 +88,11 @@ class AjustesNotifier extends StateNotifier<AjustesState> {
   void _cargarAjustes() {
     if (prefs == null) return;
     final isDark = prefs!.getBool('es_oscuro') ?? false;
-    final tema = prefs!.getString('tema_id') ?? 'clasico';
+    var tema = prefs!.getString('tema_id') ?? 'clasico';
+    if (tema == 'fondo_personalizado') {
+      tema = 'clasico';
+      prefs!.setString('tema_id', 'clasico');
+    }
     final fondoPath = prefs!.getString('fondo_personalizado_path');
     final notif = prefs!.getBool('notificaciones') ?? true;
     final sonido = prefs!.getBool('sonido') ?? true;
@@ -134,10 +138,16 @@ class AjustesNotifier extends StateNotifier<AjustesState> {
 
   Future<void> guardarFondoPersonalizado(String path) async {
     await prefs?.setString('fondo_personalizado_path', path);
-    await prefs?.setString('tema_id', 'fondo_personalizado');
+    // No sobreescribe tema_id para permitir combinar cualquier fondo con cualquier paleta de colores
     state = state.copyWith(
       fondoPersonalizadoPath: path,
-      temaId: 'fondo_personalizado',
+    );
+  }
+
+  Future<void> eliminarFondoPersonalizado() async {
+    await prefs?.remove('fondo_personalizado_path');
+    state = state.copyWith(
+      limpiarFondoPersonalizado: true,
     );
   }
 

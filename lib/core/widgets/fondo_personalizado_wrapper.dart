@@ -18,11 +18,10 @@ class FondoPersonalizadoWrapper extends ConsumerWidget {
     }
 
     final ajustes = ref.watch(ajustesProvider);
-    final temaActivo = ajustes.temaId;
     final path = ajustes.fondoPersonalizadoPath;
 
-    // Solo se activa si el tema actual es fondo_personalizado y el archivo existe
-    if (temaActivo != 'fondo_personalizado' || path == null || path.isEmpty) {
+    // Se activa si existe un archivo de fondo configurado
+    if (path == null || path.trim().isEmpty) {
       return child;
     }
 

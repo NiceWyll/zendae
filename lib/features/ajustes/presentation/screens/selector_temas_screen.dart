@@ -5,8 +5,8 @@ import 'package:mi_pendiente/core/constants/app_config.dart';
 import 'package:mi_pendiente/features/racha/presentation/providers/racha_provider.dart';
 import 'package:mi_pendiente/features/racha/presentation/widgets/zendy_personaje_widget.dart';
 import '../providers/ajustes_provider.dart';
-import '../widgets/seccion_fondo_personalizado.dart';
 import '../widgets/selector_temas_grid.dart';
+import 'fondo_pantalla_screen.dart';
 
 class SelectorTemasScreen extends ConsumerWidget {
   const SelectorTemasScreen({super.key});
@@ -17,10 +17,12 @@ class SelectorTemasScreen extends ConsumerWidget {
     final rachaAsync = ref.watch(rachaNotifierProvider);
     final racha = rachaAsync.valueOrNull;
     final dias = racha?.diasActuales ?? 0;
-    final esFondoPersonalizado = ref.watch(ajustesProvider).temaId == 'fondo_personalizado';
+    final ajustes = ref.watch(ajustesProvider);
+    final tieneFondo = ajustes.fondoPersonalizadoPath != null &&
+        ajustes.fondoPersonalizadoPath!.trim().isNotEmpty;
 
     return Scaffold(
-      backgroundColor: esFondoPersonalizado
+      backgroundColor: tieneFondo
           ? Colors.transparent
           : (isDark ? AppColors.backgroundDark : AppColors.backgroundLight),
       appBar: AppBar(
@@ -100,8 +102,62 @@ class SelectorTemasScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 18),
 
-          // Sección de fondo personalizado con difuminado (EXCLUSIVO ANDROID)
-          const SeccionFondoPersonalizado(),
+          // Enlace directo al apartado independiente de Fondo de Pantalla
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? AppColors.borderDark : const Color(0xFFE2E8F0),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF8B5CF6).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.wallpaper_rounded, color: Color(0xFF8B5CF6), size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Fondo de pantalla',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        tieneFondo ? 'Fondo activo (personalizado)' : 'Usa tu propio GIF animado o foto',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const FondoPantallaScreen()),
+                    );
+                  },
+                  child: const Text('Personalizar'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
 
           // Título del grid
           Text(

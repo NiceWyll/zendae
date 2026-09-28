@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
 import 'package:mi_pendiente/core/services/notification_service.dart';
+import 'package:mi_pendiente/core/widgets/alarma_time_picker_sheet.dart';
 import 'package:mi_pendiente/features/horario/domain/entities/clase.dart';
 import '../providers/horario_provider.dart';
 
@@ -75,15 +76,9 @@ class _FormularioClaseScreenState extends ConsumerState<FormularioClaseScreen> {
 
   Future<void> _seleccionarHora({required bool esInicio}) async {
     final horaActual = esInicio ? _horaInicio : _horaFin;
-    final pick = await showTimePicker(
-      context: context,
-      initialTime: horaActual,
-      builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
-          child: child!,
-        );
-      },
+    final pick = await AlarmaTimePickerSheet.mostrar(
+      context,
+      horaInicial: horaActual,
     );
 
     if (pick != null) {

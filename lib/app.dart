@@ -14,12 +14,22 @@ class MiPendienteApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ajustes = ref.watch(ajustesProvider);
     final tema = TemasDisponibles.obtenerPorId(ajustes.temaId);
+    final tieneFondo = ajustes.fondoPersonalizadoPath != null &&
+        ajustes.fondoPersonalizadoPath!.trim().isNotEmpty;
 
     return MaterialApp(
       title: 'Zendae',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.crearThemeData(tema, false),
-      darkTheme: AppTheme.crearThemeData(tema, true),
+      theme: AppTheme.crearThemeData(
+        tema,
+        false,
+        tieneFondoPersonalizado: tieneFondo,
+      ),
+      darkTheme: AppTheme.crearThemeData(
+        tema,
+        true,
+        tieneFondoPersonalizado: tieneFondo,
+      ),
       themeMode: ajustes.themeMode,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
@@ -7,6 +8,7 @@ import 'package:mi_pendiente/features/pendientes/presentation/providers/usecase_
 import 'package:mi_pendiente/core/constants/app_sounds.dart';
 import '../providers/ajustes_provider.dart';
 import '../widgets/selector_sonido_dialog.dart';
+import 'fondo_pantalla_screen.dart';
 import 'selector_temas_screen.dart';
 
 class AjustesScreen extends ConsumerWidget {
@@ -77,6 +79,43 @@ class AjustesScreen extends ConsumerWidget {
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const SelectorTemasScreen()),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
+
+        // Fila: Fondo de pantalla (Independiente del color de tema)
+        _buildSettingCard(
+          isDark: isDark,
+          primaryColor: primaryColor,
+          icon: Icons.wallpaper_rounded,
+          title: 'Fondo de pantalla',
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                ajustes.fondoPersonalizadoPath != null &&
+                        ajustes.fondoPersonalizadoPath!.trim().isNotEmpty &&
+                        File(ajustes.fondoPersonalizadoPath!).existsSync()
+                    ? 'Personalizado'
+                    : 'Predeterminado',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.chevron_right,
+                color: Color(0xFF94A3B8),
+                size: 20,
+              ),
+            ],
+          ),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const FondoPantallaScreen()),
             );
           },
         ),

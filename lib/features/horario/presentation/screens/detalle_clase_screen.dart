@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
 import 'package:mi_pendiente/core/providers/clock_providers.dart';
 import 'package:mi_pendiente/core/utils/date_time_utils.dart';
+import 'package:mi_pendiente/core/widgets/alarma_time_picker_sheet.dart';
 import 'package:mi_pendiente/features/horario/domain/entities/clase.dart';
 import 'package:mi_pendiente/features/horario/domain/entities/examen.dart';
 import 'package:mi_pendiente/features/horario/presentation/providers/horario_provider.dart';
@@ -129,9 +130,9 @@ class _DetalleClaseScreenState extends ConsumerState<DetalleClaseScreen> {
                     // Selector de hora
                     InkWell(
                       onTap: () async {
-                        final picked = await showTimePicker(
-                          context: context,
-                          initialTime: horaSeleccionada,
+                        final picked = await AlarmaTimePickerSheet.mostrar(
+                          context,
+                          horaInicial: horaSeleccionada,
                         );
                         if (picked != null) {
                           setDialogState(() => horaSeleccionada = picked);

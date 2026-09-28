@@ -24,6 +24,7 @@ class _CalendarioGeneralScreenState extends ConsumerState<CalendarioGeneralScree
   DateTime _currentMonth = DateTime.now();
   DateTime _selectedDate = DateTime.now();
   FiltroCalendarioGeneral _filtroActivo = FiltroCalendarioGeneral.todo;
+  bool _calendarioExpandido = true;
 
   static const List<String> _weekdays = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
 
@@ -65,188 +66,304 @@ class _CalendarioGeneralScreenState extends ConsumerState<CalendarioGeneralScree
       return aMin.compareTo(bMin);
     });
 
-    final esFondoPersonalizado = ref.watch(ajustesProvider).temaId == 'fondo_personalizado';
+    final pathFondo = ref.watch(ajustesProvider).fondoPersonalizadoPath;
+    final esFondoPersonalizado = pathFondo != null && pathFondo.isNotEmpty;
 
-    return Column(
-      children: [
-        // Tarjeta moderna del calendario (protege números y textos sobre fotos claras u oscuras)
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-          padding: const EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            color: isDark
-                ? (esFondoPersonalizado ? const Color(0xFF1E293B).withOpacity(0.72) : const Color(0xFF1E293B).withOpacity(0.40))
-                : (esFondoPersonalizado ? Colors.white.withOpacity(0.85) : Colors.white.withOpacity(0.55)),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isDark ? const Color(0xFF334155).withOpacity(0.6) : const Color(0xFFE2E8F0),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
+    return GestureDetector(
+      onVerticalDragEnd: (details) {
+        final velocity = details.primaryVelocity ?? 0;
+        if (velocity < -200 && _calendarioExpandido) {
+          // Deslizar hacia arriba oculta el calendario
+          setState(() => _calendarioExpandido = false);
+        } else if (velocity > 200 && !_calendarioExpandido) {
+          // Deslizar hacia abajo o tirar reabre el calendario
+          setState(() => _calendarioExpandido = true);
+        }
+      },
+      child: Column(
+        children: [
+          // Tarjeta interactiva del calendario (expandible / colapsable para ganar espacio)
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 250),
+            crossFadeState: _calendarioExpandido
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+            // Estado 1: Calendario completo
+            firstChild: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+              padding: const EdgeInsets.only(bottom: 6),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? (esFondoPersonalizado ? const Color(0xFF1E293B).withOpacity(0.72) : const Color(0xFF1E293B).withOpacity(0.40))
+                    : (esFondoPersonalizado ? Colors.white.withOpacity(0.85) : Colors.white.withOpacity(0.55)),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF334155).withOpacity(0.6) : const Color(0xFFE2E8F0),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.25 : 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Column(
-            children: [
-              // Selector de mes (< Mes Año >)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.chevron_left, color: primaryColor, size: 28),
-                      onPressed: () {
-                        setState(() {
-                          _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
-                        });
-                      },
+              child: Column(
+                children: [
+                  // Selector de mes (< Mes Año >)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.chevron_left, color: primaryColor, size: 28),
+                          onPressed: () {
+                            setState(() {
+                              _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1);
+                            });
+                          },
+                        ),
+                        Text(
+                          '${_getMonthName(_currentMonth.month)} ${_currentMonth.year}',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: isDark ? Colors.white : primaryColor,
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.chevron_right, color: primaryColor, size: 28),
+                          onPressed: () {
+                            setState(() {
+                              _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
+                            });
+                          },
+                        ),
+                      ],
                     ),
+                  ),
+
+                  // Días de la semana (LUN, MAR, ...)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: _weekdays.map((w) => SizedBox(
+                        width: 36,
+                        child: Text(
+                          w,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                        ),
+                      )).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+
+                  // Matriz de días del mes con indicadores duales
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: _buildMonthGrid(isDark, todosPendientes, todasClases),
+                  ),
+
+                  const SizedBox(height: 4),
+                  // Pestaña interactiva inferior para ocultar manualmente
+                  InkWell(
+                    onTap: () => setState(() => _calendarioExpandido = false),
+                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.keyboard_arrow_up_rounded,
+                            size: 18,
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Ocultar calendario',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Estado 2: Calendario colapsado (barra compacta que deja todo el espacio para la lista)
+            secondChild: InkWell(
+              onTap: () => setState(() => _calendarioExpandido = true),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? (esFondoPersonalizado ? const Color(0xFF1E293B).withOpacity(0.78) : const Color(0xFF1E293B).withOpacity(0.50))
+                      : (esFondoPersonalizado ? Colors.white.withOpacity(0.88) : Colors.white.withOpacity(0.68)),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark ? const Color(0xFF334155).withOpacity(0.6) : const Color(0xFFE2E8F0),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_month_rounded, color: primaryColor, size: 20),
+                    const SizedBox(width: 10),
                     Text(
                       '${_getMonthName(_currentMonth.month)} ${_currentMonth.year}',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 14,
                         fontWeight: FontWeight.w800,
                         color: isDark ? Colors.white : primaryColor,
                       ),
                     ),
-                    IconButton(
-                      icon: Icon(Icons.chevron_right, color: primaryColor, size: 28),
-                      onPressed: () {
-                        setState(() {
-                          _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1);
-                        });
-                      },
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Día ${_selectedDate.day}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: primaryColor,
+                        ),
+                      ),
                     ),
-                  ],
-                ),
-              ),
-
-              // Días de la semana (LUN, MAR, ...)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: _weekdays.map((w) => SizedBox(
-                    width: 36,
-                    child: Text(
-                      w,
-                      textAlign: TextAlign.center,
+                    const Spacer(),
+                    Text(
+                      'Abrir calendario',
                       style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
                         color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
                       ),
                     ),
-                  )).toList(),
+                    const SizedBox(width: 4),
+                    Icon(Icons.keyboard_arrow_down_rounded, color: primaryColor, size: 20),
+                  ],
                 ),
               ),
-              const SizedBox(height: 4),
-
-              // Matriz de días del mes con indicadores duales
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: _buildMonthGrid(isDark, todosPendientes, todasClases),
-              ),
-            ],
+            ),
           ),
-        ),
 
-        const SizedBox(height: 6),
+          const SizedBox(height: 6),
 
-        // Encabezado del día seleccionado y los 3 Botones de Filtro
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '${_selectedDate.day} de ${_getMonthName(_selectedDate.month)}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: isDark ? Colors.white : (esFondoPersonalizado ? const Color(0xFF0F172A) : primaryColor),
-                      shadows: esFondoPersonalizado
-                          ? [
-                              Shadow(
-                                color: Colors.black.withOpacity(isDark ? 0.7 : 0.2),
-                                blurRadius: 4,
-                                offset: const Offset(0, 1),
-                              ),
-                            ]
-                          : null,
+          // Encabezado del día seleccionado y los 3 Botones de Filtro
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${_selectedDate.day} de ${_getMonthName(_selectedDate.month)}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : (esFondoPersonalizado ? const Color(0xFF0F172A) : primaryColor),
+                        shadows: esFondoPersonalizado
+                            ? [
+                                Shadow(
+                                  color: Colors.black.withOpacity(isDark ? 0.7 : 0.2),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ]
+                            : null,
+                      ),
                     ),
-                  ),
-                  Text(
-                    DateTimeUtils.getDayName(_selectedDate),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
-                      shadows: esFondoPersonalizado
-                          ? [
-                              Shadow(
-                                color: Colors.black.withOpacity(isDark ? 0.6 : 0.15),
-                                blurRadius: 3,
-                                offset: const Offset(0, 1),
-                              ),
-                            ]
-                          : null,
+                    Text(
+                      DateTimeUtils.getDayName(_selectedDate),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                        shadows: esFondoPersonalizado
+                            ? [
+                                Shadow(
+                                  color: Colors.black.withOpacity(isDark ? 0.6 : 0.15),
+                                  blurRadius: 3,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ]
+                            : null,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
+                  ],
+                ),
+                const SizedBox(height: 10),
 
-              // 3 Botones Interactivos ("Ver pendientes", "Ver horario", "Ver todo")
-              Row(
-                children: [
-                  _buildFiltroButton(
-                    label: 'Ver pendientes',
-                    count: pendientesDelDia.length,
-                    filtro: FiltroCalendarioGeneral.pendientes,
-                    color: const Color(0xFF3B82F6),
-                    isDark: isDark,
-                  ),
-                  const SizedBox(width: 8),
-                  _buildFiltroButton(
-                    label: 'Ver horario',
-                    count: clasesDelDia.length,
-                    filtro: FiltroCalendarioGeneral.horario,
-                    color: const Color(0xFF8B5CF6),
-                    isDark: isDark,
-                  ),
-                  const SizedBox(width: 8),
-                  _buildFiltroButton(
-                    label: 'Ver todo',
-                    count: pendientesDelDia.length + clasesDelDia.length,
-                    filtro: FiltroCalendarioGeneral.todo,
-                    color: isDark ? Theme.of(context).colorScheme.primary : Theme.of(context).primaryColor,
-                    isDark: isDark,
-                  ),
-                ],
-              ),
-            ],
+                // 3 Botones Interactivos ("Ver pendientes", "Ver horario", "Ver todo")
+                Row(
+                  children: [
+                    _buildFiltroButton(
+                      label: 'Ver pendientes',
+                      count: pendientesDelDia.length,
+                      filtro: FiltroCalendarioGeneral.pendientes,
+                      color: const Color(0xFF3B82F6),
+                      isDark: isDark,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildFiltroButton(
+                      label: 'Ver horario',
+                      count: clasesDelDia.length,
+                      filtro: FiltroCalendarioGeneral.horario,
+                      color: const Color(0xFF8B5CF6),
+                      isDark: isDark,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildFiltroButton(
+                      label: 'Ver todo',
+                      count: pendientesDelDia.length + clasesDelDia.length,
+                      filtro: FiltroCalendarioGeneral.todo,
+                      color: isDark ? Theme.of(context).colorScheme.primary : Theme.of(context).primaryColor,
+                      isDark: isDark,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
+          const SizedBox(height: 8),
 
-        // Lista de contenido dinámico según el botón seleccionado
-        Expanded(
-          child: _buildListaContenido(
-            isDark: isDark,
-            pendientes: pendientesDelDia,
-            clases: clasesDelDia,
+          // Lista de contenido dinámico según el botón seleccionado
+          Expanded(
+            child: _buildListaContenido(
+              isDark: isDark,
+              pendientes: pendientesDelDia,
+              clases: clasesDelDia,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -264,6 +381,8 @@ class _CalendarioGeneralScreenState extends ConsumerState<CalendarioGeneralScree
         onTap: () {
           setState(() {
             _filtroActivo = filtro;
+            // Oculta automáticamente el calendario al presionar cualquiera de los 3 botones para dar todo el espacio a la lista
+            _calendarioExpandido = false;
           });
         },
         borderRadius: BorderRadius.circular(10),

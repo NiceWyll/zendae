@@ -10,17 +10,17 @@ class AppTheme {
 
   static ThemeData get darkTheme => crearThemeData(TemasDisponibles.clasico, true);
 
-  static ThemeData crearThemeData(TemaApp tema, bool esOscuro) {
+  static ThemeData crearThemeData(TemaApp tema, bool esOscuro, {bool tieneFondoPersonalizado = false}) {
     final primary = tema.colorPrimario;
     final secondary = tema.colorSecundario;
-    final esFondoPersonalizado = tema.id == 'fondo_personalizado';
+    final esFondo = tieneFondoPersonalizado || tema.id == 'fondo_personalizado';
 
     if (esOscuro) {
       return ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
         primaryColor: secondary,
-        scaffoldBackgroundColor: esFondoPersonalizado ? Colors.transparent : AppColors.backgroundDark,
+        scaffoldBackgroundColor: esFondo ? Colors.transparent : AppColors.backgroundDark,
         colorScheme: ColorScheme.dark(
           primary: secondary,
           secondary: tema.colorAcento ?? secondary,
@@ -40,7 +40,7 @@ class AppTheme {
           ),
         ),
         cardTheme: CardThemeData(
-          color: esFondoPersonalizado
+          color: esFondo
               ? const Color(0xFF1E293B).withValues(alpha: 0.85)
               : AppColors.cardDark,
           elevation: 0,
@@ -57,7 +57,7 @@ class AppTheme {
           shape: const CircleBorder(),
         ),
         bottomNavigationBarTheme: BottomNavigationBarThemeData(
-          backgroundColor: esFondoPersonalizado
+          backgroundColor: esFondo
               ? const Color(0xFF0F172A).withValues(alpha: 0.85)
               : AppColors.surfaceDark,
           selectedItemColor: secondary,
@@ -91,7 +91,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       primaryColor: primary,
-      scaffoldBackgroundColor: esFondoPersonalizado ? Colors.transparent : AppColors.backgroundLight,
+      scaffoldBackgroundColor: esFondo ? Colors.transparent : AppColors.backgroundLight,
       colorScheme: ColorScheme.light(
         primary: primary,
         secondary: secondary,
@@ -111,7 +111,7 @@ class AppTheme {
         ),
       ),
       cardTheme: CardThemeData(
-        color: esFondoPersonalizado
+        color: esFondo
             ? Colors.white.withValues(alpha: 0.88)
             : AppColors.cardLight,
         elevation: 1.5,

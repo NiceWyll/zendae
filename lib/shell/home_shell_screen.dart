@@ -76,7 +76,10 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final hoyList = ref.watch(pendientesDeHoyProvider).valueOrNull ?? [];
     final mostrarFab = _bottomNavIndex == 1 || (_bottomNavIndex == 0 && hoyList.isNotEmpty);
-    final esFondoPersonalizado = ref.watch(ajustesProvider).temaId == 'fondo_personalizado';
+    final ajustesState = ref.watch(ajustesProvider);
+    final esFondoPersonalizado = (ajustesState.fondoPersonalizadoPath != null &&
+            ajustesState.fondoPersonalizadoPath!.trim().isNotEmpty) ||
+        ajustesState.temaId == 'fondo_personalizado';
     final scaffoldBg = esFondoPersonalizado
         ? Colors.transparent
         : (isDark ? AppColors.backgroundDark : AppColors.backgroundLight);

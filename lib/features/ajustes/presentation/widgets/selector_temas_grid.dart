@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,7 +20,9 @@ class SelectorTemasGrid extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final esAndroid = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
-    final temas = TemasDisponibles.todosParaPlataforma(esAndroid: esAndroid);
+    final temas = TemasDisponibles.todosParaPlataforma(esAndroid: esAndroid)
+        .where((t) => t.id != 'fondo_personalizado')
+        .toList();
 
     return GridView.builder(
       shrinkWrap: true,
@@ -66,50 +67,28 @@ class SelectorTemasGrid extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         onTap: () {
           if (estaDesbloqueado) {
-            if (tema.id == 'fondo_personalizado') {
-              final path = ref.read(ajustesProvider).fondoPersonalizadoPath;
-              if (path != null && File(path).existsSync()) {
-                ref.read(ajustesProvider.notifier).cambiarTema(tema.id);
-                ScaffoldMessenger.of(context).clearSnackBars();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('✨ Fondo personalizado activado'),
-                    behavior: SnackBarBehavior.floating,
-                    duration: Duration(milliseconds: 1800),
-                  ),
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Sube primero tu fondo en la sección de arriba con el botón "Subir fondo".'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              }
-            } else {
-              ref.read(ajustesProvider.notifier).cambiarTema(tema.id);
-              ScaffoldMessenger.of(context).clearSnackBars();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      Container(
-                        width: 14,
-                        height: 14,
-                        decoration: BoxDecoration(
-                          color: tema.colorPrimario,
-                          shape: BoxShape.circle,
-                        ),
+            ref.read(ajustesProvider.notifier).cambiarTema(tema.id);
+            ScaffoldMessenger.of(context).clearSnackBars();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    Container(
+                      width: 14,
+                      height: 14,
+                      decoration: BoxDecoration(
+                        color: tema.colorPrimario,
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(width: 8),
-                      Text('🎨 Tema "${tema.nombre}" aplicado'),
-                    ],
-                  ),
-                  behavior: SnackBarBehavior.floating,
-                  duration: const Duration(milliseconds: 1800),
+                    ),
+                    const SizedBox(width: 8),
+                    Text('🎨 Tema "${tema.nombre}" aplicado'),
+                  ],
                 ),
-              );
-            }
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(milliseconds: 1800),
+              ),
+            );
           } else {
             _mostrarDialogoBloqueo(context, tema, diasRacha);
           }
