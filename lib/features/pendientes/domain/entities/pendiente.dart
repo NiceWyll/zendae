@@ -10,7 +10,7 @@ class Pendiente {
   final HoraDelDia hora;
   final Prioridad prioridad;
   final bool tieneRecordatorio;
-  final int minutosAntes; // Ej. 10, 15, 30, 60
+  final int minutosAntes; // Ej. 15, 30, 60, 120, 180
   final Repeticion repetir;
   final bool estaCompletado;
   final DateTime? fechaCompletado;
@@ -25,7 +25,7 @@ class Pendiente {
     required this.hora,
     this.prioridad = Prioridad.media,
     this.tieneRecordatorio = false,
-    this.minutosAntes = 10,
+    this.minutosAntes = 15,
     this.repetir = Repeticion.noRepetir,
     this.estaCompletado = false,
     this.fechaCompletado,

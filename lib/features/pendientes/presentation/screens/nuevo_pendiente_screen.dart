@@ -46,7 +46,9 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
     _horaSeleccionada = p?.hora.comoTimeOfDay ?? const TimeOfDay(hour: 10, minute: 30);
     _prioridad = p?.prioridad ?? Prioridad.media;
     _tieneRecordatorio = p?.tieneRecordatorio ?? true;
-    _minutosAntes = p?.minutosAntes ?? 10;
+    final int minutosCargados = p?.minutosAntes ?? 15;
+    const opcionesValidas = [15, 30, 60, 120, 180];
+    _minutosAntes = opcionesValidas.contains(minutosCargados) ? minutosCargados : 15;
     _repetir = p?.repetir.comoTexto ?? 'No repetir';
     _claseId = p?.claseId ?? widget.claseIdInicial;
   }
@@ -380,11 +382,11 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
                     value: _minutosAntes,
                     icon: Icon(Icons.keyboard_arrow_down, color: primaryColor),
                     items: const [
-                      DropdownMenuItem(value: 5, child: Text('5 minutos antes')),
-                      DropdownMenuItem(value: 10, child: Text('10 minutos antes')),
                       DropdownMenuItem(value: 15, child: Text('15 minutos antes')),
                       DropdownMenuItem(value: 30, child: Text('30 minutos antes')),
                       DropdownMenuItem(value: 60, child: Text('1 hora antes')),
+                      DropdownMenuItem(value: 120, child: Text('2 horas antes')),
+                      DropdownMenuItem(value: 180, child: Text('3 horas antes')),
                     ],
                     style: TextStyle(
                       fontSize: 14,

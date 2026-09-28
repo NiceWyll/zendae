@@ -355,7 +355,9 @@ class NotificationServiceImpl implements NotificationScheduler {
       }
 
       final String aviso = pendiente.minutosAntes > 0
-          ? 'En ${pendiente.minutosAntes} minutos: ${pendiente.titulo}'
+          ? (pendiente.minutosAntes >= 60 && pendiente.minutosAntes % 60 == 0
+              ? 'En ${pendiente.minutosAntes ~/ 60} ${pendiente.minutosAntes ~/ 60 == 1 ? "hora" : "horas"}: ${pendiente.titulo}'
+              : 'En ${pendiente.minutosAntes} minutos: ${pendiente.titulo}')
           : '¡Es hora de: ${pendiente.titulo}!';
 
       await programarRecordatorio(

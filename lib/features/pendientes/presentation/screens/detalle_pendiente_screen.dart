@@ -174,7 +174,7 @@ class DetallePendienteScreen extends ConsumerWidget {
                         icon: Icons.notifications_none_rounded,
                         label: 'Recordatorio',
                         value: pendiente.tieneRecordatorio
-                            ? '${pendiente.minutosAntes} minutos antes'
+                            ? _formatearAvisoMinutos(pendiente.minutosAntes)
                             : 'Sin recordatorio',
                         isDark: isDark,
                       ),
@@ -425,5 +425,26 @@ class DetallePendienteScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  String _formatearAvisoMinutos(int m) {
+    switch (m) {
+      case 15:
+        return '15 minutos antes';
+      case 30:
+        return '30 minutos antes';
+      case 60:
+        return '1 hora antes';
+      case 120:
+        return '2 horas antes';
+      case 180:
+        return '3 horas antes';
+      default:
+        if (m >= 60 && m % 60 == 0) {
+          final h = m ~/ 60;
+          return '$h ${h == 1 ? "hora" : "horas"} antes';
+        }
+        return '$m minutos antes';
+    }
   }
 }

@@ -872,7 +872,7 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    '${DateTimeUtils.formatFullDate(item.fecha)} a las ${DateTimeUtils.formatTime(item.hora)} (${item.minutosAntes} min antes)',
+                                    '${DateTimeUtils.formatFullDate(item.fecha)} a las ${DateTimeUtils.formatTime(item.hora)} (${item.minutosAntes >= 60 && item.minutosAntes % 60 == 0 ? "${item.minutosAntes ~/ 60}h antes" : "${item.minutosAntes} min antes"})',
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: isDark ? Colors.white70 : const Color(0xFF64748B),
