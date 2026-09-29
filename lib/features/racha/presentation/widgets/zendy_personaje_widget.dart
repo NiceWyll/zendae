@@ -2,9 +2,11 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Personaje animado de la Racha: "Zendy, el Reloj con ojos".
 /// Reemplaza el ícono de fuego 🔥 con movimiento continuo, parpadeo y ropa intercambiable.
+/// Además cuenta con animación de alegría y celebración al hacer clic / tocar.
 class ZendyPersonajeWidget extends StatefulWidget {
   final double size;
   final String prendaId;
@@ -23,14 +25,23 @@ class ZendyPersonajeWidget extends StatefulWidget {
         animado = animar ?? animado ?? true;
 
   @override
-  State<ZendyPersonajeWidget> createState() => _ZendyPersonajeWidgetState();
+  State<ZendyPersonajeWidget> createState() => ZendyPersonajeWidgetState();
 }
 
-class _ZendyPersonajeWidgetState extends State<ZendyPersonajeWidget>
-    with SingleTickerProviderStateMixin {
+class ZendyPersonajeWidgetState extends State<ZendyPersonajeWidget>
+    with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _flotacionAnim;
   late Animation<double> _parpadeoAnim;
+
+  // Animaciones interactivas de alegría al hacer clic
+  late AnimationController _happyController;
+  late Animation<double> _happyJumpAnim;
+  late Animation<double> _happyScaleXAnim;
+  late Animation<double> _happyScaleYAnim;
+  late Animation<double> _happyWiggleAnim;
+  late Animation<double> _happyFaceAnim;
+  late Animation<double> _happySparklesAnim;
 
   @override
   void initState() {
@@ -66,10 +77,80 @@ class _ZendyPersonajeWidgetState extends State<ZendyPersonajeWidget>
       TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 4),
     ]).animate(_controller);
 
+    // 2. Controlador de celebración feliz (al tocar a Zendy)
+    _happyController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 750),
+    );
+
+    // Salto elástico de alegría
+    _happyJumpAnim = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 0.0, end: 3.0).chain(CurveTween(curve: Curves.easeIn)),
+        weight: 12,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 3.0, end: -18.0).chain(CurveTween(curve: Curves.easeOutQuad)),
+        weight: 38,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: -18.0, end: 1.5).chain(CurveTween(curve: Curves.bounceOut)),
+        weight: 30,
+      ),
+      TweenSequenceItem(
+        tween: Tween<double>(begin: 1.5, end: 0.0).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 20,
+      ),
+    ]).animate(_happyController);
+
+    // Squash & Stretch
+    _happyScaleXAnim = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.15), weight: 12),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.15, end: 0.90), weight: 38),
+      TweenSequenceItem(tween: Tween<double>(begin: 0.90, end: 1.08), weight: 28),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.08, end: 1.0), weight: 22),
+    ]).animate(_happyController);
+
+    _happyScaleYAnim = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.85), weight: 12),
+      TweenSequenceItem(tween: Tween<double>(begin: 0.85, end: 1.18), weight: 38),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.18, end: 0.94), weight: 28),
+      TweenSequenceItem(tween: Tween<double>(begin: 0.94, end: 1.0), weight: 22),
+    ]).animate(_happyController);
+
+    // Meneo alegre de cabeza (-8.5° a +8.5°)
+    _happyWiggleAnim = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: -0.15), weight: 18),
+      TweenSequenceItem(tween: Tween<double>(begin: -0.15, end: 0.15), weight: 32),
+      TweenSequenceItem(tween: Tween<double>(begin: 0.15, end: -0.08), weight: 25),
+      TweenSequenceItem(tween: Tween<double>(begin: -0.08, end: 0.0), weight: 25),
+    ]).animate(_happyController);
+
+    // Expresión facial feliz: cara de alegría (^ ^ y sonrisa abierta D)
+    _happyFaceAnim = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0), weight: 15),
+      TweenSequenceItem(tween: ConstantTween<double>(1.0), weight: 65),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.0), weight: 20),
+    ]).animate(_happyController);
+
+    // Estrellitas y destellos mágicos
+    _happySparklesAnim = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeOutBack)), weight: 35),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 1.1), weight: 35),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.1, end: 0.0).chain(CurveTween(curve: Curves.easeIn)), weight: 30),
+    ]).animate(_happyController);
+
     final bool esTest = !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
     if (widget.animado && !esTest) {
       _controller.repeat();
     }
+  }
+
+  /// Dispara la reacción alegre de Zendy con vibración háptica
+  Future<void> reaccionarFeliz() async {
+    HapticFeedback.lightImpact();
+    if (!mounted) return;
+    await _happyController.forward(from: 0.0);
   }
 
   @override
@@ -89,41 +170,60 @@ class _ZendyPersonajeWidgetState extends State<ZendyPersonajeWidget>
   @override
   void dispose() {
     _controller.dispose();
+    _happyController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     Widget content = AnimatedBuilder(
-      animation: _controller,
+      animation: Listenable.merge([_controller, _happyController]),
       builder: (context, child) {
         // En tamaños compactos (ej. chips de AppBar), la flotación se escala para mantenerse dentro del contenedor
         final double scaleFactor = (widget.size <= 24) ? 0.25 : 1.0;
-        final dy = widget.animado ? (_flotacionAnim.value * scaleFactor) : 0.0;
+        final dyFlotacion = widget.animado ? (_flotacionAnim.value * scaleFactor) : 0.0;
+        final dySalto = _happyController.isAnimating ? (_happyJumpAnim.value * scaleFactor) : 0.0;
         final blinkScale = widget.animado ? _parpadeoAnim.value : 1.0;
 
+        final scaleX = _happyController.isAnimating ? _happyScaleXAnim.value : 1.0;
+        final scaleY = _happyController.isAnimating ? _happyScaleYAnim.value : 1.0;
+        final rotation = _happyController.isAnimating ? _happyWiggleAnim.value : 0.0;
+        final happyFace = _happyController.isAnimating ? _happyFaceAnim.value : 0.0;
+        final sparkles = _happyController.isAnimating ? _happySparklesAnim.value : 0.0;
+
         return Transform.translate(
-          offset: Offset(0, dy),
-          child: CustomPaint(
-            size: Size(widget.size, widget.size),
-            painter: _ZendyPainter(
-              prendaId: widget.prendaId,
-              blinkScale: blinkScale,
-              animationValue: _controller.value,
+          offset: Offset(0, dyFlotacion + dySalto),
+          child: Transform.rotate(
+            angle: rotation,
+            alignment: Alignment.bottomCenter,
+            child: Transform.scale(
+              scaleX: scaleX,
+              scaleY: scaleY,
+              alignment: Alignment.bottomCenter,
+              child: CustomPaint(
+                size: Size(widget.size, widget.size),
+                painter: _ZendyPainter(
+                  prendaId: widget.prendaId,
+                  blinkScale: blinkScale,
+                  animationValue: _controller.value,
+                  happyValue: happyFace,
+                  sparkleValue: sparkles,
+                ),
+              ),
             ),
           ),
         );
       },
     );
 
-    if (widget.onTap != null) {
-      return GestureDetector(
-        onTap: widget.onTap,
-        child: content,
-      );
-    }
-
-    return content;
+    return GestureDetector(
+      onTap: () {
+        reaccionarFeliz();
+        widget.onTap?.call();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: content,
+    );
   }
 }
 
@@ -131,11 +231,15 @@ class _ZendyPainter extends CustomPainter {
   final String prendaId;
   final double blinkScale;
   final double animationValue;
+  final double happyValue;
+  final double sparkleValue;
 
   _ZendyPainter({
     required this.prendaId,
     required this.blinkScale,
     required this.animationValue,
+    this.happyValue = 0.0,
+    this.sparkleValue = 0.0,
   });
 
   @override
@@ -304,95 +408,218 @@ class _ZendyPainter extends CustomPainter {
     final eyeDistance = radio * 0.36;
     final eyeRadius = radio * 0.22;
 
-    // Mejillas rosaditas
+    // Mejillas rosaditas (más brillantes cuando está feliz)
+    final cheekColor = happyValue > 0.1
+        ? const Color(0xFFF43F5E).withOpacity((0.55 + 0.35 * happyValue).clamp(0.0, 0.95))
+        : const Color(0xFFFB7185).withOpacity(0.5);
+    final cheekRadiusExtra = happyValue * radio * 0.10;
+
     final cheekPaint = Paint()
-      ..color = const Color(0xFFFB7185).withOpacity(0.5)
+      ..color = cheekColor
       ..style = PaintingStyle.fill;
     canvas.drawOval(
       Rect.fromCenter(
         center: Offset(center.dx - eyeDistance * 1.25, center.dy + radio * 0.22),
-        width: radio * 0.26,
-        height: radio * 0.15,
+        width: radio * 0.26 + cheekRadiusExtra,
+        height: radio * 0.15 + cheekRadiusExtra,
       ),
       cheekPaint,
     );
     canvas.drawOval(
       Rect.fromCenter(
         center: Offset(center.dx + eyeDistance * 1.25, center.dy + radio * 0.22),
-        width: radio * 0.26,
-        height: radio * 0.15,
+        width: radio * 0.26 + cheekRadiusExtra,
+        height: radio * 0.15 + cheekRadiusExtra,
       ),
       cheekPaint,
     );
 
-    // Dibujar Ojos (con escala de parpadeo)
-    canvas.save();
-    canvas.translate(0, eyeY);
-    canvas.scale(1.0, blinkScale);
-    canvas.translate(0, -eyeY);
+    // Dibujar Ojos (Ojos felices ^ ^ cuando happyValue > 0.2, normales de lo contrario)
+    if (happyValue > 0.2) {
+      final happyEyePaint = Paint()
+        ..color = const Color(0xFF0F172A)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = eyeRadius * 0.44
+        ..strokeCap = StrokeCap.round;
 
-    final eyePaint = Paint()
-      ..color = const Color(0xFF0F172A)
+      // Ojo Izquierdo feliz (^ curvado de pura alegría)
+      final eyeLeft = Offset(center.dx - eyeDistance, eyeY);
+      final pathL = Path()
+        ..moveTo(eyeLeft.dx - eyeRadius * 0.72, eyeLeft.dy + eyeRadius * 0.30)
+        ..quadraticBezierTo(
+          eyeLeft.dx,
+          eyeLeft.dy - eyeRadius * 0.95,
+          eyeLeft.dx + eyeRadius * 0.72,
+          eyeLeft.dy + eyeRadius * 0.30,
+        );
+      canvas.drawPath(pathL, happyEyePaint);
+
+      // Ojo Derecho feliz (^ curvado de pura alegría)
+      final eyeRight = Offset(center.dx + eyeDistance, eyeY);
+      final pathR = Path()
+        ..moveTo(eyeRight.dx - eyeRadius * 0.72, eyeRight.dy + eyeRadius * 0.30)
+        ..quadraticBezierTo(
+          eyeRight.dx,
+          eyeRight.dy - eyeRadius * 0.95,
+          eyeRight.dx + eyeRadius * 0.72,
+          eyeRight.dy + eyeRadius * 0.30,
+        );
+      canvas.drawPath(pathR, happyEyePaint);
+    } else {
+      canvas.save();
+      canvas.translate(0, eyeY);
+      canvas.scale(1.0, blinkScale);
+      canvas.translate(0, -eyeY);
+
+      final eyePaint = Paint()
+        ..color = const Color(0xFF0F172A)
+        ..style = PaintingStyle.fill;
+
+      // Ojo Izquierdo
+      final eyeLeft = Offset(center.dx - eyeDistance, eyeY);
+      canvas.drawOval(
+        Rect.fromCenter(center: eyeLeft, width: eyeRadius * 1.3, height: eyeRadius * 1.7),
+        eyePaint,
+      );
+      // Brillo principal blanco
+      canvas.drawCircle(
+        Offset(eyeLeft.dx - eyeRadius * 0.25, eyeLeft.dy - eyeRadius * 0.35),
+        eyeRadius * 0.42,
+        Paint()..color = Colors.white,
+      );
+      // Brillo secundario blanco
+      canvas.drawCircle(
+        Offset(eyeLeft.dx + eyeRadius * 0.3, eyeLeft.dy + eyeRadius * 0.3),
+        eyeRadius * 0.2,
+        Paint()..color = Colors.white.withOpacity(0.85),
+      );
+
+      // Ojo Derecho
+      final eyeRight = Offset(center.dx + eyeDistance, eyeY);
+      canvas.drawOval(
+        Rect.fromCenter(center: eyeRight, width: eyeRadius * 1.3, height: eyeRadius * 1.7),
+        eyePaint,
+      );
+      // Brillo principal blanco
+      canvas.drawCircle(
+        Offset(eyeRight.dx - eyeRadius * 0.25, eyeRight.dy - eyeRadius * 0.35),
+        eyeRadius * 0.42,
+        Paint()..color = Colors.white,
+      );
+      // Brillo secundario blanco
+      canvas.drawCircle(
+        Offset(eyeRight.dx + eyeRadius * 0.3, eyeRight.dy + eyeRadius * 0.3),
+        eyeRadius * 0.2,
+        Paint()..color = Colors.white.withOpacity(0.85),
+      );
+      canvas.restore();
+    }
+
+    // 6. BOCA (Boca abierta feliz estilo D con lengüita cuando happyValue > 0.2, o sonrisa normal)
+    if (happyValue > 0.2) {
+      final happyMouthPath = Path()
+        ..moveTo(center.dx - radio * 0.26, center.dy + radio * 0.25)
+        ..quadraticBezierTo(
+          center.dx,
+          center.dy + radio * 0.20,
+          center.dx + radio * 0.26,
+          center.dy + radio * 0.25,
+        )
+        ..quadraticBezierTo(
+          center.dx,
+          center.dy + radio * 0.62,
+          center.dx - radio * 0.26,
+          center.dy + radio * 0.25,
+        );
+
+      // Fondo oscuro de la boca
+      canvas.drawPath(
+        happyMouthPath,
+        Paint()..color = const Color(0xFF78350F)..style = PaintingStyle.fill,
+      );
+
+      // Lengüita rosadita tierna en el fondo
+      canvas.save();
+      canvas.clipPath(happyMouthPath);
+      canvas.drawCircle(
+        Offset(center.dx, center.dy + radio * 0.52),
+        radio * 0.17,
+        Paint()..color = const Color(0xFFFB7185),
+      );
+      canvas.restore();
+
+      // Borde de la boca
+      canvas.drawPath(
+        happyMouthPath,
+        Paint()
+          ..color = const Color(0xFF78350F)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = radio * 0.05
+          ..strokeCap = StrokeCap.round,
+      );
+    } else {
+      final mouthPaint = Paint()
+        ..color = const Color(0xFF78350F)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = radio * 0.075
+        ..strokeCap = StrokeCap.round;
+
+      final mouthPath = Path()
+        ..moveTo(center.dx - radio * 0.22, center.dy + radio * 0.28)
+        ..quadraticBezierTo(
+          center.dx,
+          center.dy + radio * 0.48,
+          center.dx + radio * 0.22,
+          center.dy + radio * 0.28,
+        );
+      canvas.drawPath(mouthPath, mouthPaint);
+    }
+
+    // 7. DESTELLOS Y ESTRELLITAS DE CELEBRACIÓN (Al rededor del cuerpo de Zendy)
+    if (sparkleValue > 0.05) {
+      _dibujarEstrellitasCelebracion(canvas, center, radio, sparkleValue);
+    }
+
+    // 8. CAPA DE ACCESORIOS / PRENDAS DESBLOQUEADAS
+    _dibujarPrendaEquipada(canvas, center, radio, w, h);
+  }
+
+  void _dibujarEstrellitasCelebracion(Canvas canvas, Offset center, double radio, double progress) {
+    final double opacity = (math.sin(progress.clamp(0.0, 1.0) * math.pi)).clamp(0.0, 1.0);
+    final paintGold = Paint()
+      ..color = const Color(0xFFFFD700).withValues(alpha: opacity)
+      ..style = PaintingStyle.fill;
+    final paintWhite = Paint()
+      ..color = Colors.white.withValues(alpha: opacity * 0.95)
       ..style = PaintingStyle.fill;
 
-    // Ojo Izquierdo
-    final eyeLeft = Offset(center.dx - eyeDistance, eyeY);
-    canvas.drawOval(
-      Rect.fromCenter(center: eyeLeft, width: eyeRadius * 1.3, height: eyeRadius * 1.7),
-      eyePaint,
-    );
-    // Brillo principal blanco
-    canvas.drawCircle(
-      Offset(eyeLeft.dx - eyeRadius * 0.25, eyeLeft.dy - eyeRadius * 0.35),
-      eyeRadius * 0.42,
-      Paint()..color = Colors.white,
-    );
-    // Brillo secundario blanco
-    canvas.drawCircle(
-      Offset(eyeLeft.dx + eyeRadius * 0.3, eyeLeft.dy + eyeRadius * 0.3),
-      eyeRadius * 0.2,
-      Paint()..color = Colors.white.withOpacity(0.85),
-    );
+    final offsets = [
+      Offset(center.dx + radio * 0.98, center.dy - radio * 0.72),
+      Offset(center.dx - radio * 0.98, center.dy - radio * 0.68),
+      Offset(center.dx + radio * 1.10, center.dy + radio * 0.36),
+      Offset(center.dx - radio * 1.10, center.dy + radio * 0.40),
+    ];
 
-    // Ojo Derecho
-    final eyeRight = Offset(center.dx + eyeDistance, eyeY);
-    canvas.drawOval(
-      Rect.fromCenter(center: eyeRight, width: eyeRadius * 1.3, height: eyeRadius * 1.7),
-      eyePaint,
-    );
-    // Brillo principal blanco
-    canvas.drawCircle(
-      Offset(eyeRight.dx - eyeRadius * 0.25, eyeRight.dy - eyeRadius * 0.35),
-      eyeRadius * 0.42,
-      Paint()..color = Colors.white,
-    );
-    // Brillo secundario blanco
-    canvas.drawCircle(
-      Offset(eyeRight.dx + eyeRadius * 0.3, eyeRight.dy + eyeRadius * 0.3),
-      eyeRadius * 0.2,
-      Paint()..color = Colors.white.withOpacity(0.85),
-    );
-    canvas.restore();
+    for (int i = 0; i < offsets.length; i++) {
+      final pos = offsets[i];
+      final starSize = radio * 0.26 * progress;
+      _dibujarEstrella4Puntas(canvas, pos, starSize, paintGold, paintWhite);
+    }
+  }
 
-    // 6. SONRISA CONTENTA
-    final mouthPaint = Paint()
-      ..color = const Color(0xFF78350F)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = radio * 0.075
-      ..strokeCap = StrokeCap.round;
+  void _dibujarEstrella4Puntas(Canvas canvas, Offset center, double size, Paint paintGold, Paint paintWhite) {
+    if (size <= 0) return;
+    final path = Path();
+    final half = size / 2;
+    path.moveTo(center.dx, center.dy - half);
+    path.quadraticBezierTo(center.dx, center.dy, center.dx + half, center.dy);
+    path.quadraticBezierTo(center.dx, center.dy, center.dx, center.dy + half);
+    path.quadraticBezierTo(center.dx, center.dy, center.dx - half, center.dy);
+    path.quadraticBezierTo(center.dx, center.dy, center.dx, center.dy - half);
+    path.close();
 
-    final mouthPath = Path()
-      ..moveTo(center.dx - radio * 0.22, center.dy + radio * 0.28)
-      ..quadraticBezierTo(
-        center.dx,
-        center.dy + radio * 0.48,
-        center.dx + radio * 0.22,
-        center.dy + radio * 0.28,
-      );
-    canvas.drawPath(mouthPath, mouthPaint);
-
-    // 7. CAPA DE ACCESORIOS / PRENDAS DESBLOQUEADAS
-    _dibujarPrendaEquipada(canvas, center, radio, w, h);
+    canvas.drawPath(path, paintGold);
+    canvas.drawCircle(center, size * 0.16, paintWhite);
   }
 
   void _dibujarCapaHeroe(Canvas canvas, Offset center, double radio, double w, double h) {

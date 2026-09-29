@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
 import 'package:mi_pendiente/core/constants/app_config.dart';
@@ -19,6 +20,30 @@ class MisLogrosScreen extends ConsumerStatefulWidget {
 class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
   RangoRacha _rangoSeleccionado = RangoRacha.bronce;
   final Set<RangoRacha> _rangosDesbloqueadosManualmente = {};
+  final GlobalKey<ZendyPersonajeWidgetState> _zendyHeroKey = GlobalKey<ZendyPersonajeWidgetState>();
+
+  int _fraseHeroIndex = 0;
+  bool _mostrarBocadilloHero = false;
+
+  static const List<String> _frasesHeroFelices = [
+    '¡Vamos con todo hoy! 🔥',
+    '¡Tu racha está que arde! ⚡',
+    '¡Sigue así, vas increíble! 🌟',
+    '¡Qué alegría verte aquí! 💛',
+    '¡Eres imparable! 🚀',
+    '¡Hoy no se procrastina! 🎉',
+    '¡Zendy está súper feliz! ✨',
+    '¡Tu constancia es legendaria! 🏆',
+  ];
+
+  void _celebrarHeroZendy() {
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _fraseHeroIndex = (_fraseHeroIndex + 1) % _frasesHeroFelices.length;
+      _mostrarBocadilloHero = true;
+    });
+    _zendyHeroKey.currentState?.reaccionarFeliz();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -262,25 +287,74 @@ class _MisLogrosScreenState extends ConsumerState<MisLogrosScreen> {
       ),
       child: Column(
         children: [
-          Container(
-            width: 88,
-            height: 88,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+          // Bocadillo de diálogo motivacional flotante
+          GestureDetector(
+            onTap: _celebrarHeroZendy,
+            child: AnimatedOpacity(
+              opacity: _mostrarBocadilloHero ? 1.0 : 0.92,
+              duration: const Duration(milliseconds: 250),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.18),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-              ],
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _mostrarBocadilloHero
+                          ? _frasesHeroFelices[_fraseHeroIndex]
+                          : '¡Tócame para alegrarme! ✨',
+                      style: const TextStyle(
+                        color: Color(0xFF0F172A),
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            child: Center(
-              child: ZendyPersonajeWidget(
-                size: 72,
-                prendaId: prendaId,
-                animado: true,
+          ),
+
+          // Avatar de Zendy en tamaño grande con aura pulsante y respuesta táctil
+          GestureDetector(
+            onTap: _celebrarHeroZendy,
+            child: Container(
+              width: 98,
+              height: 98,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.24),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.45),
+                  width: 2.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.16),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: ZendyPersonajeWidget(
+                  key: _zendyHeroKey,
+                  size: 80,
+                  prendaId: prendaId,
+                  animado: true,
+                  onTap: _celebrarHeroZendy,
+                ),
               ),
             ),
           ),
