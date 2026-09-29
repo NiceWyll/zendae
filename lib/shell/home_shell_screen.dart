@@ -729,9 +729,10 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: Center(
               child: Text(
-                'Zendae · v1.0.0',
+                'Zendae · v1.1.0 (Edición Zendy)',
                 style: TextStyle(
                   fontSize: 12,
+                  fontWeight: FontWeight.w600,
                   color: isDark ? AppColors.textMuted : const Color(0xFF94A3B8),
                 ),
               ),

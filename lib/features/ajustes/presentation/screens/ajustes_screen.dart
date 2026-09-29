@@ -410,10 +410,24 @@ class AjustesScreen extends ConsumerWidget {
           primaryColor: primaryColor,
           icon: Icons.info_outline_rounded,
           title: 'Acerca de la aplicación',
-          trailing: const Icon(
-            Icons.chevron_right,
-            color: Color(0xFF94A3B8),
-            size: 22,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'v1.1.0',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: primaryColor,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.chevron_right,
+                color: Color(0xFF94A3B8),
+                size: 22,
+              ),
+            ],
           ),
           onTap: () => _mostrarAcercaDe(context, primaryColor),
         ),
@@ -510,35 +524,84 @@ class AjustesScreen extends ConsumerWidget {
   }
 
   void _mostrarAcercaDe(BuildContext context, Color primaryColor) {
+    final isIOS = Platform.isIOS;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Icon(Icons.calendar_month_rounded, color: primaryColor),
-            const SizedBox(width: 10),
-            const Text('Zendae', style: TextStyle(fontWeight: FontWeight.w700)),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: primaryColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.calendar_month_rounded, color: primaryColor, size: 24),
+            ),
+            const SizedBox(width: 12),
+            const Text('Zendae', style: TextStyle(fontWeight: FontWeight.w800)),
           ],
         ),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Versión 1.0.0 (MVP)'),
-            SizedBox(height: 8),
-            Text('Aplicación móvil de organización personal simple e intuitiva.'),
-            SizedBox(height: 12),
-            Text(
-              'Construida con Flutter, Clean Architecture y Riverpod para Android e iOS.',
-              style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: primaryColor.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: primaryColor.withOpacity(0.3)),
+              ),
+              child: Text(
+                'Versión 1.1.0 (Edición Zendy)',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: primaryColor,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Organizador personal inteligente con Zendy, vestidor de racha, horario con despertador, avisos flexibles y 100% offline.',
+              style: TextStyle(fontSize: 14, height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF64748B).withOpacity(0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isIOS
+                        ? '🍎 Plataforma: iOS (iPhone) · Modo Pruebas Desbloqueado'
+                        : '🤖 Plataforma: Android (APK) · Desbloqueo por Racha',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Base de datos SQLite local · Cero anuncios · 100% Privado',
+                    style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
         actions: [
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: primaryColor),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cerrar', style: TextStyle(color: Colors.white)),
+            child: const Text('Entendido', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
