@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
@@ -90,7 +91,7 @@ class _HorarioScreenState extends ConsumerState<HorarioScreen> {
     final primaryColor = Theme.of(context).primaryColor;
     final hoyWeekday = DateTime.now().weekday;
     final pathFondo = ref.watch(ajustesProvider).fondoPersonalizadoPath;
-    final esFondo = pathFondo != null && pathFondo.isNotEmpty;
+    final esFondo = pathFondo != null && pathFondo.isNotEmpty && File(pathFondo).existsSync();
 
     final content = asyncClases.when(
         loading: () => const Center(child: CircularProgressIndicator()),

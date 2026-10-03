@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
@@ -67,7 +68,7 @@ class _CalendarioGeneralScreenState extends ConsumerState<CalendarioGeneralScree
     });
 
     final pathFondo = ref.watch(ajustesProvider).fondoPersonalizadoPath;
-    final esFondoPersonalizado = pathFondo != null && pathFondo.isNotEmpty;
+    final esFondoPersonalizado = pathFondo != null && pathFondo.isNotEmpty && File(pathFondo).existsSync();
 
     return GestureDetector(
       onVerticalDragEnd: (details) {

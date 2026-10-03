@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mi_pendiente/core/constants/app_colors.dart';
@@ -79,9 +80,10 @@ class _HomeShellScreenState extends ConsumerState<HomeShellScreen> {
     final hoyList = ref.watch(pendientesDeHoyProvider).valueOrNull ?? [];
     final mostrarFab = _bottomNavIndex == 1 || (_bottomNavIndex == 0 && hoyList.isNotEmpty) || _bottomNavIndex == 2;
     final ajustesState = ref.watch(ajustesProvider);
-    final esFondoPersonalizado = (ajustesState.fondoPersonalizadoPath != null &&
-            ajustesState.fondoPersonalizadoPath!.trim().isNotEmpty) ||
-        ajustesState.temaId == 'fondo_personalizado';
+    final esFondoPersonalizado = ((ajustesState.fondoPersonalizadoPath != null &&
+            ajustesState.fondoPersonalizadoPath!.trim().isNotEmpty &&
+            File(ajustesState.fondoPersonalizadoPath!).existsSync()) ||
+        ajustesState.temaId == 'fondo_personalizado');
     final scaffoldBg = esFondoPersonalizado
         ? Colors.transparent
         : (isDark ? AppColors.backgroundDark : AppColors.backgroundLight);
