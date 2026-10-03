@@ -1,7 +1,7 @@
 name: mi_pendiente
 description: "Mi Pendiente - Organización personal simple e intuitiva para tu día, semana y mes."
 publish_to: 'none'
-version: 1.1.0+2
+version: 1.1.1+3
 
 environment:
   sdk: ^3.5.0
