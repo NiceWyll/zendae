@@ -27,73 +27,52 @@ class BannerRachaChip extends ConsumerStatefulWidget {
 }
 
 class _BannerRachaChipState extends ConsumerState<BannerRachaChip>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   late AnimationController _idleController;
   late Animation<double> _bobAnim;
   late Animation<double> _swayAnim;
   late Animation<double> _glowAnim;
   late Animation<double> _flickerAnim;
-
-  late AnimationController _clickController;
-  late Animation<double> _clickScaleAnim;
-  late Animation<double> _clickBurstAnim;
-
-  bool _isPressed = false;
+  late Animation<double> _pulseScaleAnim;
 
   @override
   void initState() {
     super.initState();
 
-    // 1. Animación continua pasiva (vaivén, respiración y parpadeo de llama)
+    // Animación continua pasiva (flotación, vaivén, respiración y titileo de fuego)
     _idleController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2400),
+      duration: const Duration(milliseconds: 1800),
     );
 
-    // Flotación vertical suave (-3.2px a 0.0px)
-    _bobAnim = Tween<double>(begin: 0.0, end: -3.2).animate(
-      CurvedAnimation(parent: _idleController, curve: Curves.easeInOut),
+    // Flotación vertical suave (-2.8px a 1.2px)
+    _bobAnim = Tween<double>(begin: -2.8, end: 1.2).animate(
+      CurvedAnimation(parent: _idleController, curve: Curves.easeInOutSine),
     );
 
-    // Vaivén orgánico de inclinación (aprox. -2.2° a +2.2°)
-    _swayAnim = Tween<double>(begin: -0.038, end: 0.038).animate(
+    // Vaivén orgánico de inclinación (aprox. -2.0° a +2.0°)
+    _swayAnim = Tween<double>(begin: -0.035, end: 0.035).animate(
+      CurvedAnimation(parent: _idleController, curve: Curves.easeInOutSine),
+    );
+
+    // Respiración suave de escala (0.98 a 1.03) para dar sensación viva
+    _pulseScaleAnim = Tween<double>(begin: 0.98, end: 1.03).animate(
       CurvedAnimation(parent: _idleController, curve: Curves.easeInOut),
     );
 
     // Parpadeo / pulsación suave del aura luminosa y sombra (glow)
-    _glowAnim = Tween<double>(begin: 0.35, end: 0.90).animate(
+    _glowAnim = Tween<double>(begin: 0.40, end: 0.95).animate(
       CurvedAnimation(parent: _idleController, curve: Curves.easeInOut),
     );
 
     // Titileo dinámico que simula el parpadeo de fuego
     _flickerAnim = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween<double>(begin: 0.88, end: 1.0), weight: 28),
-      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.72), weight: 22),
-      TweenSequenceItem(tween: Tween<double>(begin: 0.72, end: 1.0), weight: 28),
-      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.88), weight: 22),
+      TweenSequenceItem(tween: Tween<double>(begin: 0.85, end: 1.0), weight: 28),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.70), weight: 22),
+      TweenSequenceItem(tween: Tween<double>(begin: 0.70, end: 1.0), weight: 28),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.85), weight: 22),
     ]).animate(
       CurvedAnimation(parent: _idleController, curve: Curves.easeInOut),
-    );
-
-    // 2. Animación interactiva de clic (rebote elástico + destello)
-    _clickController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 340),
-    );
-
-    _clickScaleAnim = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 0.88, end: 1.18).chain(CurveTween(curve: Curves.easeOutBack)),
-        weight: 45,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1.18, end: 1.0).chain(CurveTween(curve: Curves.elasticOut)),
-        weight: 55,
-      ),
-    ]).animate(_clickController);
-
-    _clickBurstAnim = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(parent: _clickController, curve: Curves.easeOut),
     );
 
     final bool esTest = !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
@@ -105,18 +84,11 @@ class _BannerRachaChipState extends ConsumerState<BannerRachaChip>
   @override
   void dispose() {
     _idleController.dispose();
-    _clickController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleTap() async {
+  void _handleTap() {
     HapticFeedback.lightImpact();
-    setState(() => _isPressed = false);
-
-    // Disparar animación de rebote y destello
-    await _clickController.forward(from: 0.0);
-
-    if (!mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => const MisLogrosScreen(),
@@ -144,17 +116,13 @@ class _BannerRachaChipState extends ConsumerState<BannerRachaChip>
     bool isDark,
   ) {
     return AnimatedBuilder(
-      animation: Listenable.merge([_idleController, _clickController]),
+      animation: _idleController,
       builder: (context, _) {
-        final double scale = _clickController.isAnimating
-            ? _clickScaleAnim.value
-            : (_isPressed ? 0.90 : 1.0);
-
         final double bob = _bobAnim.value;
         final double sway = _swayAnim.value;
+        final double scale = _pulseScaleAnim.value;
         final double glow = _glowAnim.value;
         final double flicker = _flickerAnim.value;
-        final double burst = _clickController.isAnimating ? _clickBurstAnim.value : 0.0;
 
         return Transform.translate(
           offset: Offset(0, bob),
@@ -164,21 +132,16 @@ class _BannerRachaChipState extends ConsumerState<BannerRachaChip>
               scale: scale,
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTapDown: (_) {
-                  setState(() => _isPressed = true);
-                },
-                onTapUp: (_) => _handleTap(),
-                onTapCancel: () {
-                  setState(() => _isPressed = false);
-                },
-                child: _buildChipContent(
-                  context,
-                  racha,
-                  prendaId,
-                  isDark,
-                  glow,
-                  flicker,
-                  burst,
+                onTap: _handleTap,
+                child: IgnorePointer(
+                  child: _buildChipContent(
+                    context,
+                    racha,
+                    prendaId,
+                    isDark,
+                    glow,
+                    flicker,
+                  ),
                 ),
               ),
             ),
@@ -195,15 +158,14 @@ class _BannerRachaChipState extends ConsumerState<BannerRachaChip>
     bool isDark,
     double glow,
     double flicker,
-    double burst,
   ) {
     final tieneRacha = racha.diasActuales > 0;
 
     // Gradiente con efecto de titileo parpadeante sutil
     final gradientColors = tieneRacha
         ? [
-            Color.lerp(const Color(0xFFF59E0B), const Color(0xFFFBBF24), (flicker - 0.72) / 0.28) ?? const Color(0xFFF59E0B),
-            Color.lerp(const Color(0xFFD97706), const Color(0xFFEA580C), burst) ?? const Color(0xFFD97706),
+            Color.lerp(const Color(0xFFF59E0B), const Color(0xFFFBBF24), (flicker - 0.70) / 0.30) ?? const Color(0xFFF59E0B),
+            const Color(0xFFEA580C),
           ]
         : isDark
             ? [const Color(0xFF2C2C2C), const Color(0xFF1E1E1E)]
@@ -216,14 +178,14 @@ class _BannerRachaChipState extends ConsumerState<BannerRachaChip>
             : const Color(0xFF64748B);
 
     // Resplandor pulsante / parpadeante
-    final double auraOpacity = (tieneRacha ? (glow * 0.45 + burst * 0.45) : (glow * 0.15)).clamp(0.0, 1.0);
-    final double blurRadius = tieneRacha ? (6.0 + glow * 8.0 + burst * 8.0) : (4.0 + glow * 3.0);
-    final double spreadRadius = tieneRacha ? (0.4 + glow * 1.2 + burst * 1.5) : 0.0;
+    final double auraOpacity = (tieneRacha ? (glow * 0.45) : (glow * 0.15)).clamp(0.0, 1.0);
+    final double blurRadius = tieneRacha ? (6.0 + glow * 8.0) : (4.0 + glow * 3.0);
+    final double spreadRadius = tieneRacha ? (0.4 + glow * 1.2) : 0.0;
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: widget.compacto ? 8 : 12,
-        vertical: widget.compacto ? 4 : 6,
+        horizontal: widget.compacto ? 10 : 14,
+        vertical: widget.compacto ? 5 : 7,
       ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -234,9 +196,9 @@ class _BannerRachaChipState extends ConsumerState<BannerRachaChip>
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: tieneRacha
-              ? const Color(0xFFFDE68A).withOpacity(0.4 + glow * 0.45)
+              ? const Color(0xFFFDE68A).withOpacity(0.45 + glow * 0.45)
               : (isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
-          width: tieneRacha ? (1.0 + glow * 0.6) : 1.0,
+          width: tieneRacha ? (1.1 + glow * 0.5) : 1.0,
         ),
         boxShadow: [
           BoxShadow(
@@ -247,36 +209,30 @@ class _BannerRachaChipState extends ConsumerState<BannerRachaChip>
             spreadRadius: spreadRadius,
             offset: const Offset(0, 1.5),
           ),
-          if (burst > 0.05)
-            BoxShadow(
-              color: Colors.white.withOpacity(burst * 0.6),
-              blurRadius: 14 * burst,
-              spreadRadius: 2 * burst,
-            ),
         ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Personaje animado de Zendy en miniatura
+          // Personaje animado de Zendy en miniatura (ligeramente más grande y visible)
           SizedBox(
-            width: widget.compacto ? 20 : 24,
-            height: widget.compacto ? 20 : 24,
+            width: widget.compacto ? 24 : 28,
+            height: widget.compacto ? 24 : 28,
             child: Center(
               child: ZendyPersonajeWidget(
-                size: widget.compacto ? 18 : 24,
+                size: widget.compacto ? 22 : 26,
                 prendaId: prendaId,
                 animado: true,
               ),
             ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 4.5),
           Text(
             '${racha.diasActuales}',
             style: TextStyle(
               color: textColor,
-              fontSize: widget.compacto ? 12 : 13,
+              fontSize: widget.compacto ? 13.5 : 15,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.2,
             ),
@@ -287,7 +243,7 @@ class _BannerRachaChipState extends ConsumerState<BannerRachaChip>
               racha.diasActuales == 1 ? 'día' : 'días',
               style: TextStyle(
                 color: textColor.withOpacity(0.9),
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
             ),

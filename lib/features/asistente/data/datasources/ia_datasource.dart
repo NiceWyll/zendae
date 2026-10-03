@@ -75,7 +75,7 @@ class NlpIaDatasource implements IaDatasource {
     if (_esPreguntaAgenteOChatbox(lower)) {
       return const ResultadoInterpretacion(
         tipoAccion: TipoAccionIa.conversacional,
-        respuestaTexto: 'Esa función no está disponible para mí. Mi único propósito es ayudarte a organizar y gestionar tus tareas, horarios y recordatorios en Zendae. ¿En qué pendiente te gustaría que te ayude?',
+        respuestaTexto: 'Mi único propósito es ayudarte a organizar y gestionar tus tareas, horarios y recordatorios en Zendae. ¿En qué pendiente te gustaría que te ayude?',
         esConversacional: true,
       );
     }

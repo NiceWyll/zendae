@@ -216,14 +216,18 @@ class ZendyPersonajeWidgetState extends State<ZendyPersonajeWidget>
       },
     );
 
-    return GestureDetector(
-      onTap: () {
-        reaccionarFeliz();
-        widget.onTap?.call();
-      },
-      behavior: HitTestBehavior.opaque,
-      child: content,
-    );
+    if (widget.onTap != null) {
+      return GestureDetector(
+        onTap: () {
+          reaccionarFeliz();
+          widget.onTap?.call();
+        },
+        behavior: HitTestBehavior.opaque,
+        child: content,
+      );
+    }
+
+    return content;
   }
 }
 

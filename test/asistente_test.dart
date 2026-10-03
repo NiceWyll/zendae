@@ -226,15 +226,15 @@ void main() {
       expect(res.respuestaTexto, contains('Soy tu Asistente IA'));
     });
 
-    test('si se le pregunta si es un agente o chatbox, indica que esa función no está disponible y se enfoca en tareas', () async {
+    test('si se le pregunta si es un agente o chatbox, responde con su propósito enfático de Zendae', () async {
       final resAgente = await nlp.interpretarTexto('eres un agente o chatbox?', relojFijo.ahora());
       expect(resAgente.esConversacional, isTrue);
       expect(resAgente.pendiente, isNull);
-      expect(resAgente.respuestaTexto, contains('Esa función no está disponible para mí'));
+      expect(resAgente.respuestaTexto, 'Mi único propósito es ayudarte a organizar y gestionar tus tareas, horarios y recordatorios en Zendae. ¿En qué pendiente te gustaría que te ayude?');
 
       final resChatbox = await nlp.interpretarTexto('eres chatbox?', relojFijo.ahora());
       expect(resChatbox.esConversacional, isTrue);
-      expect(resChatbox.respuestaTexto, contains('Esa función no está disponible para mí'));
+      expect(resChatbox.respuestaTexto, 'Mi único propósito es ayudarte a organizar y gestionar tus tareas, horarios y recordatorios en Zendae. ¿En qué pendiente te gustaría que te ayude?');
     });
 
     test('si el usuario escribe dentias, mercado o tarea sin fecha ni hora, pregunta para qué día y hora es', () async {

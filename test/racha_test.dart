@@ -310,6 +310,36 @@ void main() {
       expect(find.text('días'), findsOneWidget);
     });
 
+    testWidgets('Tocar BannerRachaChip abre la pantalla MisLogrosScreen sin bloquearse', (tester) async {
+      final repo = FakeRachaRepository(
+        const Racha(
+          diasActuales: 5,
+          mejorRacha: 10,
+          ultimaFechaCompletado: null,
+          logrosDesbloqueados: ['dias3'],
+        ),
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            rachaRepositoryProvider.overrideWithValue(repo),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: BannerRachaChip(compacto: true),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(BannerRachaChip));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(MisLogrosScreen), findsOneWidget);
+    });
+
     testWidgets('BannerRachaMotivacional muestra mensaje motivador', (tester) async {
       final repo = FakeRachaRepository(
         const Racha(
