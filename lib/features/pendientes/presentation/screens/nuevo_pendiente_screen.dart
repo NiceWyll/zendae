@@ -32,7 +32,6 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
   late Prioridad _prioridad;
   late bool _tieneRecordatorio;
   late int _minutosAntes;
-  late String _repetir;
   String? _claseId;
   bool _isSaving = false;
 
@@ -49,8 +48,6 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
     final int minutosCargados = p?.minutosAntes ?? 15;
     const opcionesValidas = [15, 30, 60, 120, 180];
     _minutosAntes = opcionesValidas.contains(minutosCargados) ? minutosCargados : 15;
-    final repTexto = p?.repetir.comoTexto ?? 'Una vez';
-    _repetir = (repTexto == 'No repetir') ? 'Una vez' : repTexto;
     _claseId = p?.claseId ?? widget.claseIdInicial;
   }
 
@@ -87,7 +84,7 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
         prioridad: _prioridad,
         tieneRecordatorio: _tieneRecordatorio,
         minutosAntes: _minutosAntes,
-        repetir: Repeticion.desdeTexto(_repetir),
+        repetir: Repeticion.noRepetir,
         estaCompletado: widget.pendienteAEditar?.estaCompletado ?? false,
         fechaCompletado: widget.pendienteAEditar?.fechaCompletado,
         claseId: _claseId,

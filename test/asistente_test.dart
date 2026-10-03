@@ -112,7 +112,7 @@ void main() {
       expect(p.fecha.day, 18); // Hoy
       expect(p.hora.hora, 7);
       expect(p.hora.minuto, 30);
-      expect(p.repetir, Repeticion.diario);
+      expect(p.repetir, Repeticion.noRepetir);
     });
 
     test('interpreta el ejemplo del usuario: "mañana llamar al doctor a las 12 pm alto"', () async {

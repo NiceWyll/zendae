@@ -540,15 +540,6 @@ class NlpIaDatasource implements IaDatasource {
   }
 
   Repeticion _extraerRepeticion(String text) {
-    if (text.contains('todos los dias') || text.contains('cada dia') || text.contains('diario') || text.contains('diariamente')) {
-      return Repeticion.diario;
-    }
-    if (text.contains('todas las semanas') || text.contains('cada semana') || text.contains('semanal') || text.contains('semanalmente')) {
-      return Repeticion.semanal;
-    }
-    if (text.contains('todos los meses') || text.contains('cada mes') || text.contains('mensual') || text.contains('mensualmente')) {
-      return Repeticion.mensual;
-    }
     return Repeticion.noRepetir;
   }
 
