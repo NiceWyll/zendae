@@ -41,6 +41,8 @@ class EnviarMensajeChat {
     List<Clase> clasesExistentes = const [],
     List<Pendiente>? candidatosPendientesEliminacion,
     void Function(List<Pendiente>?)? onCandidatosActualizados,
+    String? tituloPendienteIncompleto,
+    void Function(String?)? onTituloIncompletoActualizado,
   }) async {
     final ahora = _reloj.ahora();
 
@@ -78,6 +80,7 @@ class EnviarMensajeChat {
       pendientesExistentes: pendientesExistentes,
       clasesExistentes: clasesExistentes,
       candidatosPendientesEliminacion: candidatosPendientesEliminacion,
+      tituloPendienteIncompleto: tituloPendienteIncompleto,
     );
     final interpretacion = switch (resInterpretacion) {
       Exito(:final valor) => valor,
@@ -86,6 +89,9 @@ class EnviarMensajeChat {
           esConversacional: true,
         ),
     };
+
+    // Actualizar estado de pendiente en espera si corresponde
+    onTituloIncompletoActualizado?.call(interpretacion.tituloPendienteIncompleto);
 
     // Caso A: Edición de un pendiente existente (Requisito 5)
     if (interpretacion.tipoAccion == TipoAccionIa.editar && interpretacion.pendienteModificado != null) {

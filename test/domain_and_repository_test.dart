@@ -95,7 +95,8 @@ void main() {
 
     test('Repeticion convierte correctamente a enum y texto', () {
       expect(Repeticion.desdeTexto('Diario'), Repeticion.diario);
-      expect(Repeticion.diario.comoTexto, 'Diario');
+      expect(Repeticion.desdeTexto('Diariamente'), Repeticion.diario);
+      expect(Repeticion.diario.comoTexto, 'Diariamente');
       expect(Repeticion.desdeTexto('desconocido'), Repeticion.noRepetir);
     });
 

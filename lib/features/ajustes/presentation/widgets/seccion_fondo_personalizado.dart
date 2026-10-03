@@ -6,9 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:mi_pendiente/core/constants/app_colors.dart';
-import 'package:mi_pendiente/core/constants/app_config.dart';
-import 'package:mi_pendiente/core/theme/tema_app.dart';
-import 'package:mi_pendiente/features/racha/presentation/providers/racha_provider.dart';
 import '../providers/ajustes_provider.dart';
 import 'dialogo_preview_fondo.dart';
 
@@ -25,14 +22,6 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final ajustes = ref.watch(ajustesProvider);
-    final rachaAsync = ref.watch(rachaNotifierProvider);
-    final racha = rachaAsync.valueOrNull;
-    final diasRacha = racha?.diasActuales ?? 0;
-    final logros = racha?.logrosDesbloqueados ?? const <String>[];
-
-    const temaFondo = TemasDisponibles.fondoPersonalizado;
-    final estaDesbloqueado = AppConfig.todoDesbloqueado ||
-        temaFondo.estaDesbloqueado(diasRacha, logros);
 
     final tieneFondoActivo = ajustes.fondoPersonalizadoPath != null &&
         ajustes.fondoPersonalizadoPath!.trim().isNotEmpty &&
@@ -128,37 +117,8 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
           ),
           const SizedBox(height: 14),
 
-          // SI ESTÁ BLOQUEADO POR RACHA
-          if (!estaDesbloqueado) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.black26 : const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark ? Colors.white12 : Colors.black12,
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Text('🔒', style: TextStyle(fontSize: 18)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Se desbloquea al alcanzar ${temaFondo.diasRequeridos} días de racha activa (llevas $diasRacha días).',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFFF97316) : const Color(0xFFC2410C),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ] else ...[
-            // SI ESTÁ DESBLOQUEADO: Botones de subida, vista previa y restaurar
-            if (tieneFondoActivo) ...[
+          // Botones de subida, vista previa y restaurar (100% gratuito)
+          if (tieneFondoActivo) ...[
               // Preview thumbnail del fondo actual
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -244,9 +204,8 @@ class SeccionFondoPersonalizado extends ConsumerWidget {
               ],
             ),
           ],
-        ],
-      ),
-    );
+        ),
+      );
   }
 
   void _mostrarOpcionesDeOrigen(BuildContext context, WidgetRef ref) {

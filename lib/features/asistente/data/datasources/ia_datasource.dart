@@ -22,6 +22,7 @@ class ResultadoInterpretacion {
   final bool esConversacional;
   final bool debeLeerEnVozAlta;
   final List<Pendiente>? candidatosEliminacion;
+  final String? tituloPendienteIncompleto;
 
   const ResultadoInterpretacion({
     this.tipoAccion = TipoAccionIa.crear,
@@ -32,6 +33,7 @@ class ResultadoInterpretacion {
     this.esConversacional = false,
     this.debeLeerEnVozAlta = false,
     this.candidatosEliminacion,
+    this.tituloPendienteIncompleto,
   });
 }
 
@@ -42,6 +44,7 @@ abstract class IaDatasource {
     List<Pendiente> pendientesExistentes = const [],
     List<Clase> clasesExistentes = const [],
     List<Pendiente>? candidatosPendientesEliminacion,
+    String? tituloPendienteIncompleto,
   });
 }
 
@@ -56,6 +59,7 @@ class NlpIaDatasource implements IaDatasource {
     List<Pendiente> pendientesExistentes = const [],
     List<Clase> clasesExistentes = const [],
     List<Pendiente>? candidatosPendientesEliminacion,
+    String? tituloPendienteIncompleto,
   }) async {
     final cleanPrompt = prompt.trim();
     if (cleanPrompt.isEmpty) {
@@ -67,6 +71,15 @@ class NlpIaDatasource implements IaDatasource {
 
     final lower = _normalizar(cleanPrompt);
 
+    // -1. Pregunta sobre si es un agente o chatbox (Requisito del usuario)
+    if (_esPreguntaAgenteOChatbox(lower)) {
+      return const ResultadoInterpretacion(
+        tipoAccion: TipoAccionIa.conversacional,
+        respuestaTexto: 'Esa función no está disponible para mí. Mi único propósito es ayudarte a organizar y gestionar tus tareas, horarios y recordatorios en Zendae. ¿En qué pendiente te gustaría que te ayude?',
+        esConversacional: true,
+      );
+    }
+
     // 0. Si hay candidatos pendientes de eliminación y el usuario está eligiendo
     if (candidatosPendientesEliminacion != null && candidatosPendientesEliminacion.isNotEmpty) {
       final elegido = _resolverSeleccionCandidato(lower, candidatosPendientesEliminacion);
@@ -75,6 +88,51 @@ class NlpIaDatasource implements IaDatasource {
           tipoAccion: TipoAccionIa.eliminar,
           pendienteAEliminarId: elegido.id,
           respuestaTexto: '¡Listo! Eliminé el pendiente **"${elegido.titulo}"**.',
+          esConversacional: false,
+        );
+      }
+    }
+
+    // 0.1 Si había un pendiente en espera de día y hora y el usuario responde con la fecha/hora
+    if (tituloPendienteIncompleto != null && tituloPendienteIncompleto.isNotEmpty) {
+      if (lower == 'cancelar' || lower == 'no' || lower == 'cancela' || lower == 'olvidalo' || lower == 'olvídalo') {
+        return ResultadoInterpretacion(
+          tipoAccion: TipoAccionIa.conversacional,
+          respuestaTexto: 'Entendido, cancelé el registro de "$tituloPendienteIncompleto". ¿Qué otra cosa deseas hacer?',
+          esConversacional: true,
+        );
+      }
+
+      if (_tieneFechaExplicita(lower) || _tieneHoraExplicita(lower)) {
+        final prioridad = _extraerPrioridad(lower);
+        final repeticion = _extraerRepeticion(lower);
+        final fecha = _extraerFecha(lower, ahora);
+        final hora = _extraerHora(lower, ahora);
+        final titulo = tituloPendienteIncompleto;
+
+        final horaFormateada = '${hora.hora.toString().padLeft(2, '0')}:${hora.minuto.toString().padLeft(2, '0')}';
+        final fechaTexto = _describirFecha(fecha, ahora);
+        final prioridadTexto = prioridad == Prioridad.alta
+            ? ' (prioridad alta)'
+            : (prioridad == Prioridad.baja ? ' (prioridad baja)' : '');
+
+        final respuesta = '¡Listo! Programé **"$titulo"** para $fechaTexto a las $horaFormateada$prioridadTexto.';
+
+        final pendiente = PendienteParseado(
+          titulo: titulo,
+          fecha: fecha,
+          hora: hora,
+          prioridad: prioridad,
+          tieneRecordatorio: true,
+          minutosAntes: 10,
+          repetir: repeticion,
+          explicacionRespuesta: respuesta,
+        );
+
+        return ResultadoInterpretacion(
+          tipoAccion: TipoAccionIa.crear,
+          pendiente: pendiente,
+          respuestaTexto: respuesta,
           esConversacional: false,
         );
       }
@@ -104,12 +162,20 @@ class NlpIaDatasource implements IaDatasource {
       );
     }
 
-    // 5. Creación de nuevo pendiente (Flujo existente)
-    final prioridad = _extraerPrioridad(lower);
-    final repeticion = _extraerRepeticion(lower);
-    final fecha = _extraerFecha(lower, ahora);
-    final hora = _extraerHora(lower, ahora);
-    final titulo = _extraerTitulo(cleanPrompt);
+    // 5. Creación de nuevo pendiente (Flujo con soporte para completar día y hora)
+    final tieneFecha = _tieneFechaExplicita(lower);
+    final tieneHora = _tieneHoraExplicita(lower);
+    var titulo = _extraerTitulo(cleanPrompt);
+
+    // Normalización de términos clave como "dentias" -> "Dentista", "mercado", "tarea"
+    final lowerTitulo = _normalizar(titulo).trim();
+    if (lowerTitulo == 'dentias' || lowerTitulo.contains('dentias')) {
+      titulo = 'Dentista';
+    } else if (lowerTitulo == 'mercado' || lowerTitulo == 'el mercado') {
+      titulo = 'Mercado';
+    } else if (lowerTitulo == 'tarea' || lowerTitulo == 'la tarea') {
+      titulo = 'Tarea';
+    }
 
     if (titulo.length < 2) {
       return const ResultadoInterpretacion(
@@ -118,6 +184,21 @@ class NlpIaDatasource implements IaDatasource {
         esConversacional: true,
       );
     }
+
+    // Si NO se especificó ni fecha ni hora, preguntamos al usuario para qué día y para qué hora es
+    if (!tieneFecha && !tieneHora) {
+      return ResultadoInterpretacion(
+        tipoAccion: TipoAccionIa.conversacional,
+        respuestaTexto: '¿Para qué día y para qué hora deseas agendar "$titulo"? (Por ejemplo: "Mañana a las 4:00 pm")',
+        esConversacional: true,
+        tituloPendienteIncompleto: titulo,
+      );
+    }
+
+    final prioridad = _extraerPrioridad(lower);
+    final repeticion = _extraerRepeticion(lower);
+    final fecha = _extraerFecha(lower, ahora);
+    final hora = _extraerHora(lower, ahora);
 
     final horaFormateada = '${hora.hora.toString().padLeft(2, '0')}:${hora.minuto.toString().padLeft(2, '0')}';
     final fechaTexto = _describirFecha(fecha, ahora);
@@ -788,6 +869,50 @@ class NlpIaDatasource implements IaDatasource {
 
     const dias = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
     return 'el ${dias[fecha.weekday - 1]} ${fecha.day}/${fecha.month}';
+  }
+
+  bool _esPreguntaAgenteOChatbox(String text) {
+    final lower = _normalizar(text).trim();
+    if (lower == 'chatbox' || lower == 'agente' || lower == 'chatbot' || lower == 'bot') {
+      return true;
+    }
+    final patrones = [
+      RegExp(r'\b(eres|sos|es)\b.*\b(agente|chatbox|chatbot|bot|robot)\b'),
+      RegExp(r'\b(agente\s+o\s+chatbox|chatbox\s+o\s+agente|agente\s+o\s+chatbot|chatbot\s+o\s+agente)\b'),
+      RegExp(r'\b(un\s+agente\s+o\s+chatbox|un\s+chatbox\s+o\s+un\s+agente)\b'),
+      RegExp(r'\bque\s+(tipo\s+de\s+)?(ia|bot|agente|chatbox|chatbot)\s+eres\b'),
+      RegExp(r'\beres\s+(un\s+)?(agente|chatbox|chatbot|bot|robot)\b'),
+      RegExp(r'\b(eres\s+humano|eres\s+real|eres\s+una\s+persona)\b'),
+    ];
+    return patrones.any((p) => p.hasMatch(lower));
+  }
+
+  bool _tieneFechaExplicita(String text) {
+    final lower = _normalizar(text);
+    if (RegExp(r'\b(hoy|manana|mañana|pasado manana|pasado mañana)\b').hasMatch(lower)) {
+      return true;
+    }
+    if (RegExp(r'\b(lunes|martes|miercoles|miércoles|jueves|viernes|sabado|sábado|domingo)\b').hasMatch(lower)) {
+      return true;
+    }
+    final regexDiaMes = RegExp(r'\b(?:el\s+(?:dia\s+)?)?(\d{1,2})\s+de\s+([a-z]+)\b');
+    if (regexDiaMes.hasMatch(lower)) {
+      return true;
+    }
+    final regexDiaSolo = RegExp(r'\b(?:para\s+el|el\s+dia|el)\s+(\d{1,2})\b');
+    if (regexDiaSolo.hasMatch(lower)) {
+      return true;
+    }
+    return false;
+  }
+
+  bool _tieneHoraExplicita(String text) {
+    final lower = _normalizar(text);
+    if (RegExp(r'\b([01]?\d|2[0-3]):[0-5]\d\b').hasMatch(lower)) return true;
+    if (RegExp(r'\b(am|pm|[ap]\.\s*m\.?)\b').hasMatch(lower)) return true;
+    if (RegExp(r'\b(?:a\s+las?|para\s+las?)\s+(\d{1,2}|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce)\b').hasMatch(lower)) return true;
+    if (RegExp(r'\b(al mediodia|al mediodía|de la manana|de la mañana|de la tarde|de la noche|del mediodia|del mediodía)\b').hasMatch(lower)) return true;
+    return false;
   }
 
   String _normalizar(String s) {

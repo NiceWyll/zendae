@@ -16,6 +16,18 @@ class MainActivity : FlutterActivity() {
     private var pendingResult: MethodChannel.Result? = null
     private var currentRingtone: Ringtone? = null
 
+    companion object {
+        // Garantizar que R8 y AAPT2 nunca descarten los recursos raw de sonido en Release
+        @JvmStatic
+        private val RAW_SOUNDS = intArrayOf(
+            R.raw.campana,
+            R.raw.alerta,
+            R.raw.digital,
+            R.raw.suave,
+            R.raw.zen
+        )
+    }
+
     override fun getRenderMode(): RenderMode {
         return RenderMode.texture
     }

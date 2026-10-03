@@ -27,16 +27,18 @@ class PosponerParaManana {
 
     if (actualizado.tieneRecordatorio &&
         actualizado.momentoDeAviso.isAfter(_reloj.ahora())) {
-      if (actualizado.notificacionId != null) {
-        await _alarmas.programarRecordatorio(
-          notificacionId: actualizado.notificacionId!,
-          titulo: actualizado.titulo,
-          cuerpo: actualizado.descripcion ?? 'Tienes un pendiente programado',
-          cuando: actualizado.momentoDeAviso,
-        );
-      } else {
-        await _alarmas.programarRecordatorioPendiente(actualizado);
-      }
+      try {
+        if (actualizado.notificacionId != null) {
+          await _alarmas.programarRecordatorio(
+            notificacionId: actualizado.notificacionId!,
+            titulo: actualizado.titulo,
+            cuerpo: actualizado.descripcion ?? 'Tienes un pendiente programado',
+            cuando: actualizado.momentoDeAviso,
+          );
+        } else {
+          await _alarmas.programarRecordatorioPendiente(actualizado);
+        }
+      } catch (_) {}
     }
 
     return Exito(actualizado);

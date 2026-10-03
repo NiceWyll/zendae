@@ -11,6 +11,7 @@ import 'package:mi_pendiente/features/pendientes/domain/entities/repeticion.dart
 import 'package:mi_pendiente/features/pendientes/presentation/providers/pendientes_provider.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/mappers/hora_ui.dart';
 import 'package:mi_pendiente/features/pendientes/presentation/mappers/prioridad_ui.dart';
+import 'package:mi_pendiente/features/pendientes/presentation/widgets/selector_repeticion_sheet.dart';
 import 'package:mi_pendiente/features/horario/presentation/providers/horario_provider.dart';
 
 class NuevoPendienteScreen extends ConsumerStatefulWidget {
@@ -49,7 +50,8 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
     final int minutosCargados = p?.minutosAntes ?? 15;
     const opcionesValidas = [15, 30, 60, 120, 180];
     _minutosAntes = opcionesValidas.contains(minutosCargados) ? minutosCargados : 15;
-    _repetir = p?.repetir.comoTexto ?? 'No repetir';
+    final repTexto = p?.repetir.comoTexto ?? 'Una vez';
+    _repetir = (repTexto == 'No repetir') ? 'Una vez' : repTexto;
     _claseId = p?.claseId ?? widget.claseIdInicial;
   }
 
@@ -402,29 +404,39 @@ class _NuevoPendienteScreenState extends ConsumerState<NuevoPendienteScreen> {
               const SizedBox(height: 12),
             ],
 
-            // Campo: Repetir
+            // Campo: Repetir (abre el modal con las opciones de Captura 2)
             _buildCardRow(
               isDark: isDark,
               icon: Icons.sync_rounded,
               label: 'Repetir',
-              trailing: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _repetir,
-                  icon: Icon(Icons.keyboard_arrow_down, color: primaryColor),
-                  items: const [
-                    DropdownMenuItem(value: 'No repetir', child: Text('No repetir')),
-                    DropdownMenuItem(value: 'Diario', child: Text('Diario')),
-                    DropdownMenuItem(value: 'Semanal', child: Text('Semanal')),
-                    DropdownMenuItem(value: 'Mensual', child: Text('Mensual')),
-                  ],
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: primaryColor,
+              trailing: InkWell(
+                onTap: () {
+                  SelectorRepeticionSheet.mostrar(
+                    context: context,
+                    repeticionActual: _repetir,
+                    onSeleccionado: (nueva) {
+                      setState(() => _repetir = nueva);
+                    },
+                  );
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _repetir,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: primaryColor,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(Icons.keyboard_arrow_down, color: primaryColor),
+                    ],
                   ),
-                  onChanged: (val) {
-                    if (val != null) setState(() => _repetir = val);
-                  },
                 ),
               ),
             ),

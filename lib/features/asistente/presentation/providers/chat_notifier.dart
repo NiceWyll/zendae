@@ -40,6 +40,7 @@ class ChatState {
 class ChatNotifier extends StateNotifier<ChatState> {
   final Ref ref;
   List<Pendiente>? _candidatosEliminacion;
+  String? _tituloPendienteIncompleto;
 
   ChatNotifier(this.ref)
       : super(
@@ -125,6 +126,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
       clasesExistentes: clasesActuales,
       candidatosPendientesEliminacion: _candidatosEliminacion,
       onCandidatosActualizados: (c) => _candidatosEliminacion = c,
+      tituloPendienteIncompleto: _tituloPendienteIncompleto,
+      onTituloIncompletoActualizado: (t) => _tituloPendienteIncompleto = t,
     );
 
     final repo = ref.read(asistenteRepositoryProvider);
@@ -170,6 +173,8 @@ class ChatNotifier extends StateNotifier<ChatState> {
     final repo = ref.read(asistenteRepositoryProvider);
     final reloj = ref.read(relojProvider);
     await repo.limpiarHistorial();
+    _tituloPendienteIncompleto = null;
+    _candidatosEliminacion = null;
 
     final bienvenida = MensajeChat(
       id: 'bienvenida',

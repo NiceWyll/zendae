@@ -15,6 +15,7 @@ class InterpretarMensaje {
     List<Pendiente> pendientesExistentes = const [],
     List<Clase> clasesExistentes = const [],
     List<Pendiente>? candidatosPendientesEliminacion,
+    String? tituloPendienteIncompleto,
   }) async {
     try {
       final ahora = _reloj.ahora();
@@ -24,6 +25,7 @@ class InterpretarMensaje {
         pendientesExistentes: pendientesExistentes,
         clasesExistentes: clasesExistentes,
         candidatosPendientesEliminacion: candidatosPendientesEliminacion,
+        tituloPendienteIncompleto: tituloPendienteIncompleto,
       );
       return Exito(resultado);
     } catch (e) {

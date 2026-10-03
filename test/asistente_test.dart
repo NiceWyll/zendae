@@ -226,6 +226,52 @@ void main() {
       expect(res.respuestaTexto, contains('Soy tu Asistente IA'));
     });
 
+    test('si se le pregunta si es un agente o chatbox, indica que esa función no está disponible y se enfoca en tareas', () async {
+      final resAgente = await nlp.interpretarTexto('eres un agente o chatbox?', relojFijo.ahora());
+      expect(resAgente.esConversacional, isTrue);
+      expect(resAgente.pendiente, isNull);
+      expect(resAgente.respuestaTexto, contains('Esa función no está disponible para mí'));
+
+      final resChatbox = await nlp.interpretarTexto('eres chatbox?', relojFijo.ahora());
+      expect(resChatbox.esConversacional, isTrue);
+      expect(resChatbox.respuestaTexto, contains('Esa función no está disponible para mí'));
+    });
+
+    test('si el usuario escribe dentias, mercado o tarea sin fecha ni hora, pregunta para qué día y hora es', () async {
+      final resDentias = await nlp.interpretarTexto('dentias', relojFijo.ahora());
+      expect(resDentias.esConversacional, isTrue);
+      expect(resDentias.pendiente, isNull);
+      expect(resDentias.tituloPendienteIncompleto, 'Dentista');
+      expect(resDentias.respuestaTexto, contains('¿Para qué día y para qué hora deseas agendar "Dentista"?'));
+
+      final resMercado = await nlp.interpretarTexto('mercado', relojFijo.ahora());
+      expect(resMercado.esConversacional, isTrue);
+      expect(resMercado.pendiente, isNull);
+      expect(resMercado.tituloPendienteIncompleto, 'Mercado');
+      expect(resMercado.respuestaTexto, contains('¿Para qué día y para qué hora deseas agendar "Mercado"?'));
+
+      final resTarea = await nlp.interpretarTexto('tarea', relojFijo.ahora());
+      expect(resTarea.esConversacional, isTrue);
+      expect(resTarea.pendiente, isNull);
+      expect(resTarea.tituloPendienteIncompleto, 'Tarea');
+      expect(resTarea.respuestaTexto, contains('¿Para qué día y para qué hora deseas agendar "Tarea"?'));
+    });
+
+    test('completa tarea pendiente al recibir el día y la hora en el siguiente mensaje', () async {
+      final resCompleto = await nlp.interpretarTexto(
+        'mañana a las 3pm',
+        relojFijo.ahora(),
+        tituloPendienteIncompleto: 'Dentista',
+      );
+
+      expect(resCompleto.esConversacional, isFalse);
+      expect(resCompleto.pendiente, isNotNull);
+      expect(resCompleto.pendiente?.titulo, 'Dentista');
+      expect(resCompleto.pendiente?.fecha.day, 19);
+      expect(resCompleto.pendiente?.hora.hora, 15);
+      expect(resCompleto.respuestaTexto, contains('Programé **"Dentista"** para mañana a las 15:00'));
+    });
+
     test('Requisito 5: cambia la tarea del doctor para las 3pm actualiza la hora del pendiente existente', () async {
       final pendienteExistente = Pendiente(
         id: 'p-doc',

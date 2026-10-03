@@ -34,29 +34,31 @@ class AlternarCompletado {
 
     // Regla: una tarea completada no debe sonar; al restaurarla, vuelve a sonar
     // solo si su hora sigue en el futuro.
-    if (completandoAhora) {
-      if (actualizado.notificacionId != null) {
-        await _alarmas.cancelarRecordatorio(actualizado.notificacionId!);
-      }
-      await _alarmas.cancelarRecordatorioPorIdString(actualizado.id);
+    try {
+      if (completandoAhora) {
+        if (actualizado.notificacionId != null) {
+          await _alarmas.cancelarRecordatorio(actualizado.notificacionId!);
+        }
+        await _alarmas.cancelarRecordatorioPorIdString(actualizado.id);
 
-      // Actualizar racha al completar pendiente
-      if (_actualizarRacha != null) {
-        await _actualizarRacha();
+        // Actualizar racha al completar pendiente
+        if (_actualizarRacha != null) {
+          await _actualizarRacha();
+        }
+      } else if (actualizado.tieneRecordatorio &&
+          actualizado.momentoDeAviso.isAfter(_reloj.ahora())) {
+        if (actualizado.notificacionId != null) {
+          await _alarmas.programarRecordatorio(
+            notificacionId: actualizado.notificacionId!,
+            titulo: actualizado.titulo,
+            cuerpo: actualizado.descripcion ?? 'Tienes un pendiente programado',
+            cuando: actualizado.momentoDeAviso,
+          );
+        } else {
+          await _alarmas.programarRecordatorioPendiente(actualizado);
+        }
       }
-    } else if (actualizado.tieneRecordatorio &&
-        actualizado.momentoDeAviso.isAfter(_reloj.ahora())) {
-      if (actualizado.notificacionId != null) {
-        await _alarmas.programarRecordatorio(
-          notificacionId: actualizado.notificacionId!,
-          titulo: actualizado.titulo,
-          cuerpo: actualizado.descripcion ?? 'Tienes un pendiente programado',
-          cuando: actualizado.momentoDeAviso,
-        );
-      } else {
-        await _alarmas.programarRecordatorioPendiente(actualizado);
-      }
-    }
+    } catch (_) {}
 
     return Exito(actualizado);
   }

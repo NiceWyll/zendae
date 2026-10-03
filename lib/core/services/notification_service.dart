@@ -642,16 +642,47 @@ class NotificationServiceImpl implements NotificationScheduler {
       );
       debugPrint('📅 Recordatorio programado para: $date (ID: $id, Canal: $channelId, Sonido: $sId)');
     } catch (exactError) {
-      debugPrint('⚠️ Intento con inexactAllowWhileIdle por: $exactError');
-      await _plugin.zonedSchedule(
-        id: id,
-        title: titulo,
-        body: cuerpo,
-        scheduledDate: date,
-        notificationDetails: details,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        payload: payload,
-      );
+      debugPrint('⚠️ Intento con inexactAllowWhileIdle o fallback por: $exactError');
+      try {
+        await _plugin.zonedSchedule(
+          id: id,
+          title: titulo,
+          body: cuerpo,
+          scheduledDate: date,
+          notificationDetails: details,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          payload: payload,
+        );
+      } catch (soundOrInexactError) {
+        debugPrint('⚠️ Error con sonido "$sId": $soundOrInexactError. Aplicando fallback seguro a sonido del sistema.');
+        try {
+          final fallbackAndroid = AndroidNotificationDetails(
+            channelId,
+            channelName,
+            channelDescription: channelDesc,
+            importance: Importance.max,
+            priority: Priority.high,
+            playSound: true,
+            sound: null, // Sonido por defecto garantizado
+            enableVibration: vibracion,
+            vibrationPattern: vibracion ? _vibrationPattern : null,
+            category: AndroidNotificationCategory.reminder,
+            icon: '@mipmap/ic_launcher',
+          );
+          await _plugin.zonedSchedule(
+            id: id,
+            title: titulo,
+            body: cuerpo,
+            scheduledDate: date,
+            notificationDetails: NotificationDetails(android: fallbackAndroid, iOS: iosDetails),
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            payload: payload,
+          );
+          debugPrint('✅ Recordatorio agendado exitosamente con sonido predeterminado del sistema');
+        } catch (finalError) {
+          debugPrint('⚠️ Notificación no pudo agendarse pero no bloquea la aplicación: $finalError');
+        }
+      }
     }
   }
 

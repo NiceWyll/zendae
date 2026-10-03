@@ -22,24 +22,28 @@ class ActualizarPendiente {
       return Fallo(failure);
     }
 
-    if (pendiente.tieneRecordatorio &&
-        !pendiente.estaCompletado &&
-        pendiente.momentoDeAviso.isAfter(_reloj.ahora())) {
-      if (pendiente.notificacionId != null) {
-        await _alarmas.programarRecordatorio(
-          notificacionId: pendiente.notificacionId!,
-          titulo: pendiente.titulo,
-          cuerpo: pendiente.descripcion ?? 'Tienes un pendiente programado',
-          cuando: pendiente.momentoDeAviso,
-        );
+    try {
+      if (pendiente.tieneRecordatorio &&
+          !pendiente.estaCompletado &&
+          pendiente.momentoDeAviso.isAfter(_reloj.ahora())) {
+        if (pendiente.notificacionId != null) {
+          await _alarmas.programarRecordatorio(
+            notificacionId: pendiente.notificacionId!,
+            titulo: pendiente.titulo,
+            cuerpo: pendiente.descripcion ?? 'Tienes un pendiente programado',
+            cuando: pendiente.momentoDeAviso,
+          );
+        } else {
+          await _alarmas.programarRecordatorioPendiente(pendiente);
+        }
       } else {
-        await _alarmas.programarRecordatorioPendiente(pendiente);
+        if (pendiente.notificacionId != null) {
+          await _alarmas.cancelarRecordatorio(pendiente.notificacionId!);
+        }
+        await _alarmas.cancelarRecordatorioPorIdString(pendiente.id);
       }
-    } else {
-      if (pendiente.notificacionId != null) {
-        await _alarmas.cancelarRecordatorio(pendiente.notificacionId!);
-      }
-      await _alarmas.cancelarRecordatorioPorIdString(pendiente.id);
+    } catch (_) {
+      // La notificación no debe impedir la actualización en base de datos
     }
 
     return Exito(pendiente);

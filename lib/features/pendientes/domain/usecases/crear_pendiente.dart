@@ -40,15 +40,19 @@ class CrearPendiente {
 
     if (conIds.tieneRecordatorio &&
         conIds.momentoDeAviso.isAfter(_reloj.ahora())) {
-      if (conIds.notificacionId != null) {
-        await _alarmas.programarRecordatorio(
-          notificacionId: conIds.notificacionId!,
-          titulo: conIds.titulo,
-          cuerpo: conIds.descripcion ?? 'Tienes un pendiente programado',
-          cuando: conIds.momentoDeAviso,
-        );
-      } else {
-        await _alarmas.programarRecordatorioPendiente(conIds);
+      try {
+        if (conIds.notificacionId != null) {
+          await _alarmas.programarRecordatorio(
+            notificacionId: conIds.notificacionId!,
+            titulo: conIds.titulo,
+            cuerpo: conIds.descripcion ?? 'Tienes un pendiente programado',
+            cuando: conIds.momentoDeAviso,
+          );
+        } else {
+          await _alarmas.programarRecordatorioPendiente(conIds);
+        }
+      } catch (_) {
+        // La notificación no debe impedir el guardado exitoso en base de datos
       }
     }
 

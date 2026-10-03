@@ -125,8 +125,8 @@ class TemasDisponibles {
     colorPrimario: Color(0xFF8B5CF6),
     colorSecundario: Color(0xFF06B6D4),
     colorAcento: Color(0xFFEC4899),
-    esDesbloqueablePorRacha: true,
-    diasRequeridos: 10,
+    esDesbloqueablePorRacha: false,
+    diasRequeridos: 0,
     esExclusivoAndroid: false,
   );
 
