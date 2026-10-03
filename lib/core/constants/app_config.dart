@@ -12,6 +12,8 @@ class AppConfig {
   /// está bloqueado para que el usuario avance y desbloquee día a día por racha.
   static bool get todoDesbloqueado {
     if (_overrideTodoDesbloqueado != null) return _overrideTodoDesbloqueado!;
+    const bool forceUnlocked = bool.fromEnvironment('TODO_DESBLOQUEADO', defaultValue: false);
+    if (forceUnlocked) return true;
     try {
       return Platform.isIOS;
     } catch (_) {
