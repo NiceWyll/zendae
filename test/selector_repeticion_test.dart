@@ -38,9 +38,9 @@ void main() {
       expect(find.text('Diariamente'), findsOneWidget);
       expect(find.text('Lun a Vie'), findsOneWidget);
 
-      // Verificar opciones de la tarjeta 2
-      expect(find.text('Alarmas de turno'), findsOneWidget);
-      expect(find.text('Personalizar'), findsOneWidget);
+      // Verificar que NO están las opciones descartadas
+      expect(find.text('Alarmas de turno'), findsNothing);
+      expect(find.text('Personalizar'), findsNothing);
 
       // Tocar "Diariamente"
       await tester.tap(find.text('Diariamente'));
